@@ -28,7 +28,7 @@ setup(
     description="Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.",
     long_description=read("README.md"),
 
-    packages=find_packages(exclude=('tests',)),
+    packages=find_packages(exclude=('tests', 'example',)),
 
     install_requires=requires_list,
 
@@ -38,5 +38,8 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
 )

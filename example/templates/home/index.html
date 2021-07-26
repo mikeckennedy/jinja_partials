@@ -1,0 +1,37 @@
+{% extends "shared/_layout.html" %}
+{% block main_content %}
+
+    <h1>Demo app: jinja_partials</h1>
+
+
+    <div class="container">
+
+
+        <div class="container videos category">
+            {% for row in rows %}
+                <div class="row">
+                    <div class="col-md-1"></div>
+
+                    {% for v in row %}
+
+                        <div class="col-md-3 video">
+                            <div>
+                                <a href="https://www.youtube.com/watch?v={{ v.id }}" target="_blank">
+                                    {{ render_partial('shared/partials/partial_video_image.html', video=v) }}
+                                </a>
+                                <a href="https://www.youtube.com/watch?v={{ v.id }}" target="_blank"
+                                   class="author">{{ v.author }}</a>
+                                <div class="views">{{ "{:,}".format(v.views) }} views</div>
+                            </div>
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+            {% endfor %}
+        </div>
+
+
+    </div>
+
+{% endblock %}
