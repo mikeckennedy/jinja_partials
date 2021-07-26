@@ -12,7 +12,7 @@ def index():
     return flask.render_template('home/index.html', rows=rows)
 
 
-@blueprint.get('/list')
+@blueprint.get('/listing')
 def listing():
     videos = video_service.all_videos()
-    return flask.render_template('home/listing.html', videos)
+    return flask.render_template('home/listing.html', videos=videos)

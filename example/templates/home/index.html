@@ -15,14 +15,7 @@
                     {% for v in row %}
 
                         <div class="col-md-3 video">
-                            <div>
-                                <a href="https://www.youtube.com/watch?v={{ v.id }}" target="_blank">
-                                    {{ render_partial('shared/partials/partial_video_image.html', video=v) }}
-                                </a>
-                                <a href="https://www.youtube.com/watch?v={{ v.id }}" target="_blank"
-                                   class="author">{{ v.author }}</a>
-                                <div class="views">{{ "{:,}".format(v.views) }} views</div>
-                            </div>
+                            {{ render_partial('shared/partials/partial_video_square.html', video=v) }}
                         </div>
 
                     {% endfor %}
