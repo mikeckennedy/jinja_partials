@@ -42,4 +42,5 @@ h1 {
 
 .listing span.video div {
     max-width: 500px;
+    margin-bottom: 30px;
 }

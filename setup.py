@@ -29,7 +29,7 @@ setup(
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
 
-    packages=find_packages(exclude=('tests', 'example',)),
+    packages=find_packages(exclude=('tests', 'example', 'readme_resources', 'build', 'dist',)),
 
     install_requires=requires_list,
 
