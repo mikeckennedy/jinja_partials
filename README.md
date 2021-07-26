@@ -84,7 +84,7 @@ linking out to YouTube:
 Now you see the `render_partial()` method. It takes the subpath into the templates folder and
 any model data passed in as keyword arguments.
 
-We can finally generate the single video blocks as follows:
+We can finally generate the list of video blocks as follows:
 
 ```html
 {% for v in videos %}
@@ -97,4 +97,4 @@ We can finally generate the single video blocks as follows:
 ```
 
 This time, we reframe each item in the list from the outer template (called `v`) as the `video` model
-in the outer HTML section.
+in the inner HTML section.

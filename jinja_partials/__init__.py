@@ -2,7 +2,7 @@
 jinja_partials - Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'Michael Kennedy <michael@talkpython.fm>'
 __all__ = ['render_partial']
 

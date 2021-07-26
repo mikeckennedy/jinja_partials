@@ -18,7 +18,7 @@ with open('./requirements.txt', 'r', encoding='utf-8') as fin:
 
 setup(
     name="jinja_partials",
-    version="0.1.0",
+    version="0.1.1",
     url="https://github.com/mikeckennedy/jinja_partials",
     license='MIT',
 
