@@ -16,9 +16,20 @@ def read(filename):
 with open('./requirements.txt', 'r', encoding='utf-8') as fin:
     requires_list = [line.strip() for line in fin if line and line.strip()]
 
+
+def read_version():
+    filename = os.path.join(os.path.dirname(__file__), 'jinja_partials', '__init__.py')
+    with open(filename, mode="r", encoding='utf-8') as fin2:
+        for line in fin2:
+            if line and line.strip() and line.startswith('__version__'):
+                return line.split('=')[1].strip().strip("'").strip('"')
+
+    return "0.0.0.0"
+
+
 setup(
     name="jinja_partials",
-    version="0.1.1",
+    version=read_version(),
     url="https://github.com/mikeckennedy/jinja_partials",
     license='MIT',
 
