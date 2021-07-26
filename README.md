@@ -16,7 +16,8 @@ app. Here's a visual:
 
 ![](./readme_resources/reused-html-visual.png)
 
-Check out the [**demo / example application**](tree/main/example) to see it in action. 
+Check out the [**demo / example application**](https://github.com/mikeckennedy/jinja_partials/tree/main/example) 
+to see it in action. 
 
 ## Installation
 
