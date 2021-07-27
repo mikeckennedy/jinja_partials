@@ -1,6 +1,7 @@
 # Jinja Partials
 
 Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.
+(There is also a [Pyramid/Chameleon version here](https://github.com/mikeckennedy/chameleon_partials).)
 
 ## Overview
 
