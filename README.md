@@ -50,8 +50,8 @@ define your partial templates. I recommend locating and naming them accordingly:
 │   └── shared
 │       ├── _layout.html
 │       └── partials
-│           ├── partial_video_image.html
-│           └── partial_video_square.html
+│           ├── video_image.html
+│           └── video_square.html
 ```
 
 Notice the `partials` subfolder in the `templates` folder.
@@ -74,7 +74,7 @@ linking out to YouTube:
 ```html
 <div>
     <a href="https://www.youtube.com/watch?v={{ video.id }}" target="_blank">
-        {{ render_partial('shared/partials/partial_video_image.html', video=video) }}
+        {{ render_partial('shared/partials/video_image.html', video=video) }}
     </a>
     <a href="https://www.youtube.com/watch?v={{ video.id }}" target="_blank"
        class="author">{{ video.author }}</a>
@@ -91,7 +91,7 @@ We can finally generate the list of video blocks as follows:
 {% for v in videos %}
 
     <div class="col-md-3 video">
-        {{ render_partial('shared/partials/partial_video_square.html', video=v) }}
+        {{ render_partial('shared/partials/video_square.html', video=v) }}
     </div>
 
 {% endfor %}
