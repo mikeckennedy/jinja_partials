@@ -54,7 +54,7 @@ define your partial templates. I recommend locating and naming them accordingly:
 │           └── video_square.html
 ```
 
-Notice the `partials` subfolder in the `templates` folder.
+Notice the `partials` subfolder in the `templates/shared` folder.
 
 The templates are just HTML fragments. Here is a stand-alone one for the YouTube thumbnail from
 the example app:
