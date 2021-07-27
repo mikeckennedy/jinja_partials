@@ -4,7 +4,7 @@ jinja_partials - Simple reuse of partial HTML page templates in the Jinja templa
 
 __version__ = '0.1.1'
 __author__ = 'Michael Kennedy <michael@talkpython.fm>'
-__all__ = ['render_partial']
+__all__ = ['register_extensions', 'render_partial', 'PartialsException', ]
 
 import flask as __flask
 from jinja2 import Markup as Markup
