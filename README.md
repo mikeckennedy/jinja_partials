@@ -99,3 +99,9 @@ We can finally generate the list of video blocks as follows:
 
 This time, we reframe each item in the list from the outer template (called `v`) as the `video` model
 in the inner HTML section.
+
+
+## Why not just use `include` or `macro` from Jinja?
+
+The short answer is they are nearly the same, but both fall short in different ways. 
+For a more detailed response, see the discussion on [**issue #1**](https://github.com/mikeckennedy/jinja_partials/issues/1)
