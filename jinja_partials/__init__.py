@@ -16,7 +16,7 @@ class PartialsException(Exception):
     pass
 
 
-def render_partial(template_name: str, **data: dict) -> Markup:
+def render_partial(template_name: str, **data) -> Markup:
     if not has_registered_extensions:
         raise PartialsException("You must call register_extensions() before this function can be used.")
 
