@@ -1,2 +1,4 @@
 pytest
 pytest-clarity
+flask
+fastapi
