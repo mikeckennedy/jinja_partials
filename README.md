@@ -39,6 +39,19 @@ jinja_partials.register_extensions(app)
 # ...
 ```
 
+You can also use this library in your FastAPI (or Starlette) project!
+```python
+from fastapi.templating import Jinja2Templates
+# or `from starlette.templating import Jinja2Templates`
+
+import jinja_partials
+
+templates = Jinja2Templates("tests/test_templates")
+
+jinja_partials.register_starlette_extensions(templates)
+# ...
+```
+
 Next, you define your main HTML (Jinja2) templates as usual. Then 
 define your partial templates. I recommend locating and naming them accordingly:
 
