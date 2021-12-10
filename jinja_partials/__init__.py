@@ -16,13 +16,17 @@ __all__ = [
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
-import starlette
-from jinja2 import Markup as Markup
+from markupsafe import Markup as Markup
 
 try:
     import flask
 except ImportError:
     flask = None
+
+try:
+    import starlette
+except ImportError:
+    starlette = None
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -41,7 +45,7 @@ def render_partial(
 ) -> Markup:
     if renderer is None:
         if flask is None:
-            raise PartialsException("No renderer specified")
+            raise PartialsException('No renderer specified')
         else:
             renderer = flask.render_template
 
@@ -49,25 +53,21 @@ def render_partial(
 
 
 def generate_render_partial(renderer: Callable[..., Any]) -> Callable[..., Markup]:
-    return partial(render_partial, renderer=renderer)  # type: ignore
+    return partial(render_partial, renderer=renderer)
 
 
-def register_extensions(app: "Flask"):
+def register_extensions(app: 'Flask'):
     if flask is None:
-        raise PartialsException("Install Flask to use `register_extensions`")
+        raise PartialsException('Install Flask to use `register_extensions`')
 
     app.jinja_env.globals.update(render_partial=generate_render_partial(flask.render_template))
 
 
-def register_starlette_extensions(templates: "Jinja2Templates"):
+def register_starlette_extensions(templates: 'Jinja2Templates'):
     if starlette is None:
-        raise PartialsException("Install Starlette to use `register_starlette_extensions`")
+        raise PartialsException('Install Starlette to use `register_starlette_extensions`')
 
     def renderer(template_name: str, **data: Any) -> str:
         return templates.get_template(template_name).render(**data)
 
     templates.env.globals.update(render_partial=generate_render_partial(renderer))
-
-
-def register_fastapi_extensions(templates: "Jinja2Templates"):
-    register_starlette_extensions(templates)
