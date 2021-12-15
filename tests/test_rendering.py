@@ -10,6 +10,7 @@ from fixtures import registered_extension, starlette_render_partial
 
 import jinja_partials
 
+
 def test_render_empty(registered_extension):
     html: Markup = jinja_partials.render_partial('render/bare.html')
     assert '<h1>This is bare HTML fragment</h1>' in html
@@ -34,8 +35,8 @@ def test_render_recursive(registered_extension):
     inner_text = "The message is recursive"
 
     html: Markup = jinja_partials.render_partial('render/recursive.html',
-                                                message=value_text,
-                                                inner=inner_text)
+                                                 message=value_text,
+                                                 inner=inner_text)
     assert value_text in html
     assert inner_text in html
 
@@ -68,20 +69,20 @@ def test_register_extensions_raises_if_flask_is_not_installed():
     del sys.modules['jinja_partials']
     import jinja_partials
     with pytest.raises(
-        jinja_partials.PartialsException,
-        match='Install Flask to use `register_extensions`',
+            jinja_partials.PartialsException,
+            match='Install Flask to use `register_extensions`',
     ):
         jinja_partials.register_extensions(SimpleNamespace())
     del sys.modules['flask']
 
 
-def test_register_extensions_raises_if_flask_is_not_installed():
+def test_register_extensions_raises_if_starlette_is_not_installed():
     sys.modules['starlette'] = None
     del sys.modules['jinja_partials']
     import jinja_partials
     with pytest.raises(
-        jinja_partials.PartialsException,
-        match='Install Starlette to use `register_starlette_extensions`',
+            jinja_partials.PartialsException,
+            match='Install Starlette to use `register_starlette_extensions`',
     ):
         jinja_partials.register_starlette_extensions(SimpleNamespace())
     del sys.modules['starlette']
