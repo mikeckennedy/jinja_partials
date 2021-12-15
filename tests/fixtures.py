@@ -1,4 +1,6 @@
 from pathlib import Path
+from functools import partial
+from typing import Any
 
 import flask
 # noinspection PyPackageRequirements
@@ -6,6 +8,7 @@ import pytest
 
 import jinja_partials
 
+from fastapi.templating import Jinja2Templates
 
 @pytest.fixture
 def registered_extension():
@@ -24,3 +27,16 @@ def registered_extension():
 
         # Roll back the fact that we registered the extensions for future tests.
         jinja_partials.has_registered_extensions = False
+
+
+
+@pytest.fixture
+def starlette_render_partial():
+    templates = Jinja2Templates(Path(__file__).parent / "test_templates")
+    jinja_partials.register_starlette_extensions(templates)
+
+    def renderer(template_name: str, **data: Any) -> str:
+        return templates.get_template(template_name).render(**data)
+
+    return partial(jinja_partials.render_partial, renderer=renderer)
+    
