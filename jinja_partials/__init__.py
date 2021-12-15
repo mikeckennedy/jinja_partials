@@ -7,7 +7,6 @@ __author__ = 'Michael Kennedy <michael@talkpython.fm>'
 __all__ = [
     'register_extensions',
     'register_starlette_extensions',
-    'register_fastapi_extensions',
     'render_partial',
     'generate_render_partial',
     'PartialsException',
