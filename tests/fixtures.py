@@ -32,7 +32,7 @@ def registered_extension():
 
 @pytest.fixture
 def starlette_render_partial():
-    templates = Jinja2Templates('tests/test_templates')
+    templates = Jinja2Templates(Path(__file__).parent / "test_templates")
     jinja_partials.register_starlette_extensions(templates)
 
     def renderer(template_name: str, **data: Any) -> str:
