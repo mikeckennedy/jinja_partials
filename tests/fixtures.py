@@ -1,14 +1,16 @@
-from pathlib import Path
 from functools import partial
+from pathlib import Path
 from typing import Any
 
 import flask
+
 # noinspection PyPackageRequirements
 import pytest
+from fastapi.templating import Jinja2Templates
+from jinja2 import Environment, FileSystemLoader
 
 import jinja_partials
 
-from fastapi.templating import Jinja2Templates
 
 @pytest.fixture
 def registered_extension():
@@ -39,4 +41,13 @@ def starlette_render_partial():
         return templates.get_template(template_name).render(**data)
 
     return partial(jinja_partials.render_partial, renderer=renderer)
-    
+
+@pytest.fixture
+def environment_render_partial():
+    environment = Environment(loader=FileSystemLoader(Path(__file__).parent / "test_templates"))
+    jinja_partials.register_environment(environment)
+
+    def renderer(template_name: str, **data: Any) -> str:
+        return environment.get_template(template_name).render(**data)
+
+    return partial(jinja_partials.render_partial, renderer=renderer)
