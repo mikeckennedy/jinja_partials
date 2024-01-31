@@ -52,6 +52,16 @@ jinja_partials.register_starlette_extensions(templates)
 # ...
 ```
 
+Or directly using a jijna environment!
+```python
+import jinja_partials
+from jinja2 import Environment, FileSystemLoader
+
+environment = Environment(loader=FileSystemLoader("tests/test_templates"))
+jinja_partials.register_environment(environment)
+# ...
+```
+
 Next, you define your main HTML (Jinja2) templates as usual. Then 
 define your partial templates. I recommend locating and naming them accordingly:
 
