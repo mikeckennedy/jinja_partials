@@ -7,14 +7,16 @@ __author__ = 'Michael Kennedy <michael@talkpython.fm>'
 __all__ = [
     'register_extensions',
     'register_starlette_extensions',
+    'register_environment',
     'render_partial',
     'generate_render_partial',
     'PartialsException',
 ]
 
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
+from jinja2 import Environment
 from markupsafe import Markup as Markup
 
 try:
@@ -40,19 +42,23 @@ class PartialsException(Exception):
 def render_partial(
     template_name: str,
     renderer: Optional[Callable[..., Any]] = None,
+    markup: bool = True,
     **data: Any,
-) -> Markup:
+) -> Union[Markup, str]:
     if renderer is None:
         if flask is None:
             raise PartialsException('No renderer specified')
         else:
             renderer = flask.render_template
 
-    return Markup(renderer(template_name, **data))
+    if markup:
+        return Markup(renderer(template_name, **data))
+
+    return renderer(template_name, **data)
 
 
-def generate_render_partial(renderer: Callable[..., Any]) -> Callable[..., Markup]:
-    return partial(render_partial, renderer=renderer)
+def generate_render_partial(renderer: Callable[..., Any], markup: bool = True) -> Callable[..., Markup]:
+    return partial(render_partial, renderer=renderer, markup=markup)
 
 
 def register_extensions(app: 'Flask'):
@@ -70,3 +76,10 @@ def register_starlette_extensions(templates: 'Jinja2Templates'):
         return templates.get_template(template_name).render(**data)
 
     templates.env.globals.update(render_partial=generate_render_partial(renderer))
+
+
+def register_environment(env: Environment, markup: bool = False):
+    def renderer(template_name: str, **data: Any) -> str:
+        return env.get_template(template_name).render(**data)
+
+    env.globals.update(render_partial=generate_render_partial(renderer, markup=markup))
