@@ -1,4 +1,5 @@
 import flask
+
 import jinja_partials
 from views import home
 

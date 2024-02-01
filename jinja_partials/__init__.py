@@ -34,16 +34,15 @@ if TYPE_CHECKING:
     from starlette.templating import Jinja2Templates
 
 
-
 class PartialsException(Exception):
     pass
 
 
 def render_partial(
-    template_name: str,
-    renderer: Optional[Callable[..., Any]] = None,
-    markup: bool = True,
-    **data: Any,
+        template_name: str,
+        renderer: Optional[Callable[..., Any]] = None,
+        markup: bool = True,
+        **data: Any,
 ) -> Union[Markup, str]:
     if renderer is None:
         if flask is None:
