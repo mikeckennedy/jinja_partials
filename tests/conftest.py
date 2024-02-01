@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any
 
 import flask
-
 # noinspection PyPackageRequirements
 import pytest
 from fastapi.templating import Jinja2Templates
@@ -31,7 +30,6 @@ def registered_extension():
         jinja_partials.has_registered_extensions = False
 
 
-
 @pytest.fixture
 def starlette_render_partial():
     templates = Jinja2Templates(Path(__file__).parent / "test_templates")
@@ -41,6 +39,7 @@ def starlette_render_partial():
         return templates.get_template(template_name).render(**data)
 
     return partial(jinja_partials.render_partial, renderer=renderer)
+
 
 @pytest.fixture
 def environment_render_partial():
