@@ -4,9 +4,9 @@ from typing import Callable
 
 # noinspection PyPackageRequirements
 import pytest as pytest
+from fixtures import environment_render_partial, registered_extension, starlette_render_partial
 from jinja2 import TemplateNotFound
 from markupsafe import Markup
-from fixtures import registered_extension, starlette_render_partial
 
 import jinja_partials
 
@@ -63,6 +63,17 @@ def test_starlette_render_recursive(starlette_render_partial: Callable[..., Mark
     assert value_text in html
     assert inner_text in html
 
+def test_register_environment(environment_render_partial: Callable[..., Markup]):
+    value_text = "The message is clear"
+    inner_text = "The message is recursive"
+
+    html = environment_render_partial(
+        'render/recursive.html',
+        message=value_text,
+        inner=inner_text,
+    )
+    assert value_text in html
+    assert inner_text in html
 
 def test_register_extensions_raises_if_flask_is_not_installed():
     sys.modules['flask'] = None
@@ -86,3 +97,4 @@ def test_register_extensions_raises_if_starlette_is_not_installed():
     ):
         jinja_partials.register_starlette_extensions(SimpleNamespace())
     del sys.modules['starlette']
+
