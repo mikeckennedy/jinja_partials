@@ -13,8 +13,11 @@ def read(filename):
         return re.sub(text_type(r':[a-z]+:`~?(.*?)`'), text_type(r'``\1``'), fd.read())
 
 
-with open('./requirements.txt', 'r', encoding='utf-8') as fin:
-    requires_list = [line.strip() for line in fin if line and line.strip()]
+try:
+    with open('./requirements.txt', 'r', encoding='utf-8') as fin:
+        requires_list = [line.strip() for line in fin if line and line.strip()]
+except Exception as e:
+    requires_list = ['jinja2']
 
 
 def read_version():
