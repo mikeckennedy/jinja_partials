@@ -2,7 +2,7 @@
 jinja_partials - Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Michael Kennedy <michael@talkpython.fm>'
 __all__ = [
     'register_extensions',
@@ -29,7 +29,7 @@ try:
 except ImportError:
     starlette = None
 
-if TYPE_CHECKING:
+if TYPE_CHECKING and flask and starlette:
     from flask import Flask
     from starlette.templating import Jinja2Templates
 
