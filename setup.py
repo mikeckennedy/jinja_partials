@@ -6,13 +6,13 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-def read_readme(filename):
+def read_readme(filename: str) -> str:
     try:
         filename = os.path.join(os.path.dirname(__file__), filename)
         text_type = type(u"")
         with io.open(filename, mode="r", encoding='utf-8') as fd:
             return re.sub(text_type(r':[a-z]+:`~?(.*?)`'), text_type(r'``\1``'), fd.read())
-    except:
+    except:  # noqa: E722
         return ''
 
 
@@ -25,7 +25,7 @@ def read_version():
                     return line.split('=')[1].strip().strip("'").strip('"')
 
         return "0.0.0.0"
-    except:
+    except:  # noqa: E722
         return "0.0.0.0"
 
 
