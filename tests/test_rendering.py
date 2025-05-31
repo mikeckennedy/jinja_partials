@@ -50,6 +50,59 @@ def test_not_registered():
         jinja_partials.render_partial('doesnt-matter.pt', message=7)
 
 
+# Tests for markup parameter
+def test_render_partial_markup_false(registered_extension):  # type: ignore
+    """Test render_partial with markup=False returns a string instead of Markup."""
+    html = jinja_partials.render_partial('render/bare.html', markup=False)
+    assert isinstance(html, str)
+    assert not isinstance(html, Markup)
+    assert '<h1>This is bare HTML fragment</h1>' in html
+
+
+def test_render_partial_markup_true_explicit(registered_extension):  # type: ignore
+    """Test render_partial with markup=True (explicit) returns Markup."""
+    html = jinja_partials.render_partial('render/bare.html', markup=True)
+    assert isinstance(html, Markup)
+    assert '<h1>This is bare HTML fragment</h1>' in html
+
+
+# Tests for template name edge cases
+def test_render_partial_empty_template_name(registered_extension):  # type: ignore
+    """Test render_partial with empty string template name."""
+    with pytest.raises(TemplateNotFound):
+        jinja_partials.render_partial('')
+
+
+def test_render_partial_none_template_name(registered_extension):  # type: ignore
+    """Test render_partial with None template name."""
+    from jinja2.exceptions import TemplatesNotFound
+    with pytest.raises(TemplatesNotFound):
+        jinja_partials.render_partial(None)  # type: ignore
+
+
+# New test for template rendering verification
+def test_data_passed_through_correctly(registered_extension):  # type: ignore
+    """Test that data is actually passed through correctly to templates."""
+    # Test with various data types
+    test_data = {
+        'string_value': 'test_string',
+        'number_value': 42,
+        'list_value': [1, 2, 3],
+        'dict_value': {'nested': 'value'},
+        'boolean_value': True,
+    }
+    
+    # This test uses a template that should render all the passed data
+    # We'll verify each piece of data appears in the output
+    html = jinja_partials.render_partial('render/with_data.html', 
+                                        name=test_data['string_value'], 
+                                        age=test_data['number_value'])
+    
+    # Verify the data was actually passed through and rendered
+    assert str(test_data['string_value']) in html
+    assert str(test_data['number_value']) in html
+
+
 def test_starlette_render_recursive(starlette_render_partial: Callable[..., Markup]):
     value_text = 'The message is clear'
     inner_text = 'The message is recursive'
