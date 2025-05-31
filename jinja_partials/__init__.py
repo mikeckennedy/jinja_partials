@@ -5,6 +5,7 @@ jinja_partials - Simple reuse of partial HTML page templates in the Jinja templa
 __version__ = '0.2.1'
 __author__ = 'Michael Kennedy <michael@talkpython.fm>'
 __all__ = [
+    '__version__',
     'register_extensions',
     'register_starlette_extensions',
     'register_environment',
@@ -56,7 +57,7 @@ def render_partial(
     return renderer(template_name, **data)
 
 
-def generate_render_partial(renderer: Callable[..., Any], markup: bool = True) -> Callable[..., Markup]:
+def generate_render_partial(renderer: Callable[..., Any], markup: bool = True) -> Callable[..., Union[Markup, str]]:
     return partial(render_partial, renderer=renderer, markup=markup)
 
 
@@ -72,9 +73,9 @@ def register_starlette_extensions(templates: 'Jinja2Templates'):
         raise PartialsException('Install Starlette to use `register_starlette_extensions`')
 
     def renderer(template_name: str, **data: Any) -> str:
-        return templates.get_template(template_name).render(**data)
+        return templates.get_template(template_name).render(**data) # type: ignore
 
-    templates.env.globals.update(render_partial=generate_render_partial(renderer))
+    templates.env.globals.update(render_partial=generate_render_partial(renderer)) # type: ignore
 
 
 def register_environment(env: Environment, markup: bool = False):
