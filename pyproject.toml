@@ -28,7 +28,7 @@ classifiers = [
 dependencies = [
     "jinja2",
 ]
-version = "0.2.1"
+version = "0.3.0"
 
 
 [project.urls]
