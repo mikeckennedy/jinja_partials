@@ -76,6 +76,7 @@ def test_render_partial_empty_template_name(registered_extension):  # type: igno
 def test_render_partial_none_template_name(registered_extension):  # type: ignore
     """Test render_partial with None template name."""
     from jinja2.exceptions import TemplatesNotFound
+
     with pytest.raises(TemplatesNotFound):
         jinja_partials.render_partial(None)  # type: ignore
 
@@ -91,13 +92,13 @@ def test_data_passed_through_correctly(registered_extension):  # type: ignore
         'dict_value': {'nested': 'value'},
         'boolean_value': True,
     }
-    
+
     # This test uses a template that should render all the passed data
     # We'll verify each piece of data appears in the output
-    html = jinja_partials.render_partial('render/with_data.html', 
-                                        name=test_data['string_value'], 
-                                        age=test_data['number_value'])
-    
+    html = jinja_partials.render_partial(
+        'render/with_data.html', name=test_data['string_value'], age=test_data['number_value']
+    )
+
     # Verify the data was actually passed through and rendered
     assert str(test_data['string_value']) in html
     assert str(test_data['number_value']) in html
@@ -153,3 +154,51 @@ def test_register_extensions_raises_if_starlette_is_not_installed():
     ):
         jinja_partials.register_starlette_extensions(SimpleNamespace())  # type: ignore
     del sys.modules['starlette']
+
+
+def test_partials_jinja_extension():
+    """Test that PartialsJinjaExtension works declaratively with Jinja2 Environment."""
+    from jinja2 import Environment, FileSystemLoader
+    from pathlib import Path
+
+    # Create environment with the extension loaded declaratively
+    templates_path = Path(__file__).parent / 'test_templates'
+    env = Environment(loader=FileSystemLoader(templates_path), extensions=['jinja_partials.PartialsJinjaExtension'])
+
+    # Test that render_partial is available as a global
+    assert 'render_partial' in env.globals
+
+    # Test that render_partial works correctly
+    template = env.get_template('render/recursive.html')
+    html = template.render(message='test message', inner='test inner')
+
+    assert 'test message' in html
+    assert 'test inner' in html
+    assert '<h1>This is inner html</h1>' in html
+
+    # Test with data template
+    data_template = env.get_template('render/with_data.html')
+    html = data_template.render(name='Alice', age=30)
+
+    assert 'Alice' in html
+    assert '30' in html
+    assert '<span>Your name is Alice and age is 30</span>' in html
+
+
+def test_partials_jinja_extension_markup_behavior():
+    """Test that PartialsJinjaExtension returns Markup objects by default."""
+    from jinja2 import Environment, FileSystemLoader
+    from pathlib import Path
+    from markupsafe import Markup
+
+    # Create environment with the extension loaded declaratively
+    templates_path = Path(__file__).parent / 'test_templates'
+    env = Environment(loader=FileSystemLoader(templates_path), extensions=['jinja_partials.PartialsJinjaExtension'])
+
+    # Get the render_partial function from globals
+    render_partial_func = env.globals['render_partial']
+
+    # Test that it returns Markup by default
+    result = render_partial_func('render/bare.html')  # type: ignore
+    assert isinstance(result, Markup)
+    assert '<h1>This is bare HTML fragment</h1>' in result

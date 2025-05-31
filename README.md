@@ -62,6 +62,55 @@ jinja_partials.register_environment(environment)
 # ...
 ```
 
+### Using the Jinja2 Extension (Declarative)
+
+Alternatively, you can use the `PartialsJinjaExtension` for a more declarative approach.
+
+#### For Flask Applications
+
+With Flask, add the extension to your app's Jinja environment:
+
+```python
+import flask
+import jinja_partials
+
+app = flask.Flask(__name__)
+
+# Declarative registration with Flask
+app.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')
+
+# Alternative: traditional registration
+# jinja_partials.register_extensions(app)
+```
+
+#### For Standalone Jinja2 Environments
+
+For direct Jinja2 usage (without Flask):
+
+```python
+from jinja2 import Environment, FileSystemLoader
+
+# Declarative registration - extension automatically registers render_partial
+environment = Environment(
+    loader=FileSystemLoader("tests/test_templates"),
+    extensions=["jinja_partials.PartialsJinjaExtension"]
+)
+# render_partial is now available in templates, no additional setup needed!
+```
+
+#### When to Use the Extension Approach
+
+This declarative approach is especially useful when:
+- Working with frameworks that configure Jinja2 environments declaratively
+- You want cleaner, more explicit dependency management
+- Integrating with other Jinja2 extensions
+- Using standalone Jinja2 environments outside of Flask
+
+The extension automatically enables markup support by default, ensuring that your partial templates 
+return properly escaped `Markup` objects.
+
+## Template Usage
+
 Next, you define your main HTML (Jinja2) templates as usual. Then 
 define your partial templates. I recommend locating and naming them accordingly:
 
