@@ -1,0 +1,16 @@
+{
+    "folders": [
+        {
+            "name": "jinja-partials",
+            "path": "."
+        },
+        {
+            "name": "example",
+            "path": "./example"
+        }
+    ],
+    "settings": {
+        "python.analysis.autoSearchPaths": true,
+        "python.defaultInterpreterPath": "./venv/bin/python"
+    }
+} 
