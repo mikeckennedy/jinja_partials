@@ -42,11 +42,23 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.sdist]
 exclude = [
+    "/.ruff_cache",
+    "/.idea",
+    "/.claude",
+    "/.cursor",
+    "/.vs_code",
+    "/.pytest_cache",
     "/.github",
+    "/ruff.toml",
+    "/pyrefly.toml",
+    "/setup.py",
+    "/warp.md",
     "/tests",
     "/example",
     "/examples",
+    "requirements-dev.piptools",
     "requirements-dev.txt",
+    "requirements.piptools",
     "tox.ini",
     "ruff.toml",
     ".gitignore",
