@@ -4,9 +4,10 @@ jinja_partials - Simple reuse of partial HTML page templates in the Jinja templa
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 from functools import partial
 from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Optional, Union
 
 from jinja2 import Environment
 from jinja2.ext import Extension
@@ -14,13 +15,15 @@ from jinja2.utils import concat
 from markupsafe import Markup as Markup
 
 try:
-    __version__ = version("jinja_partials")
+    __version__ = version('jinja_partials')
 except PackageNotFoundError:
-    __version__ = "0.0.0"
+    __version__ = '0.0.0'
 __author__ = 'Michael Kennedy <michael@talkpython.fm>'
 __all__ = [
     '__version__',
     'register_extensions',
+    'register_quart_extensions',
+    'register_fastapi_extensions',
     'register_starlette_extensions',
     'register_environment',
     'render_partial',
@@ -38,13 +41,31 @@ except ImportError:
     flask = None
 
 try:
+    import quart
+except ImportError:
+    quart = None
+
+try:
+    import fastapi
+except ImportError:
+    fastapi = None
+
+try:
     import starlette
 except ImportError:
     starlette = None
 
-if TYPE_CHECKING and flask and starlette:
-    from flask import Flask
-    from starlette.templating import Jinja2Templates
+if TYPE_CHECKING:
+    if flask:
+        from flask import Flask
+    if quart:
+        from quart import Quart
+    if fastapi:
+        from fastapi import FastAPI
+        from fastapi.templating import Jinja2Templates as FastAPIJinja2Templates
+    if starlette:
+        from starlette.applications import Starlette
+        from starlette.templating import Jinja2Templates
 
 
 class PartialsException(Exception):
@@ -97,6 +118,199 @@ def register_extensions(app: 'Flask'):
     app.jinja_env.globals.update(render_partial=generate_render_partial(flask.render_template))
 
 
+def register_quart_extensions(app: 'Quart', max_workers: int = 4):
+    """Register jinja_partials with a Quart application.
+
+    This creates a dedicated ThreadPoolExecutor for rendering partials in async
+    environments. The executor lifecycle is tied to the Quart app - it will be
+    properly shut down when the app stops.
+
+    Args:
+        app: The Quart application instance.
+        max_workers: Maximum number of worker threads for rendering partials.
+                     Defaults to 4.
+    """
+    if quart is None:
+        raise PartialsException('Install Quart to use `register_quart_extensions`')
+
+    # Create a dedicated executor for this app
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    # Store executor on the app for potential access/debugging
+    app.extensions['jinja_partials_executor'] = executor  # type: ignore[index]
+
+    @app.after_serving
+    async def shutdown_executor():
+        executor.shutdown(wait=True)
+
+    def renderer(template_name: str, **data: Any) -> str:
+        env = app.jinja_env
+        template = env.get_template(template_name)
+
+        if env.is_async:
+            # Run async render in the app's dedicated thread pool
+            future = executor.submit(_run_async_render, template, data)
+            return future.result()
+
+        # Sync environment - use direct rendering (unlikely for Quart)
+        ctx = template.new_context(data)
+        try:
+            return concat(template.root_render_func(ctx))
+        except Exception:
+            return env.handle_exception()
+
+    app.jinja_env.globals.update(render_partial=generate_render_partial(renderer, markup=True))
+
+
+def register_fastapi_extensions(
+    app: 'FastAPI',
+    templates: 'FastAPIJinja2Templates',
+    max_workers: int = 4,
+):
+    """Register jinja_partials with a FastAPI application.
+
+    This creates a dedicated ThreadPoolExecutor for rendering partials in async
+    environments. The executor lifecycle is tied to the FastAPI app via its
+    lifespan - it will be properly shut down when the app stops.
+
+    Args:
+        app: The FastAPI application instance.
+        templates: The Jinja2Templates instance used for rendering.
+        max_workers: Maximum number of worker threads for rendering partials.
+                     Defaults to 4.
+
+    Example:
+        from fastapi import FastAPI
+        from fastapi.templating import Jinja2Templates
+        import jinja_partials
+
+        app = FastAPI()
+        templates = Jinja2Templates(directory="templates")
+        jinja_partials.register_fastapi_extensions(app, templates)
+    """
+    if fastapi is None:
+        raise PartialsException('Install FastAPI to use `register_fastapi_extensions`')
+
+    # Create a dedicated executor for this app
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    # Store executor on app state for potential access/debugging
+    app.state.jinja_partials_executor = executor
+
+    # Wrap existing lifespan if present
+    original_lifespan = app.router.lifespan_context
+
+    @asynccontextmanager
+    async def lifespan_wrapper(app_instance: 'FastAPI') -> AsyncIterator[dict[str, Any]]:
+        # Run original lifespan startup
+        if original_lifespan is not None:
+            async with original_lifespan(app_instance) as state:
+                yield state if state else {} # type: ignore
+        else:
+            yield {}
+        # Shutdown executor after app stops
+        executor.shutdown(wait=True)
+
+    app.router.lifespan_context = lifespan_wrapper
+
+    env = templates.env
+
+    def renderer(template_name: str, **data: Any) -> str:
+        template = env.get_template(template_name)
+
+        if env.is_async:
+            # Run async render in the app's dedicated thread pool
+            future = executor.submit(_run_async_render, template, data)
+            return future.result()
+
+        # Sync environment - use direct rendering
+        ctx = template.new_context(data)
+        try:
+            return concat(template.root_render_func(ctx))
+        except Exception:
+            return env.handle_exception()
+
+    env.globals.update(render_partial=generate_render_partial(renderer, markup=True))
+
+
+def register_starlette_extensions(
+    templates: 'Jinja2Templates',
+    app: Optional['Starlette'] = None,
+    max_workers: int = 4,
+):
+    """Register jinja_partials with Starlette templates.
+
+    If an app is provided, creates a dedicated ThreadPoolExecutor with lifecycle
+    management. Otherwise, uses the global executor (for backwards compatibility).
+
+    Args:
+        templates: The Jinja2Templates instance used for rendering.
+        app: Optional Starlette application instance for lifecycle management.
+        max_workers: Maximum number of worker threads for rendering partials.
+                     Only used when app is provided. Defaults to 4.
+
+    Example (with lifecycle management):
+        from starlette.applications import Starlette
+        from starlette.templating import Jinja2Templates
+        import jinja_partials
+
+        templates = Jinja2Templates(directory="templates")
+        app = Starlette(...)
+        jinja_partials.register_starlette_extensions(templates, app=app)
+
+    Example (without lifecycle management - backwards compatible):
+        jinja_partials.register_starlette_extensions(templates)
+    """
+    if starlette is None:
+        raise PartialsException('Install Starlette to use `register_starlette_extensions`')
+
+    env = templates.env
+
+    if app is not None:
+        # Create a dedicated executor for this app with lifecycle management
+        executor = ThreadPoolExecutor(max_workers=max_workers)
+
+        # Store executor on app state for potential access/debugging
+        app.state.jinja_partials_executor = executor
+
+        # Wrap existing lifespan if present
+        original_lifespan = app.router.lifespan_context
+
+        @asynccontextmanager
+        async def lifespan_wrapper(app_instance: 'Starlette') -> AsyncIterator[dict[str, Any]]:
+            # Run original lifespan startup
+            if original_lifespan is not None:
+                async with original_lifespan(app_instance) as state:
+                    yield state if state else {} # type: ignore
+            else:
+                yield {}
+            # Shutdown executor after app stops
+            executor.shutdown(wait=True)
+
+        app.router.lifespan_context = lifespan_wrapper
+
+        def renderer(template_name: str, **data: Any) -> str:
+            template = env.get_template(template_name)
+
+            if env.is_async:
+                future = executor.submit(_run_async_render, template, data)
+                return future.result()
+
+            ctx = template.new_context(data)
+            try:
+                return concat(template.root_render_func(ctx))
+            except Exception:
+                return env.handle_exception()
+
+        env.globals.update(render_partial=generate_render_partial(renderer, markup=True))
+    else:
+        # Backwards compatible: use global executor
+        def renderer(template_name: str, **data: Any) -> str:
+            return _render_template_blocking(env, template_name, **data)  # type: ignore
+
+        env.globals.update(render_partial=generate_render_partial(renderer))
+
+
 def _run_async_render(template: Any, data: dict[str, Any]) -> str:
     """Run async template render in a new event loop (called from a thread)."""
 
@@ -131,16 +345,6 @@ def _render_template_blocking(env: Environment, template_name: str, **data: Any)
         return concat(template.root_render_func(ctx))
     except Exception:
         return env.handle_exception()
-
-
-def register_starlette_extensions(templates: 'Jinja2Templates'):
-    if starlette is None:
-        raise PartialsException('Install Starlette to use `register_starlette_extensions`')
-
-    def renderer(template_name: str, **data: Any) -> str:
-        return _render_template_blocking(templates.env, template_name, **data)  # type: ignore
-
-    templates.env.globals.update(render_partial=generate_render_partial(renderer))  # type: ignore
 
 
 def register_environment(env: Environment, markup: bool = False):
