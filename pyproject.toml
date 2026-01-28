@@ -45,6 +45,7 @@ exclude = [
     "/.github",
     "/tests",
     "/example",
+    "/examples",
     "requirements-dev.txt",
     "tox.ini",
     "ruff.toml",
