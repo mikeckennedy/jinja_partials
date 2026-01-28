@@ -2,7 +2,21 @@
 jinja_partials - Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.
 """
 
-__version__ = '0.3.0'
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
+from importlib.metadata import PackageNotFoundError, version
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+
+from jinja2 import Environment
+from jinja2.ext import Extension
+from jinja2.utils import concat
+from markupsafe import Markup as Markup
+
+try:
+    __version__ = version("jinja_partials")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 __author__ = 'Michael Kennedy <michael@talkpython.fm>'
 __all__ = [
     '__version__',
@@ -14,16 +28,6 @@ __all__ = [
     'PartialsException',
     'PartialsJinjaExtension',
 ]
-
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
-
-from jinja2 import Environment
-from jinja2.ext import Extension
-from jinja2.utils import concat
-from markupsafe import Markup as Markup
 
 # Thread pool for running async renders from sync context
 _async_render_executor = ThreadPoolExecutor(max_workers=4)
