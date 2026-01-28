@@ -5,20 +5,32 @@ Simple reuse of partial HTML page templates in the Jinja template language for P
 
 ## Overview
 
-When building real-world web apps with Flask + Jinja2, it's easy to end up with repeated HTML fragments.
+When building real-world web apps with Jinja2, it's easy to end up with repeated HTML fragments.
 Just like organizing code for reuse, it would be ideal to reuse smaller sections of HTML template code.
 That's what this library is all about.
 
-## Example
+## Supported Frameworks
 
-This project comes with a sample flask application (see the `example` folder). This app displays videos
-that can be played on YouTube. The image, subtitle of author and view count are reused throughout the
-app. Here's a visual:
+Jinja Partials has specific support for the most popular Python web frameworks:
 
-![](https://raw.githubusercontent.com/mikeckennedy/jinja_partials/main/readme_resources/reused-html-visual.png)
+- **Flask** - `register_extensions(app)`
+- **FastAPI** - `register_fastapi_extensions(app, templates)`
+- **Starlette** - `register_starlette_extensions(templates, app=app)`
+- **Quart** - `register_quart_extensions(app)`
+- **Any Jinja2 environment** - `register_environment(env)`
 
-Check out the [**demo / example application**](https://github.com/mikeckennedy/jinja_partials/tree/main/example) 
-to see it in action. 
+## Examples
+
+This project includes example applications for each supported framework in the [`examples`](https://github.com/mikeckennedy/jinja_partials/tree/main/examples) folder:
+
+- [**Flask example**](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask) - Traditional Flask app with partials
+- [**FastAPI example**](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_fastapi) - FastAPI with Jinja2Templates
+- [**Starlette example**](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_starlette) - Starlette with Jinja2Templates
+- [**Quart example**](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_quart) - Async Quart app with partials
+
+Each example demonstrates the same UI using reusable partial templates:
+
+![](https://raw.githubusercontent.com/mikeckennedy/jinja_partials/main/readme_resources/reused-html-visual.png) 
 
 ## Installation
 
@@ -26,40 +38,64 @@ It's just `pip install jinja-partials` and you're all set with this pure Python 
 
 ## Usage
 
-Using the library is incredible easy. The first step is to register the partial method with Jinja and Flask.
-Do this once at app startup:
+Using the library is easy. Register jinja_partials with your framework once at app startup.
+
+### Flask
 
 ```python
 import flask
 import jinja_partials
 
 app = flask.Flask(__name__)
-
 jinja_partials.register_extensions(app)
-# ...
 ```
 
-You can also use this library in your FastAPI (or Starlette) project!
+### FastAPI
+
 ```python
+from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
-# or `from starlette.templating import Jinja2Templates`
-
 import jinja_partials
 
-templates = Jinja2Templates("tests/test_templates")
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
-jinja_partials.register_starlette_extensions(templates)
-# ...
+jinja_partials.register_fastapi_extensions(app, templates)
 ```
 
-Or directly using a jijna environment!
-```python
-import jinja_partials
-from jinja2 import Environment, FileSystemLoader
+### Starlette
 
-environment = Environment(loader=FileSystemLoader("tests/test_templates"))
-jinja_partials.register_environment(environment)
-# ...
+```python
+from starlette.applications import Starlette
+from starlette.templating import Jinja2Templates
+import jinja_partials
+
+templates = Jinja2Templates(directory="templates")
+app = Starlette(routes=[...])
+
+jinja_partials.register_starlette_extensions(templates, app=app)
+```
+
+### Quart
+
+```python
+from quart import Quart
+import jinja_partials
+
+app = Quart(__name__)
+jinja_partials.register_quart_extensions(app)
+```
+
+### Direct Jinja2 Environment
+
+For any other use case, register directly with a Jinja2 environment:
+
+```python
+from jinja2 import Environment, FileSystemLoader
+import jinja_partials
+
+environment = Environment(loader=FileSystemLoader("templates"))
+jinja_partials.register_environment(environment, markup=True)
 ```
 
 ### Using the Jinja2 Extension (Declarative)
