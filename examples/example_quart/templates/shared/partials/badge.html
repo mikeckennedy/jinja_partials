@@ -1,0 +1,9 @@
+{% if tag == 'beginner' %}
+<span class="tag is-success">{{ tag }}</span>
+{% elif tag == 'intermediate' %}
+<span class="tag is-warning">{{ tag }}</span>
+{% elif tag == 'advanced' %}
+<span class="tag is-danger">{{ tag }}</span>
+{% else %}
+<span class="tag is-info">{{ tag }}</span>
+{% endif %}

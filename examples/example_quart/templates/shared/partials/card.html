@@ -1,0 +1,10 @@
+<div class="card">
+    <div class="card-content">
+        <p class="title is-4">{{ item.title }}</p>
+        <p class="subtitle is-6">by {{ item.author }}</p>
+        <div class="content">
+            <p>{{ "{:,}".format(item.views) }} views</p>
+            {{ render_partial('shared/partials/badge.html', tag=item.tag) }}
+        </div>
+    </div>
+</div>
