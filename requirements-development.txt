@@ -6,7 +6,7 @@ annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
     # via pydantic
-anyio==4.12.1
+anyio==4.13.0
     # via
     #   httpx
     #   jupyter-server
@@ -46,7 +46,7 @@ cffi==2.0.0
     # via argon2-cffi-bindings
 charset-normalizer==3.4.7
     # via requests
-click==8.3.1
+click==8.4.1
     # via
     #   flask
     #   great-docs
@@ -66,11 +66,11 @@ defusedxml==0.7.1
     # via nbconvert
 executing==2.2.1
     # via stack-data
-fastapi==0.128.0
+fastapi==0.136.3
     # via -r requirements-development.piptools
 fastjsonschema==2.21.2
     # via nbformat
-flask==3.1.2
+flask==3.1.3
     # via
     #   -r requirements-development.piptools
     #   quart
@@ -90,7 +90,7 @@ h2==4.3.0
     # via hypercorn
 hatch-vcs==0.5.0
     # via -r requirements-development.piptools
-hatchling==1.28.0
+hatchling==1.30.1
     # via
     #   -r requirements-development.piptools
     #   hatch-vcs
@@ -104,7 +104,7 @@ hypercorn==0.18.0
     # via quart
 hyperframe==6.1.0
     # via h2
-idna==3.11
+idna==3.18
     # via
     #   anyio
     #   httpx
@@ -200,7 +200,7 @@ jupyterlab-widgets==3.0.16
     # via ipywidgets
 lark==1.3.1
     # via rfc3987-syntax
-markdown-it-py==4.0.0
+markdown-it-py==4.2.0
     # via rich
 markupsafe==3.0.3
     # via
@@ -236,7 +236,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-packaging==25.0
+packaging==26.2
     # via
     #   hatchling
     #   ipykernel
@@ -247,11 +247,12 @@ packaging==25.0
     #   nbconvert
     #   pytest
     #   setuptools-scm
+    #   vcs-versioning
 pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.7
     # via jedi
-pathspec==1.0.3
+pathspec==1.1.1
     # via hatchling
 pexpect==4.9.0
     # via ipython
@@ -287,11 +288,11 @@ py-yaml12==0.1.0
     # via great-docs
 pycparser==3.0
     # via cffi
-pydantic==2.12.5
+pydantic==2.13.4
     # via fastapi
-pydantic-core==2.41.5
+pydantic-core==2.46.4
     # via pydantic
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   great-docs
     #   ipython
@@ -300,7 +301,7 @@ pygments==2.19.2
     #   nbconvert
     #   pytest
     #   rich
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   -r requirements-development.piptools
     #   pytest-clarity
@@ -341,7 +342,7 @@ rfc3986-validator==0.1.1
     #   jupyter-events
 rfc3987-syntax==1.1.0
     # via jsonschema
-rich==14.2.0
+rich==15.0.0
     # via pytest-clarity
 rpds-py==2026.5.1
     # via
@@ -351,11 +352,11 @@ ruff==0.15.15
     # via great-docs
 send2trash==2.1.0
     # via jupyter-server
-setuptools==80.10.1
+setuptools==82.0.1
     # via
     #   jupyterlab
     #   setuptools-scm
-setuptools-scm==9.2.2
+setuptools-scm==10.0.5
     # via hatch-vcs
 six==1.17.0
     # via
@@ -365,7 +366,7 @@ soupsieve==2.8.4
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
-starlette==0.50.0
+starlette==1.2.1
     # via
     #   -r requirements-development.piptools
     #   fastapi
@@ -398,7 +399,7 @@ traitlets==5.15.0
     #   nbclient
     #   nbconvert
     #   nbformat
-trove-classifiers==2026.1.14.14
+trove-classifiers==2026.6.1.19
     # via hatchling
 typing-extensions==4.15.0
     # via
@@ -408,15 +409,19 @@ typing-extensions==4.15.0
     #   pydantic-core
     #   typing-inspection
 typing-inspection==0.4.2
-    # via pydantic
+    # via
+    #   fastapi
+    #   pydantic
 tzdata==2026.2
     # via arrow
 uri-template==1.3.0
     # via jsonschema
 urllib3==2.7.0
     # via requests
-uvicorn==0.40.0
+uvicorn==0.48.0
     # via -r requirements-development.piptools
+vcs-versioning==1.1.1
+    # via setuptools-scm
 wcwidth==0.7.0
     # via prompt-toolkit
 webcolors==25.10.0
@@ -427,7 +432,7 @@ webencodings==0.5.1
     #   tinycss2
 websocket-client==1.9.0
     # via jupyter-server
-werkzeug==3.1.5
+werkzeug==3.1.8
     # via
     #   flask
     #   quart
