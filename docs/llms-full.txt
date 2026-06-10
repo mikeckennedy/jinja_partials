@@ -8,7 +8,7 @@ This is the API documentation for the jinja_partials library.
 Register render_partial with your web framework once at app startup.
 
 
-register_extensions(app: 'Flask')
+register_extensions(app: 'Flask') -> None
 
 Register jinja_partials with a Flask application.
 
@@ -21,13 +21,14 @@ Args:
 Raises:
     PartialsException: If Flask is not installed.
 
-register_fastapi_extensions(app: 'FastAPI', templates: 'FastAPIJinja2Templates', max_workers: int = 4)
+register_fastapi_extensions(app: 'FastAPI', templates: 'FastAPIJinja2Templates', max_workers: int = 4) -> None
 
 Register jinja_partials with a FastAPI application.
 
 This creates a dedicated ThreadPoolExecutor for rendering partials in async
 environments. The executor lifecycle is tied to the FastAPI app via its
-lifespan - it will be properly shut down when the app stops.
+lifespan - it is shut down when the lifespan exits normally (one
+startup/shutdown cycle per registration).
 
 Args:
     app: The FastAPI application instance.
@@ -49,12 +50,15 @@ Example:
         templates = Jinja2Templates(directory="templates")
         jinja_partials.register_fastapi_extensions(app, templates)
 
-register_starlette_extensions(templates: 'Jinja2Templates', app: ForwardRef('Starlette') | None = None, max_workers: int = 4)
+register_starlette_extensions(templates: 'Jinja2Templates', app: ForwardRef('Starlette') | None = None, max_workers: int = 4) -> None
 
 Register jinja_partials with Starlette templates.
 
-If an app is provided, creates a dedicated ThreadPoolExecutor with lifecycle
-management. Otherwise, uses the global executor (for backwards compatibility).
+If an app is provided, creates a dedicated ThreadPoolExecutor that is shut
+down when the app's lifespan exits normally (one startup/shutdown cycle per
+registration). Otherwise, falls back to the previous behavior: partials
+render directly for sync environments, or via a shared module-level
+executor for async (enable_async=True) environments.
 
 Args:
     templates: The Jinja2Templates instance used for rendering.
@@ -80,7 +84,7 @@ Example:
 
         jinja_partials.register_starlette_extensions(templates)
 
-register_quart_extensions(app: 'Quart', max_workers: int = 4)
+register_quart_extensions(app: 'Quart', max_workers: int = 4) -> None
 
 Register jinja_partials with a Quart application.
 
@@ -96,7 +100,7 @@ Args:
 Raises:
     PartialsException: If Quart is not installed.
 
-register_environment(env: jinja2.environment.Environment, markup: bool = False)
+register_environment(env: jinja2.environment.Environment, markup: bool = False) -> None
 
 Register jinja_partials with a plain Jinja2 environment.
 
@@ -120,7 +124,7 @@ Render a partial template and return the resulting HTML fragment.
 
 Args:
     template_name: Path of the template within the templates folder,
-        e.g. 'shared/partials/video_image.html'.
+        e.g. `shared/partials/video_image.html`.
     renderer: Callable that renders the template with the given keyword
         arguments. Defaults to flask.render_template when Flask is installed.
     markup: When True (the default), wrap the result in markupsafe.Markup
@@ -156,6 +160,17 @@ Jinja2 extension that automatically registers render_partial functionality.
 
 The extension automatically makes render_partial available as a global
 function in templates. By default, markup is enabled.
+
+Note:
+    Partials registered this way render directly through the Jinja2
+    environment rather than flask.render_template, so Flask context
+    processors do not apply inside partials. Flask apps that rely on
+    context processors should use register_extensions instead.
+
+Args:
+    environment: The Jinja2 environment the extension is loaded into.
+        Jinja2 passes this automatically when the class is listed in
+        extensions=[...].
 
 Example:
     Enable the extension on a Jinja2 environment:

@@ -306,7 +306,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h3 id="toc-title">On this page</h3>
    
   <ul class="collapse">
-  <li><a href="#example" id="toc-example" class="nav-link active" data-scroll-target="#example">Example</a></li>
+  <li><a href="#note" id="toc-note" class="nav-link active" data-scroll-target="#note">Note</a></li>
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul>
 </nav>
     </div>
@@ -337,14 +339,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="doc-usage-source">
 <p>Usage</p>
-<p><a href="https://github.com/mikeckennedy/jinja_partials/blob/main/jinja_partials/__init__.py#L77-L93" target="_blank" rel="noopener">Source</a></p>
+<p><a href="https://github.com/mikeckennedy/jinja_partials/blob/main/jinja_partials/__init__.py#L77-L104" target="_blank" rel="noopener">Source</a></p>
 </div>
 <div class="doc-signature doc-Kind.CLASS">
-<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="sig-name">PartialsJinjaExtension</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="sig-name">PartialsJinjaExtension</span>(environment)</span></code></pre></div>
 </div>
 <div class="doc-text">
 <p>The extension automatically makes render_partial available as a global function in templates. By default, markup is enabled.</p>
 </div>
+<section id="note" class="level2 doc-note">
+<h2 class="doc-note">Note</h2>
+<p>Partials registered this way render directly through the Jinja2 environment rather than flask.render_template, so Flask context processors do not apply inside partials. Flask apps that rely on context processors should use register_extensions instead.</p>
+</section>
+<section id="parameters" class="level2 doc-parameters">
+<h2 class="doc-parameters">Parameters</h2>
+<div class="doc-definition-items">
+<dl>
+<dt><code><span class="doc-parameter-name">environment</span><span class="doc-parameter-annotation-sep">:</span> <span class="doc-parameter-annotation">Environment</span></code></dt>
+<dd>
+The Jinja2 environment the extension is loaded into. Jinja2 passes this automatically when the class is listed in extensions=[…].
+</dd>
+</dl>
+</div>
+</section>
 <section id="example" class="level2 doc-example">
 <h2 class="doc-example">Example</h2>
 <p>Enable the extension on a Jinja2 environment:</p>

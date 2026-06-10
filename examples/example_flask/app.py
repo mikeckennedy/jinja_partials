@@ -5,10 +5,10 @@ import jinja_partials
 
 app = flask.Flask(__name__)
 
-# Option 1: Or use the traditional registration (commented out)
+# Option 1: Traditional registration (active)
 jinja_partials.register_extensions(app)
 
-# Option 2: Use the extension with Flask's jinja environment
+# Option 2: Or use the extension with Flask's jinja environment (commented out)
 # app.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')
 
 

@@ -28,13 +28,16 @@ This project includes example applications for each supported framework in the [
 - [**Starlette example**](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_starlette) - Starlette with Jinja2Templates
 - [**Quart example**](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_quart) - Async Quart app with partials
 
-Each example demonstrates the same UI using reusable partial templates:
+Each example demonstrates reusable partial templates. The screenshot below is from the Flask example:
 
 ![](https://raw.githubusercontent.com/mikeckennedy/jinja_partials/main/readme_resources/reused-html-visual.png) 
 
 ## Installation
 
 It's just `pip install jinja-partials` and you're all set with this pure Python package.
+
+Requires Python 3.10 or newer (on older versions of Python, pip will install an earlier
+release that predates the FastAPI, Starlette, and Quart support described here).
 
 ## Usage
 
@@ -119,6 +122,11 @@ app.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')
 # jinja_partials.register_extensions(app)
 ```
 
+> **Note:** With the extension approach, partials render directly through the Jinja
+> environment rather than `flask.render_template`. That means Flask context processors
+> (`@app.context_processor`) and the `template_rendered` signal do not apply inside
+> partials. If your partials depend on those, use `jinja_partials.register_extensions(app)`.
+
 #### For Standalone Jinja2 Environments
 
 For direct Jinja2 usage (without Flask):
@@ -170,12 +178,13 @@ the example app:
 
 ```html
 <img src="https://img.youtube.com/vi/{{ video.id }}/maxresdefault.jpg"
-     class="img img-responsive {{ ' '.join(classes) }}"
+     class="img img-responsive {{ (classes | default([])) | join(' ') }}"
      alt="{{ video.title }}"
      title="{{ video.title }}">
 ```
 
-Notice that an object called `video` and list of classes are passed in as the model.
+Notice that an object called `video` is passed in as the model, along with an
+optional list of CSS `classes`.
 
 Templates can also be nested. Here is the whole single video fragment with the image as well as other info
 linking out to YouTube:

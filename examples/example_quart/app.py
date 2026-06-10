@@ -4,8 +4,8 @@ import jinja_partials
 
 app = Quart(__name__)
 
-# Register jinja_partials with Quart's Jinja environment
-jinja_partials.register_environment(app.jinja_env, markup=True)
+# Register jinja_partials with the Quart app (manages its own render executor)
+jinja_partials.register_quart_extensions(app)
 
 
 @app.get('/')

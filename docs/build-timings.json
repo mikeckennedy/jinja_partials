@@ -1,60 +1,50 @@
 {
-  "build_time": "2026-06-10T04:43:37Z",
-  "total_seconds": 6.164,
+  "build_time": "2026-06-10T05:12:21Z",
+  "total_seconds": 6.299,
   "pages": [
     {
       "page": "reference/register_quart_extensions.qmd",
-      "seconds": 2.034,
+      "seconds": 2.048,
       "frozen": false
     },
     {
       "page": "index.qmd",
-      "seconds": 1.503,
-      "frozen": false
-    },
-    {
-      "page": "reference/register_extensions.qmd",
-      "seconds": 0.221,
-      "frozen": false
-    },
-    {
-      "page": "reference/register_starlette_extensions.qmd",
-      "seconds": 0.212,
+      "seconds": 1.617,
       "frozen": false
     },
     {
       "page": "reference/register_fastapi_extensions.qmd",
-      "seconds": 0.205,
-      "frozen": false
-    },
-    {
-      "page": "changelog.qmd",
-      "seconds": 0.204,
+      "seconds": 0.221,
       "frozen": false
     },
     {
       "page": "reference/render_partial.qmd",
-      "seconds": 0.204,
+      "seconds": 0.217,
+      "frozen": false
+    },
+    {
+      "page": "reference/register_starlette_extensions.qmd",
+      "seconds": 0.214,
       "frozen": false
     },
     {
       "page": "reference/PartialsJinjaExtension.qmd",
-      "seconds": 0.203,
+      "seconds": 0.205,
       "frozen": false
     },
     {
       "page": "reference/register_environment.qmd",
-      "seconds": 0.202,
+      "seconds": 0.205,
       "frozen": false
     },
     {
-      "page": "reference/index.qmd",
-      "seconds": 0.202,
+      "page": "reference/register_extensions.qmd",
+      "seconds": 0.204,
       "frozen": false
     },
     {
       "page": "reference/generate_render_partial.qmd",
-      "seconds": 0.202,
+      "seconds": 0.203,
       "frozen": false
     },
     {
@@ -63,18 +53,28 @@
       "frozen": false
     },
     {
+      "page": "reference/index.qmd",
+      "seconds": 0.201,
+      "frozen": false
+    },
+    {
+      "page": "changelog.qmd",
+      "seconds": 0.197,
+      "frozen": false
+    },
+    {
       "page": "skill.md",
-      "seconds": 0.193,
+      "seconds": 0.192,
       "frozen": false
     },
     {
       "page": "skills.qmd",
-      "seconds": 0.189,
+      "seconds": 0.19,
       "frozen": false
     },
     {
       "page": "license.qmd",
-      "seconds": 0.189,
+      "seconds": 0.184,
       "frozen": false
     }
   ]

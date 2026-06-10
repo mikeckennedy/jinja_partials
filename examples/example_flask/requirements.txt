@@ -10,7 +10,7 @@ flask==3.1.2
     # via -r requirements.piptools
 itsdangerous==2.2.0
     # via flask
-jinja-partials==0.3.0
+jinja-partials==0.3.1
     # via -r requirements.piptools
 jinja2==3.1.6
     # via

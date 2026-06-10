@@ -18,10 +18,17 @@ Fixes:
 5. Homepage og:url lacks the trailing slash the sitemap uses.
 6. Homepage <title>/og:title/twitter:title duplicate the site name
    ("Jinja Partials | Jinja Partials").
+7. Pandoc smart typography leaks into code spans: type annotations render with
+   a Unicode ellipsis (Callable[…, Any]) and literals with curly quotes, so
+   copied text is invalid Python. Restore ASCII inside <code> spans (HTML) and
+   backtick spans (reference/*.md).
+8. The class Usage signature drops __init__ parameters, rendering the
+   misleading no-arg constructor 'PartialsJinjaExtension()'.
 """
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -31,6 +38,35 @@ DOCS = Path(__file__).resolve().parent.parent / 'docs'
 HOME_TITLE = 'Jinja Partials – Partial HTML templates for Python web frameworks'
 DOUBLE_STRIP = ".href.replace(/\\/[^\\/]*$/,'').replace(/\\/[^\\/]*$/,'')+'/color-swatch.js'"
 SINGLE_STRIP = ".href.replace(/\\/[^\\/]*$/,'')+'/color-swatch.js'"
+
+_CODE_SPAN = re.compile(r'(<code[^>]*>)(.*?)(</code>)', re.DOTALL)
+_MD_CODE_SPAN = re.compile(r'`[^`\n]+`')
+_SMART_CHARS = {'…': '...', '‘': "'", '’': "'", '“': '"', '”': '"'}
+
+EXT_SIG_HTML = '<span class="sig-name">PartialsJinjaExtension</span>()'
+EXT_SIG_HTML_FIXED = '<span class="sig-name">PartialsJinjaExtension</span>(environment)'
+EXT_SIG_MD = 'PartialsJinjaExtension()'
+EXT_SIG_MD_FIXED = 'PartialsJinjaExtension(environment)'
+
+
+def _unsmart(text: str) -> str:
+    for bad, good in _SMART_CHARS.items():
+        text = text.replace(bad, good)
+    return text
+
+
+def fix_code_spans(text: str, pattern: re.Pattern[str]) -> tuple[str, int]:
+    fixed = 0
+
+    def repl(m: re.Match[str]) -> str:
+        nonlocal fixed
+        whole = m.group(0)
+        clean = _unsmart(whole)
+        if clean != whole:
+            fixed += 1
+        return clean
+
+    return pattern.sub(repl, text), fixed
 
 
 def canonical_url(rel: Path) -> str:
@@ -47,7 +83,7 @@ def main() -> int:
         print(f'docs/ missing: {DOCS}', file=sys.stderr)
         return 1
 
-    counts = {'canonical': 0, 'video_embed': 0, 'color_swatch': 0}
+    counts = {'canonical': 0, 'video_embed': 0, 'color_swatch': 0, 'code_punct': 0, 'ext_sig': 0}
 
     for page in sorted(DOCS.rglob('*.html')):
         rel = page.relative_to(DOCS)
@@ -67,6 +103,13 @@ def main() -> int:
             text = text.replace(DOUBLE_STRIP, SINGLE_STRIP)
             counts['color_swatch'] += 1
 
+        text, span_fixes = fix_code_spans(text, _CODE_SPAN)
+        counts['code_punct'] += span_fixes
+
+        if rel.as_posix() == 'reference/PartialsJinjaExtension.html' and EXT_SIG_HTML in text:
+            text = text.replace(EXT_SIG_HTML, EXT_SIG_HTML_FIXED, 1)
+            counts['ext_sig'] += 1
+
         if rel.as_posix() == 'index.html':
             text = text.replace(
                 'content="https://mkennedy.codes/docs/jinja-partials"',
@@ -75,6 +118,17 @@ def main() -> int:
             text = text.replace('<title>Jinja Partials | Jinja Partials</title>', f'<title>{HOME_TITLE}</title>')
             text = text.replace('content="Jinja Partials | Jinja Partials"', f'content="{HOME_TITLE}"')
 
+        if text != original:
+            page.write_text(text, encoding='utf-8')
+
+    for page in sorted((DOCS / 'reference').glob('*.md')):
+        text = page.read_text(encoding='utf-8')
+        original = text
+        text, span_fixes = fix_code_spans(text, _MD_CODE_SPAN)
+        counts['code_punct'] += span_fixes
+        if page.name == 'PartialsJinjaExtension.md' and EXT_SIG_MD in text:
+            text = text.replace(EXT_SIG_MD, EXT_SIG_MD_FIXED, 1)
+            counts['ext_sig'] += 1
         if text != original:
             page.write_text(text, encoding='utf-8')
 
@@ -90,6 +144,8 @@ def main() -> int:
         f'[postprocess_site] canonical tags: {counts["canonical"]}, '
         f'video-embed paths: {counts["video_embed"]}, '
         f'color-swatch loaders: {counts["color_swatch"]}, '
+        f'code spans unsmarted: {counts["code_punct"]}, '
+        f'extension signatures: {counts["ext_sig"]}, '
         f'search.json skill->skills: {skill_fixes}'
     )
     return 0

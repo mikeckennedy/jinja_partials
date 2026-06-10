@@ -339,7 +339,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="doc-usage-source">
 <p>Usage</p>
-<p><a href="https://github.com/mikeckennedy/jinja_partials/blob/main/jinja_partials/__init__.py#L285-L366" target="_blank" rel="noopener">Source</a></p>
+<p><a href="https://github.com/mikeckennedy/jinja_partials/blob/main/jinja_partials/__init__.py#L337-L421" target="_blank" rel="noopener">Source</a></p>
 </div>
 <div class="doc-signature doc-Kind.FUNCTION">
 <div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="sig-name">register_starlette_extensions</span>(
@@ -349,7 +349,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 )</span></code></pre></div>
 </div>
 <div class="doc-text">
-<p>If an app is provided, creates a dedicated ThreadPoolExecutor with lifecycle management. Otherwise, uses the global executor (for backwards compatibility).</p>
+<p>If an app is provided, creates a dedicated ThreadPoolExecutor that is shut down when the app’s lifespan exits normally (one startup/shutdown cycle per registration). Otherwise, falls back to the previous behavior: partials render directly for sync environments, or via a shared module-level executor for async (enable_async=True) environments.</p>
 </div>
 <section id="parameters" class="level2 doc-parameters">
 <h2 class="doc-parameters">Parameters</h2>

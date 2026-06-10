@@ -15,7 +15,7 @@ register_starlette_extensions(
 ```
 
 
-If an app is provided, creates a dedicated ThreadPoolExecutor with lifecycle management. Otherwise, uses the global executor (for backwards compatibility).
+If an app is provided, creates a dedicated ThreadPoolExecutor that is shut down when the app's lifespan exits normally (one startup/shutdown cycle per registration). Otherwise, falls back to the previous behavior: partials render directly for sync environments, or via a shared module-level executor for async (enable_async=True) environments.
 
 
 ## Parameters

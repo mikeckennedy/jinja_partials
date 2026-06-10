@@ -28,9 +28,12 @@ itsdangerous==2.2.0
     # via
     #   flask
     #   quart
+jinja-partials==0.3.1
+    # via -r requirements.piptools
 jinja2==3.1.6
     # via
     #   flask
+    #   jinja-partials
     #   quart
 markupsafe==3.0.3
     # via

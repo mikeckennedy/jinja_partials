@@ -1,2 +1,4 @@
 starlette
 uvicorn
+jinja2
+jinja_partials

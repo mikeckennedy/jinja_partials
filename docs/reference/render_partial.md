@@ -7,12 +7,11 @@ Render a partial template and return the resulting HTML fragment.
 Usage
 
 ``` python
-render_partial(
-    template_name,
-    renderer=None,
-    markup=True,
-    **data,
-)
+render_partial(template_name: str, renderer: Optional[Callable[..., Any]] = ..., markup: Literal[True] = ..., data: Any = {}) -> Markup
+ 
+render_partial(template_name: str, renderer: Optional[Callable[..., Any]] = ..., markup: Literal[False], data: Any = {}) -> str
+ 
+render_partial(template_name: str, renderer: Optional[Callable[..., Any]] = ..., markup: bool = ..., data: Any = {}) -> Union[Markup, str]
 ```
 
 
@@ -20,9 +19,9 @@ render_partial(
 
 
 `template_name: str`  
-Path of the template within the templates folder, e.g. 'shared/partials/video_image.html'.
+Path of the template within the templates folder, e.g. `shared/partials/video_image.html`.
 
-`renderer: Optional[Callable[…, Any]] = None`  
+`renderer: Optional[Callable[..., Any]] = None`  
 Callable that renders the template with the given keyword arguments. Defaults to flask.render_template when Flask is installed.
 
 `markup: bool = ``True`  
