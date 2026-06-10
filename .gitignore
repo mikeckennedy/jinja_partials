@@ -71,6 +71,9 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+# Great Docs ephemeral build dir (the committed site lives in /docs)
+/great-docs/
+
 # PyBuilder
 target/
 

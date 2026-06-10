@@ -23,6 +23,7 @@ classifiers = [
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
     'Programming Language :: Python :: 3.15',
+    'Typing :: Typed',
 ]
 dependencies = [
     "jinja2",
@@ -32,6 +33,7 @@ version = "0.3.1"
 
 [project.urls]
 Homepage = "https://github.com/mikeckennedy/jinja_partials"
+Documentation = "https://mkennedy.codes/docs/jinja-partials/"
 Tracker = "https://github.com/mikeckennedy/jinja_partials/issues"
 Source = "https://github.com/mikeckennedy/jinja_partials"
 
@@ -46,18 +48,24 @@ exclude = [
     "/.idea",
     "/.claude",
     "/.cursor",
-    "/.vs_code",
+    "/.vscode",
     "/.pytest_cache",
     "/.github",
     "/ruff.toml",
     "/pyrefly.toml",
     "/setup.py",
-    "/warp.md",
+    "/WARP.md",
     "/tests",
     "/example",
     "/examples",
+    "/docs",
+    "/scripts",
+    "/great-docs.yml",
+    "/jinja-partials.code-workspace",
     "requirements-dev.piptools",
     "requirements-dev.txt",
+    "requirements-development.piptools",
+    "requirements-development.txt",
     "requirements.piptools",
     "tox.ini",
     "ruff.toml",

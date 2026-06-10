@@ -7,3 +7,4 @@ hatchling>=1.21.0
 hatch-vcs>=0.3.0
 starlette
 uvicorn
+great-docs; python_version >= '3.11'

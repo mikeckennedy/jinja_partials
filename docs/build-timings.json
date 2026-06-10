@@ -1,0 +1,81 @@
+{
+  "build_time": "2026-06-10T04:43:37Z",
+  "total_seconds": 6.164,
+  "pages": [
+    {
+      "page": "reference/register_quart_extensions.qmd",
+      "seconds": 2.034,
+      "frozen": false
+    },
+    {
+      "page": "index.qmd",
+      "seconds": 1.503,
+      "frozen": false
+    },
+    {
+      "page": "reference/register_extensions.qmd",
+      "seconds": 0.221,
+      "frozen": false
+    },
+    {
+      "page": "reference/register_starlette_extensions.qmd",
+      "seconds": 0.212,
+      "frozen": false
+    },
+    {
+      "page": "reference/register_fastapi_extensions.qmd",
+      "seconds": 0.205,
+      "frozen": false
+    },
+    {
+      "page": "changelog.qmd",
+      "seconds": 0.204,
+      "frozen": false
+    },
+    {
+      "page": "reference/render_partial.qmd",
+      "seconds": 0.204,
+      "frozen": false
+    },
+    {
+      "page": "reference/PartialsJinjaExtension.qmd",
+      "seconds": 0.203,
+      "frozen": false
+    },
+    {
+      "page": "reference/register_environment.qmd",
+      "seconds": 0.202,
+      "frozen": false
+    },
+    {
+      "page": "reference/index.qmd",
+      "seconds": 0.202,
+      "frozen": false
+    },
+    {
+      "page": "reference/generate_render_partial.qmd",
+      "seconds": 0.202,
+      "frozen": false
+    },
+    {
+      "page": "reference/PartialsException.qmd",
+      "seconds": 0.201,
+      "frozen": false
+    },
+    {
+      "page": "skill.md",
+      "seconds": 0.193,
+      "frozen": false
+    },
+    {
+      "page": "skills.qmd",
+      "seconds": 0.189,
+      "frozen": false
+    },
+    {
+      "page": "license.qmd",
+      "seconds": 0.189,
+      "frozen": false
+    }
+  ]
+}

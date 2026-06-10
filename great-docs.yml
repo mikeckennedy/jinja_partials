@@ -1,0 +1,72 @@
+# Great Docs Configuration
+# See https://posit-dev.github.io/great-docs/user-guide/configuration.html
+
+display_name: Jinja Partials
+parser: google
+dynamic: true
+
+# Subpath hosting: drives Quarto's base path so CSS/JS/nav resolve. Keep trailing slash.
+site_url: "https://mkennedy.codes/docs/jinja-partials/"
+
+# Sitemap/robots/canonical/og:url use a SEPARATE base URL that Great Docs auto-detects
+# from the GitHub repo (-> owner.github.io/repo) and does NOT fall back to site_url.
+# Set it explicitly or the sitemap points at the wrong domain.
+seo:
+  canonical:
+    base_url: "https://mkennedy.codes/docs/jinja-partials/"
+
+repo: https://github.com/mikeckennedy/jinja_partials
+github_style: widget
+source:
+  enabled: true
+  branch: main
+  placement: usage
+pypi: true
+
+# Great Docs defaults mcp.enabled to true, rendering an empty "MCP" tab even with
+# no MCP server. This project does not ship one.
+mcp:
+  enabled: false
+
+# Great Docs demotes README headings ('#' -> '##') when generating index.qmd but
+# also corrupts '#' comment lines inside fenced code blocks. This hook repairs them.
+pre_render:
+  - scripts/fix_readme_code_comments.py
+
+authors:
+  - name: Michael Kennedy
+    role: Author
+    email: michael@talkpython.fm
+    github: mikeckennedy
+    homepage: https://mkennedy.codes
+
+reference:
+  title: "API Reference"
+  desc: "Public API for jinja_partials: framework registration, partial rendering, and the Jinja2 extension."
+  sections:
+    - title: Framework registration
+      desc: Register render_partial with your web framework once at app startup.
+      contents:
+        - register_extensions
+        - register_fastapi_extensions
+        - register_starlette_extensions
+        - register_quart_extensions
+        - register_environment
+
+    - title: Rendering
+      desc: Render partial templates directly or build framework-specific renderers.
+      contents:
+        - render_partial
+        - generate_render_partial
+
+    - title: Jinja2 extension
+      desc: Declarative registration via the Jinja2 extension mechanism.
+      contents:
+        - PartialsJinjaExtension
+
+    - title: Exceptions
+      desc: Errors raised by jinja_partials.
+      contents:
+        - PartialsException
+
+jupyter: python3

@@ -137,6 +137,7 @@ environment = Environment(
 #### When to Use the Extension Approach
 
 This declarative approach is especially useful when:
+
 - Working with frameworks that configure Jinja2 environments declaratively
 - You want cleaner, more explicit dependency management
 - Integrating with other Jinja2 extensions

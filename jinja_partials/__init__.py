@@ -69,18 +69,22 @@ if TYPE_CHECKING:
 
 
 class PartialsException(Exception):
+    """Raised when jinja_partials is misconfigured or a required web framework is not installed."""
+
     pass
 
 
 class PartialsJinjaExtension(Extension):
     """Jinja2 extension that automatically registers render_partial functionality.
 
-    Usage:
-        from jinja2 import Environment
-        env = Environment(extensions=["jinja_partials.PartialsJinjaExtension"])
-
     The extension automatically makes render_partial available as a global
     function in templates. By default, markup is enabled.
+
+    Example:
+        Enable the extension on a Jinja2 environment:
+
+            from jinja2 import Environment
+            env = Environment(extensions=["jinja_partials.PartialsJinjaExtension"])
     """
 
     def __init__(self, environment: Environment) -> None:
@@ -95,6 +99,23 @@ def render_partial(
     markup: bool = True,
     **data: Any,
 ) -> Union[Markup, str]:
+    """Render a partial template and return the resulting HTML fragment.
+
+    Args:
+        template_name: Path of the template within the templates folder,
+            e.g. 'shared/partials/video_image.html'.
+        renderer: Callable that renders the template with the given keyword
+            arguments. Defaults to flask.render_template when Flask is installed.
+        markup: When True (the default), wrap the result in markupsafe.Markup
+            so it is not re-escaped when inserted into another template.
+        **data: Model data passed to the template as keyword arguments.
+
+    Returns:
+        The rendered fragment as Markup, or str when markup=False.
+
+    Raises:
+        PartialsException: If no renderer is specified and Flask is not installed.
+    """
     if renderer is None:
         if flask is None:
             raise PartialsException('No renderer specified')
@@ -108,10 +129,30 @@ def render_partial(
 
 
 def generate_render_partial(renderer: Callable[..., Any], markup: bool = True) -> Callable[..., Union[Markup, str]]:
+    """Create a render_partial function bound to a specific renderer.
+
+    Args:
+        renderer: Callable that renders a template name plus keyword arguments to a string.
+        markup: When True (the default), results are wrapped in markupsafe.Markup.
+
+    Returns:
+        A callable with the same signature as render_partial that uses the bound renderer.
+    """
     return partial(render_partial, renderer=renderer, markup=markup)
 
 
 def register_extensions(app: 'Flask'):
+    """Register jinja_partials with a Flask application.
+
+    Makes render_partial available as a global function in the app's Jinja
+    templates, rendering with flask.render_template.
+
+    Args:
+        app: The Flask application instance.
+
+    Raises:
+        PartialsException: If Flask is not installed.
+    """
     if flask is None:
         raise PartialsException('Install Flask to use `register_extensions`')
 
@@ -129,6 +170,9 @@ def register_quart_extensions(app: 'Quart', max_workers: int = 4):
         app: The Quart application instance.
         max_workers: Maximum number of worker threads for rendering partials.
                      Defaults to 4.
+
+    Raises:
+        PartialsException: If Quart is not installed.
     """
     if quart is None:
         raise PartialsException('Install Quart to use `register_quart_extensions`')
@@ -179,14 +223,19 @@ def register_fastapi_extensions(
         max_workers: Maximum number of worker threads for rendering partials.
                      Defaults to 4.
 
-    Example:
-        from fastapi import FastAPI
-        from fastapi.templating import Jinja2Templates
-        import jinja_partials
+    Raises:
+        PartialsException: If FastAPI is not installed.
 
-        app = FastAPI()
-        templates = Jinja2Templates(directory="templates")
-        jinja_partials.register_fastapi_extensions(app, templates)
+    Example:
+        Register during app setup:
+
+            from fastapi import FastAPI
+            from fastapi.templating import Jinja2Templates
+            import jinja_partials
+
+            app = FastAPI()
+            templates = Jinja2Templates(directory="templates")
+            jinja_partials.register_fastapi_extensions(app, templates)
     """
     if fastapi is None:
         raise PartialsException('Install FastAPI to use `register_fastapi_extensions`')
@@ -205,7 +254,7 @@ def register_fastapi_extensions(
         # Run original lifespan startup
         if original_lifespan is not None:
             async with original_lifespan(app_instance) as state:
-                yield state if state else {} # type: ignore
+                yield state if state else {}  # type: ignore
         else:
             yield {}
         # Shutdown executor after app stops
@@ -249,17 +298,23 @@ def register_starlette_extensions(
         max_workers: Maximum number of worker threads for rendering partials.
                      Only used when app is provided. Defaults to 4.
 
-    Example (with lifecycle management):
-        from starlette.applications import Starlette
-        from starlette.templating import Jinja2Templates
-        import jinja_partials
+    Raises:
+        PartialsException: If Starlette is not installed.
 
-        templates = Jinja2Templates(directory="templates")
-        app = Starlette(...)
-        jinja_partials.register_starlette_extensions(templates, app=app)
+    Example:
+        With lifecycle management:
 
-    Example (without lifecycle management - backwards compatible):
-        jinja_partials.register_starlette_extensions(templates)
+            from starlette.applications import Starlette
+            from starlette.templating import Jinja2Templates
+            import jinja_partials
+
+            templates = Jinja2Templates(directory="templates")
+            app = Starlette(...)
+            jinja_partials.register_starlette_extensions(templates, app=app)
+
+        Without lifecycle management (backwards compatible):
+
+            jinja_partials.register_starlette_extensions(templates)
     """
     if starlette is None:
         raise PartialsException('Install Starlette to use `register_starlette_extensions`')
@@ -281,7 +336,7 @@ def register_starlette_extensions(
             # Run original lifespan startup
             if original_lifespan is not None:
                 async with original_lifespan(app_instance) as state:
-                    yield state if state else {} # type: ignore
+                    yield state if state else {}  # type: ignore
             else:
                 yield {}
             # Shutdown executor after app stops
@@ -348,6 +403,17 @@ def _render_template_blocking(env: Environment, template_name: str, **data: Any)
 
 
 def register_environment(env: Environment, markup: bool = False):
+    """Register jinja_partials with a plain Jinja2 environment.
+
+    Use this for standalone Jinja2 usage or frameworks without dedicated support.
+    Handles both sync and async (enable_async=True) environments.
+
+    Args:
+        env: The Jinja2 Environment to make render_partial available in.
+        markup: When True, wrap rendered partials in markupsafe.Markup.
+                Defaults to False.
+    """
+
     def renderer(template_name: str, **data: Any) -> str:
         return _render_template_blocking(env, template_name, **data)
 

@@ -1,0 +1,275 @@
+[
+  {
+    "objectID": "reference/register_quart_extensions.html",
+    "href": "reference/register_quart_extensions.html",
+    "title": "register_quart_extensions()",
+    "section": "",
+    "text": "Register jinja_partials with a Quart application.\n\n\nUsage\nSource\n\n\nregister_quart_extensions(app, max_workers=4)\n\n\nThis creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor lifecycle is tied to the Quart app - it will be properly shut down when the app stops.\n\n\nParameters\n\n\napp: Quart\n\nThe Quart application instance.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf Quart is not installed.",
+    "crumbs": [
+      "API Reference",
+      "Framework registration",
+      "[register_quart_extensions()]{.doc-object-name .doc-function .doc-label .doc-label-function}"
+    ]
+  },
+  {
+    "objectID": "reference/generate_render_partial.html",
+    "href": "reference/generate_render_partial.html",
+    "title": "generate_render_partial()",
+    "section": "",
+    "text": "Create a render_partial function bound to a specific renderer.\n\n\nUsage\nSource\n\n\ngenerate_render_partial(renderer, markup=True)\n\n\nParameters\n\n\nrenderer: Callable[…, Any]\n\nCallable that renders a template name plus keyword arguments to a string.\n\nmarkup: bool = True\n\nWhen True (the default), results are wrapped in markupsafe.Markup.\n\n\n\n\n\nReturns\n\n\n Callable[…, Union[Markup, str]]\n\nA callable with the same signature as render_partial that uses the bound renderer.",
+    "crumbs": [
+      "API Reference",
+      "Rendering",
+      "[generate_render_partial()]{.doc-object-name .doc-function .doc-label .doc-label-function}"
+    ]
+  },
+  {
+    "objectID": "reference/register_starlette_extensions.html",
+    "href": "reference/register_starlette_extensions.html",
+    "title": "register_starlette_extensions()",
+    "section": "",
+    "text": "Register jinja_partials with Starlette templates.\n\n\nUsage\nSource\n\n\nregister_starlette_extensions(templates, app=None, max_workers=4)\n\n\nIf an app is provided, creates a dedicated ThreadPoolExecutor with lifecycle management. Otherwise, uses the global executor (for backwards compatibility).\n\n\nParameters\n\n\ntemplates: Jinja2Templates\n\nThe Jinja2Templates instance used for rendering.\n\napp: Optional[Starlette] = None\n\nOptional Starlette application instance for lifecycle management.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Only used when app is provided. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf Starlette is not installed.\n\n\n\n\n\nExample\nWith lifecycle management:\nfrom starlette.applications import Starlette\nfrom starlette.templating import Jinja2Templates\nimport jinja_partials\n\ntemplates = Jinja2Templates(directory=\"templates\")\napp = Starlette(...)\njinja_partials.register_starlette_extensions(templates, app=app)\nWithout lifecycle management (backwards compatible):\njinja_partials.register_starlette_extensions(templates)",
+    "crumbs": [
+      "API Reference",
+      "Framework registration",
+      "[register_starlette_extensions()]{.doc-object-name .doc-function .doc-label .doc-label-function}"
+    ]
+  },
+  {
+    "objectID": "reference/register_extensions.html",
+    "href": "reference/register_extensions.html",
+    "title": "register_extensions()",
+    "section": "",
+    "text": "Register jinja_partials with a Flask application.\n\n\nUsage\nSource\n\n\nregister_extensions(app)\n\n\nMakes render_partial available as a global function in the app’s Jinja templates, rendering with flask.render_template.\n\n\nParameters\n\n\napp: Flask\n\nThe Flask application instance.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf Flask is not installed.",
+    "crumbs": [
+      "API Reference",
+      "Framework registration",
+      "[register_extensions()]{.doc-object-name .doc-function .doc-label .doc-label-function}"
+    ]
+  },
+  {
+    "objectID": "reference/PartialsException.html",
+    "href": "reference/PartialsException.html",
+    "title": "PartialsException",
+    "section": "",
+    "text": "Raised when jinja_partials is misconfigured or a required web framework is not installed.\n\n\nUsage\nSource\n\n\nPartialsException()",
+    "crumbs": [
+      "API Reference",
+      "Exceptions",
+      "[PartialsException]{.doc-object-name .doc-class .doc-label .doc-label-exception}"
+    ]
+  },
+  {
+    "objectID": "license.html",
+    "href": "license.html",
+    "title": "License",
+    "section": "",
+    "text": "▶\n    License features — MIT License\n\n\n\n\n\nPermissions\n\nCommercial use\nModification\nDistribution\nPrivate use\n\n\nConditions\n\nLicense and copyright notice\n\n\nLimitations\n\nLiability\nWarranty\n\n\n\n\nMIT License\n\nCopyright (c) 2021 Michael Kennedy\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
+  },
+  {
+    "objectID": "skills.html",
+    "href": "skills.html",
+    "title": "Jinja Partials",
+    "section": "",
+    "text": "Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks."
+  },
+  {
+    "objectID": "skills.html#framework-registration",
+    "href": "skills.html#framework-registration",
+    "title": "Jinja Partials",
+    "section": "Framework registration",
+    "text": "Framework registration\nRegister render_partial with your web framework once at app startup.\n\nregister_extensions: Register jinja_partials with a Flask application\nregister_fastapi_extensions: Register jinja_partials with a FastAPI application\nregister_starlette_extensions: Register jinja_partials with Starlette templates\nregister_quart_extensions: Register jinja_partials with a Quart application\nregister_environment: Register jinja_partials with a plain Jinja2 environment"
+  },
+  {
+    "objectID": "skills.html#rendering",
+    "href": "skills.html#rendering",
+    "title": "Jinja Partials",
+    "section": "Rendering",
+    "text": "Rendering\nRender partial templates directly or build framework-specific renderers.\n\nrender_partial: Render a partial template and return the resulting HTML fragment\ngenerate_render_partial: Create a render_partial function bound to a specific renderer"
+  },
+  {
+    "objectID": "skills.html#jinja2-extension",
+    "href": "skills.html#jinja2-extension",
+    "title": "Jinja Partials",
+    "section": "Jinja2 extension",
+    "text": "Jinja2 extension\nDeclarative registration via the Jinja2 extension mechanism.\n\nPartialsJinjaExtension: Jinja2 extension that automatically registers render_partial functionality"
+  },
+  {
+    "objectID": "skills.html#exceptions",
+    "href": "skills.html#exceptions",
+    "title": "Jinja Partials",
+    "section": "Exceptions",
+    "text": "Exceptions\nErrors raised by jinja_partials.\n\nPartialsException: Raised when jinja_partials is misconfigured or a required web framework is not installed"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Jinja Partials",
+    "section": "",
+    "text": "View on PyPI Tracker Source\n\n\n\nSkills llms.txt llms-full.txt\n\n\n\n\n\n\nMichael Kennedy\n\n\n\nAuthor\n\n  \n\n\n\n\nFull license MIT\n\n\n\nRequires: Python &gt;=3.10"
+  },
+  {
+    "objectID": "index.html#overview",
+    "href": "index.html#overview",
+    "title": "Jinja Partials",
+    "section": "Overview",
+    "text": "Overview\nWhen building real-world web apps with Jinja2, it’s easy to end up with repeated HTML fragments. Just like organizing code for reuse, it would be ideal to reuse smaller sections of HTML template code. That’s what this library is all about."
+  },
+  {
+    "objectID": "index.html#supported-frameworks",
+    "href": "index.html#supported-frameworks",
+    "title": "Jinja Partials",
+    "section": "Supported Frameworks",
+    "text": "Supported Frameworks\nJinja Partials has specific support for the most popular Python web frameworks:\n\nFlask - register_extensions(app)\nFastAPI - register_fastapi_extensions(app, templates)\nStarlette - register_starlette_extensions(templates, app=app)\nQuart - register_quart_extensions(app)\nAny Jinja2 environment - register_environment(env)"
+  },
+  {
+    "objectID": "index.html#examples",
+    "href": "index.html#examples",
+    "title": "Jinja Partials",
+    "section": "Examples",
+    "text": "Examples\nThis project includes example applications for each supported framework in the examples folder:\n\nFlask example - Traditional Flask app with partials\nFastAPI example - FastAPI with Jinja2Templates\nStarlette example - Starlette with Jinja2Templates\nQuart example - Async Quart app with partials\n\nEach example demonstrates the same UI using reusable partial templates:"
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "Jinja Partials",
+    "section": "Installation",
+    "text": "Installation\nIt’s just pip install jinja-partials and you’re all set with this pure Python package."
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "Jinja Partials",
+    "section": "Usage",
+    "text": "Usage\nUsing the library is easy. Register jinja_partials with your framework once at app startup.\n\nFlask\nimport flask\nimport jinja_partials\n\napp = flask.Flask(__name__)\njinja_partials.register_extensions(app)\n\n\nFastAPI\nfrom fastapi import FastAPI\nfrom fastapi.templating import Jinja2Templates\nimport jinja_partials\n\napp = FastAPI()\ntemplates = Jinja2Templates(directory=\"templates\")\n\njinja_partials.register_fastapi_extensions(app, templates)\n\n\nStarlette\nfrom starlette.applications import Starlette\nfrom starlette.templating import Jinja2Templates\nimport jinja_partials\n\ntemplates = Jinja2Templates(directory=\"templates\")\napp = Starlette(routes=[...])\n\njinja_partials.register_starlette_extensions(templates, app=app)\n\n\nQuart\nfrom quart import Quart\nimport jinja_partials\n\napp = Quart(__name__)\njinja_partials.register_quart_extensions(app)\n\n\nDirect Jinja2 Environment\nFor any other use case, register directly with a Jinja2 environment:\nfrom jinja2 import Environment, FileSystemLoader\nimport jinja_partials\n\nenvironment = Environment(loader=FileSystemLoader(\"templates\"))\njinja_partials.register_environment(environment, markup=True)\n\n\nUsing the Jinja2 Extension (Declarative)\nAlternatively, you can use the PartialsJinjaExtension for a more declarative approach.\n\nFor Flask Applications\nWith Flask, add the extension to your app’s Jinja environment:\nimport flask\nimport jinja_partials\n\napp = flask.Flask(__name__)\n\n# Declarative registration with Flask\napp.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')\n\n# Alternative: traditional registration\n# jinja_partials.register_extensions(app)\n\n\nFor Standalone Jinja2 Environments\nFor direct Jinja2 usage (without Flask):\nfrom jinja2 import Environment, FileSystemLoader\n\n# Declarative registration - extension automatically registers render_partial\nenvironment = Environment(\n    loader=FileSystemLoader(\"tests/test_templates\"),\n    extensions=[\"jinja_partials.PartialsJinjaExtension\"]\n)\n# render_partial is now available in templates, no additional setup needed!\n\n\nWhen to Use the Extension Approach\nThis declarative approach is especially useful when:\n\nWorking with frameworks that configure Jinja2 environments declaratively\nYou want cleaner, more explicit dependency management\nIntegrating with other Jinja2 extensions\nUsing standalone Jinja2 environments outside of Flask\n\nThe extension automatically enables markup support by default, ensuring that your partial templates return properly escaped Markup objects."
+  },
+  {
+    "objectID": "index.html#template-usage",
+    "href": "index.html#template-usage",
+    "title": "Jinja Partials",
+    "section": "Template Usage",
+    "text": "Template Usage\nNext, you define your main HTML (Jinja2) templates as usual. Then define your partial templates. I recommend locating and naming them accordingly:\n├── templates\n│   ├── home\n│   │   ├── index.html\n│   │   └── listing.html\n│   └── shared\n│       ├── _layout.html\n│       └── partials\n│           ├── video_image.html\n│           └── video_square.html\nNotice the partials subfolder in the templates/shared folder.\nThe templates are just HTML fragments. Here is a stand-alone one for the YouTube thumbnail from the example app:\n&lt;img src=\"https://img.youtube.com/vi/{{ video.id }}/maxresdefault.jpg\"\n     class=\"img img-responsive {{ ' '.join(classes) }}\"\n     alt=\"{{ video.title }}\"\n     title=\"{{ video.title }}\"&gt;\nNotice that an object called video and list of classes are passed in as the model.\nTemplates can also be nested. Here is the whole single video fragment with the image as well as other info linking out to YouTube:\n&lt;div&gt;\n    &lt;a href=\"https://www.youtube.com/watch?v={{ video.id }}\" target=\"_blank\"&gt;\n        {{ render_partial('shared/partials/video_image.html', video=video) }}\n    &lt;/a&gt;\n    &lt;a href=\"https://www.youtube.com/watch?v={{ video.id }}\" target=\"_blank\"\n       class=\"author\"&gt;{{ video.author }}&lt;/a&gt;\n    &lt;div class=\"views\"&gt;{{ \"{:,}\".format(video.views) }} views&lt;/div&gt;\n&lt;/div&gt;\nNow you see the render_partial() method. It takes the subpath into the templates folder and any model data passed in as keyword arguments.\nWe can finally generate the list of video blocks as follows:\n{% for v in videos %}\n\n    &lt;div class=\"col-md-3 video\"&gt;\n        {{ render_partial('shared/partials/video_square.html', video=v) }}\n    &lt;/div&gt;\n\n{% endfor %}\nThis time, we reframe each item in the list from the outer template (called v) as the video model in the inner HTML section."
+  },
+  {
+    "objectID": "index.html#why-not-just-use-include-or-macro-from-jinja",
+    "href": "index.html#why-not-just-use-include-or-macro-from-jinja",
+    "title": "Jinja Partials",
+    "section": "Why not just use include or macro from Jinja?",
+    "text": "Why not just use include or macro from Jinja?\nThe short answer is they are nearly the same, but both fall short in different ways. For a more detailed response, see the discussion on issue #1"
+  },
+  {
+    "objectID": "changelog.html",
+    "href": "changelog.html",
+    "title": "Changelog",
+    "section": "",
+    "text": "This changelog is generated automatically from GitHub Releases."
+  },
+  {
+    "objectID": "changelog.html#section",
+    "href": "changelog.html#section",
+    "title": "Changelog",
+    "section": "[0.3.1] - 2026-01-28",
+    "text": "[0.3.1] - 2026-01-28\n\nAdded\n\nregister_quart_extensions(app, max_workers) - Lifecycle-managed registration for Quart apps\nregister_fastapi_extensions(app, templates, max_workers) - Lifecycle-managed registration for FastAPI apps\nUpdated register_starlette_extensions(templates, app, max_workers) - Optional app parameter for lifecycle management\nExample apps for FastAPI, Starlette, and Quart in examples/ directory\n\n\n\nFixed\n\nAsync rendering now works with Quart, FastAPI, and Starlette frameworks\nFixed “asyncio.run() cannot be called from a running event loop” error when using render_partial in async environments\nTemplates compiled with enable_async=True now render correctly via ThreadPoolExecutor\n\n\n\nChanged\n\nMinimum Python version is now 3.10\nVersion info now uses package metadata instead of hardcoded value\nReorganized examples: example/ renamed to examples/ with multiple framework examples"
+  },
+  {
+    "objectID": "changelog.html#new-features",
+    "href": "changelog.html#new-features",
+    "title": "Changelog",
+    "section": "🚀 New Features",
+    "text": "🚀 New Features\n\nPartialsJinjaExtension: Added a declarative Jinja2 extension for easy integration of partials and templates. Thank you @jenisys!\nVersioning: Enhanced the __all__ import list to include version information, making it easier to manage updates."
+  },
+  {
+    "objectID": "changelog.html#improvements",
+    "href": "changelog.html#improvements",
+    "title": "Changelog",
+    "section": "🔧 Improvements",
+    "text": "🔧 Improvements\n\nCode Cleanup: Cleaned up code and fixed lint warnings on test files.\nWorkspace Setup: Added a workspace in Visual Studio Code for better type checking and navigation."
+  },
+  {
+    "objectID": "changelog.html#documentation",
+    "href": "changelog.html#documentation",
+    "title": "Changelog",
+    "section": "📚 Documentation",
+    "text": "📚 Documentation\n\nAdded new environment feature and how to use it with Flask."
+  },
+  {
+    "objectID": "changelog.html#security",
+    "href": "changelog.html#security",
+    "title": "Changelog",
+    "section": "🔒 Security",
+    "text": "🔒 Security\n\nNo security-related changes were made during this release."
+  },
+  {
+    "objectID": "changelog.html#infrastructure",
+    "href": "changelog.html#infrastructure",
+    "title": "Changelog",
+    "section": "🏗️ Infrastructure",
+    "text": "🏗️ Infrastructure\n\nNo infrastructure improvements or changes were made in this release."
+  },
+  {
+    "objectID": "skills.html",
+    "href": "skills.html",
+    "title": "Skills",
+    "section": "",
+    "text": "A skill is a package of structured files that teaches an AI coding agent how to work with a specific tool or framework. The skill below was generated by Great Docs from this project’s documentation. Install it in your agent and it will be able to run commands, edit configuration, write content, and troubleshoot problems without step-by-step guidance from you.\n\n  \n    ▶    Install this skill\n  \n  \n    \n      \nAny agent — install with npx:\nnpx skills add https://mkennedy.codes/docs/jinja-partials/\nCodex / OpenCode\nTell the agent:Fetch the skill file at https://mkennedy.codes/docs/jinja-partials/skill.md and follow the instructions.\nManual — download the skill file:\ncurl -O https://mkennedy.codes/docs/jinja-partials/skill.md\nOr browse the SKILL.md file.\n      \n    \n  \n\n\nSKILL.md\n---\nname: jinja-partials\ndescription: &gt;\n  Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks. Use when writing Python code that uses the jinja_partials package.\nlicense: MIT\ncompatibility: Requires Python &gt;=3.10.\n---\n\n# Jinja Partials\n\nSimple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.\n\n# Installation\n\n```bash\npip install jinja-partials\n```\n\n# API overview\n\n### Framework registration\n\nRegister render_partial with your web framework once at app startup.\n\n- `register_extensions`: Register jinja_partials with a Flask application\n- `register_fastapi_extensions`: Register jinja_partials with a FastAPI application\n- `register_starlette_extensions`: Register jinja_partials with Starlette templates\n- `register_quart_extensions`: Register jinja_partials with a Quart application\n- `register_environment`: Register jinja_partials with a plain Jinja2 environment\n\n### Rendering\n\nRender partial templates directly or build framework-specific renderers.\n\n- `render_partial`: Render a partial template and return the resulting HTML fragment\n- `generate_render_partial`: Create a render_partial function bound to a specific renderer\n\n### Jinja2 extension\n\nDeclarative registration via the Jinja2 extension mechanism.\n\n- `PartialsJinjaExtension`: Jinja2 extension that automatically registers render_partial functionality\n\n### Exceptions\n\nErrors raised by jinja_partials.\n\n- `PartialsException`: Raised when jinja_partials is misconfigured or a required web framework is not installed\n\n# Resources\n\n- [Full documentation](https://mkennedy.codes/docs/jinja-partials/)\n- [llms.txt](llms.txt) — Indexed API reference for LLMs\n- [llms-full.txt](llms-full.txt) — Comprehensive documentation for LLMs\n- [Source code](https://github.com/mikeckennedy/jinja_partials)"
+  },
+  {
+    "objectID": "reference/PartialsJinjaExtension.html",
+    "href": "reference/PartialsJinjaExtension.html",
+    "title": "PartialsJinjaExtension",
+    "section": "",
+    "text": "Jinja2 extension that automatically registers render_partial functionality.\n\n\nUsage\nSource\n\n\nPartialsJinjaExtension()\n\n\nThe extension automatically makes render_partial available as a global function in templates. By default, markup is enabled.\n\n\nExample\nEnable the extension on a Jinja2 environment:\nfrom jinja2 import Environment\nenv = Environment(extensions=[\"jinja_partials.PartialsJinjaExtension\"])",
+    "crumbs": [
+      "API Reference",
+      "Jinja2 extension",
+      "[PartialsJinjaExtension]{.doc-object-name .doc-class .doc-label .doc-label-class}"
+    ]
+  },
+  {
+    "objectID": "reference/register_environment.html",
+    "href": "reference/register_environment.html",
+    "title": "register_environment()",
+    "section": "",
+    "text": "Register jinja_partials with a plain Jinja2 environment.\n\n\nUsage\nSource\n\n\nregister_environment(env, markup=False)\n\n\nUse this for standalone Jinja2 usage or frameworks without dedicated support. Handles both sync and async (enable_async=True) environments.\n\n\nParameters\n\n\nenv: Environment\n\nThe Jinja2 Environment to make render_partial available in.\n\nmarkup: bool = False\n\nWhen True, wrap rendered partials in markupsafe.Markup. Defaults to False.",
+    "crumbs": [
+      "API Reference",
+      "Framework registration",
+      "[register_environment()]{.doc-object-name .doc-function .doc-label .doc-label-function}"
+    ]
+  },
+  {
+    "objectID": "reference/register_fastapi_extensions.html",
+    "href": "reference/register_fastapi_extensions.html",
+    "title": "register_fastapi_extensions()",
+    "section": "",
+    "text": "Register jinja_partials with a FastAPI application.\n\n\nUsage\nSource\n\n\nregister_fastapi_extensions(app, templates, max_workers=4)\n\n\nThis creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor lifecycle is tied to the FastAPI app via its lifespan - it will be properly shut down when the app stops.\n\n\nParameters\n\n\napp: FastAPI\n\nThe FastAPI application instance.\n\ntemplates: FastAPIJinja2Templates\n\nThe Jinja2Templates instance used for rendering.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf FastAPI is not installed.\n\n\n\n\n\nExample\nRegister during app setup:\nfrom fastapi import FastAPI\nfrom fastapi.templating import Jinja2Templates\nimport jinja_partials\n\napp = FastAPI()\ntemplates = Jinja2Templates(directory=\"templates\")\njinja_partials.register_fastapi_extensions(app, templates)",
+    "crumbs": [
+      "API Reference",
+      "Framework registration",
+      "[register_fastapi_extensions()]{.doc-object-name .doc-function .doc-label .doc-label-function}"
+    ]
+  },
+  {
+    "objectID": "reference/index.html",
+    "href": "reference/index.html",
+    "title": "API Reference",
+    "section": "",
+    "text": "Public API for jinja_partials: framework registration, partial rendering, and the Jinja2 extension.\n\n\nFramework registration\n\nRegister render_partial with your web framework once at app startup.\n\n\nregister_extensions()\n\nRegister jinja_partials with a Flask application.\n\nregister_fastapi_extensions()\n\nRegister jinja_partials with a FastAPI application.\n\nregister_starlette_extensions()\n\nRegister jinja_partials with Starlette templates.\n\nregister_quart_extensions()\n\nRegister jinja_partials with a Quart application.\n\nregister_environment()\n\nRegister jinja_partials with a plain Jinja2 environment.\n\n\n\n\nRendering\n\nRender partial templates directly or build framework-specific renderers.\n\n\nrender_partial()\n\nRender a partial template and return the resulting HTML fragment.\n\ngenerate_render_partial()\n\nCreate a render_partial function bound to a specific renderer.\n\n\n\n\nJinja2 extension\n\nDeclarative registration via the Jinja2 extension mechanism.\n\n\nPartialsJinjaExtension\n\nJinja2 extension that automatically registers render_partial functionality.\n\n\n\n\nExceptions\n\nErrors raised by jinja_partials.\n\n\nPartialsException\n\nRaised when jinja_partials is misconfigured or a required web framework is not installed.",
+    "crumbs": [
+      "API Reference",
+      "API Index"
+    ]
+  },
+  {
+    "objectID": "reference/render_partial.html",
+    "href": "reference/render_partial.html",
+    "title": "render_partial()",
+    "section": "",
+    "text": "Render a partial template and return the resulting HTML fragment.\n\n\nUsage\nSource\n\n\nrender_partial(template_name, renderer=None, markup=True, **data)\n\n\nParameters\n\n\ntemplate_name: str\n\nPath of the template within the templates folder, e.g. ‘shared/partials/video_image.html’.\n\nrenderer: Optional[Callable[…, Any]] = None\n\nCallable that renders the template with the given keyword arguments. Defaults to flask.render_template when Flask is installed.\n\nmarkup: bool = True\n\nWhen True (the default), wrap the result in markupsafe.Markup so it is not re-escaped when inserted into another template.\n\n**data: Any\n\nModel data passed to the template as keyword arguments.\n\n\n\n\n\nReturns\n\n\n Union[Markup, str]\n\nThe rendered fragment as Markup, or str when markup=False.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf no renderer is specified and Flask is not installed.",
+    "crumbs": [
+      "API Reference",
+      "Rendering",
+      "[render_partial()]{.doc-object-name .doc-function .doc-label .doc-label-function}"
+    ]
+  }
+]

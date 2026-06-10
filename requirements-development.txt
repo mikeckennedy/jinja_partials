@@ -7,24 +7,82 @@ annotated-doc==0.0.4
 annotated-types==0.7.0
     # via pydantic
 anyio==4.12.1
-    # via starlette
+    # via
+    #   httpx
+    #   jupyter-server
+    #   starlette
+appnope==0.1.4
+    # via ipykernel
+argon2-cffi==25.1.0
+    # via jupyter-server
+argon2-cffi-bindings==25.1.0
+    # via argon2-cffi
+arrow==1.4.0
+    # via isoduration
+asttokens==3.0.1
+    # via stack-data
+async-lru==2.3.0
+    # via jupyterlab
+attrs==26.1.0
+    # via
+    #   jsonschema
+    #   referencing
+babel==2.18.0
+    # via jupyterlab-server
+beautifulsoup4==4.14.3
+    # via nbconvert
+bleach==6.3.0
+    # via nbconvert
 blinker==1.9.0
     # via
     #   flask
     #   quart
+certifi==2026.5.20
+    # via
+    #   httpcore
+    #   httpx
+    #   requests
+cffi==2.0.0
+    # via argon2-cffi-bindings
+charset-normalizer==3.4.7
+    # via requests
 click==8.3.1
     # via
     #   flask
+    #   great-docs
     #   quart
     #   uvicorn
+colorama==0.4.6
+    # via griffe
+comm==0.2.3
+    # via
+    #   ipykernel
+    #   ipywidgets
+debugpy==1.8.21
+    # via ipykernel
+decorator==5.3.1
+    # via ipython
+defusedxml==0.7.1
+    # via nbconvert
+executing==2.2.1
+    # via stack-data
 fastapi==0.128.0
     # via -r requirements-development.piptools
+fastjsonschema==2.21.2
+    # via nbformat
 flask==3.1.2
     # via
     #   -r requirements-development.piptools
     #   quart
+fqdn==1.5.1
+    # via jsonschema
+great-docs==0.13.0
+    # via -r requirements-development.piptools
+griffe==1.15.0
+    # via great-docs
 h11==0.16.0
     # via
+    #   httpcore
     #   hypercorn
     #   uvicorn
     #   wsproto
@@ -38,39 +96,169 @@ hatchling==1.28.0
     #   hatch-vcs
 hpack==4.1.0
     # via h2
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via jupyterlab
 hypercorn==0.18.0
     # via quart
 hyperframe==6.1.0
     # via h2
 idna==3.11
-    # via anyio
+    # via
+    #   anyio
+    #   httpx
+    #   jsonschema
+    #   requests
 iniconfig==2.3.0
     # via pytest
+ipykernel==7.2.0
+    # via
+    #   jupyter
+    #   jupyter-console
+    #   jupyterlab
+ipython==9.14.0
+    # via
+    #   ipykernel
+    #   ipywidgets
+    #   jupyter-console
+ipython-pygments-lexers==1.1.1
+    # via ipython
+ipywidgets==8.1.8
+    # via jupyter
+isoduration==20.11.0
+    # via jsonschema
 itsdangerous==2.2.0
     # via
     #   flask
     #   quart
+jedi==0.20.0
+    # via ipython
 jinja2==3.1.6
     # via
     #   flask
+    #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
+    #   nbconvert
     #   quart
+json5==0.14.0
+    # via jupyterlab-server
+jsonpointer==3.1.1
+    # via jsonschema
+jsonschema==4.26.0
+    # via
+    #   jupyter-events
+    #   jupyterlab-server
+    #   nbformat
+jsonschema-specifications==2025.9.1
+    # via jsonschema
+jupyter==1.1.1
+    # via great-docs
+jupyter-client==8.8.0
+    # via
+    #   ipykernel
+    #   jupyter-console
+    #   jupyter-server
+    #   nbclient
+jupyter-console==6.6.3
+    # via jupyter
+jupyter-core==5.9.1
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-console
+    #   jupyter-server
+    #   jupyterlab
+    #   nbclient
+    #   nbconvert
+    #   nbformat
+jupyter-events==0.12.1
+    # via jupyter-server
+jupyter-lsp==2.3.1
+    # via jupyterlab
+jupyter-server==2.19.0
+    # via
+    #   jupyter-lsp
+    #   jupyterlab
+    #   jupyterlab-server
+    #   notebook
+    #   notebook-shim
+jupyter-server-terminals==0.5.4
+    # via jupyter-server
+jupyterlab==4.5.7
+    # via
+    #   jupyter
+    #   notebook
+jupyterlab-pygments==0.3.0
+    # via nbconvert
+jupyterlab-server==2.28.0
+    # via
+    #   jupyterlab
+    #   notebook
+jupyterlab-widgets==3.0.16
+    # via ipywidgets
+lark==1.3.1
+    # via rfc3987-syntax
 markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.3
     # via
     #   flask
     #   jinja2
+    #   nbconvert
     #   quart
     #   werkzeug
+matplotlib-inline==0.2.2
+    # via
+    #   ipykernel
+    #   ipython
 mdurl==0.1.2
     # via markdown-it-py
+mistune==3.2.1
+    # via nbconvert
+nbclient==0.10.4
+    # via nbconvert
+nbconvert==7.17.1
+    # via
+    #   jupyter
+    #   jupyter-server
+nbformat==5.10.4
+    # via
+    #   jupyter-server
+    #   nbclient
+    #   nbconvert
+nest-asyncio==1.6.0
+    # via ipykernel
+notebook==7.5.6
+    # via jupyter
+notebook-shim==0.2.4
+    # via
+    #   jupyterlab
+    #   notebook
 packaging==25.0
     # via
     #   hatchling
+    #   ipykernel
+    #   jupyter-events
+    #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
+    #   nbconvert
     #   pytest
     #   setuptools-scm
+pandocfilters==1.5.1
+    # via nbconvert
+parso==0.8.7
+    # via jedi
 pathspec==1.0.3
     # via hatchling
+pexpect==4.9.0
+    # via ipython
+pillow==12.2.0
+    # via great-docs
+platformdirs==4.10.0
+    # via jupyter-core
 pluggy==1.6.0
     # via
     #   hatchling
@@ -79,12 +267,37 @@ pprintpp==0.4.0
     # via pytest-clarity
 priority==2.0.0
     # via hypercorn
+prometheus-client==0.25.0
+    # via jupyter-server
+prompt-toolkit==3.0.52
+    # via
+    #   ipython
+    #   jupyter-console
+psutil==7.2.2
+    # via
+    #   ipykernel
+    #   ipython
+ptyprocess==0.7.0
+    # via
+    #   pexpect
+    #   terminado
+pure-eval==0.2.3
+    # via stack-data
+py-yaml12==0.1.0
+    # via great-docs
+pycparser==3.0
+    # via cffi
 pydantic==2.12.5
     # via fastapi
 pydantic-core==2.41.5
     # via pydantic
 pygments==2.19.2
     # via
+    #   great-docs
+    #   ipython
+    #   ipython-pygments-lexers
+    #   jupyter-console
+    #   nbconvert
     #   pytest
     #   rich
 pytest==9.0.2
@@ -93,33 +306,132 @@ pytest==9.0.2
     #   pytest-clarity
 pytest-clarity==1.0.1
     # via -r requirements-development.piptools
+python-dateutil==2.9.0.post0
+    # via
+    #   arrow
+    #   jupyter-client
+python-json-logger==4.1.0
+    # via jupyter-events
+pyyaml==6.0.3
+    # via jupyter-events
+pyzmq==27.1.0
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-console
+    #   jupyter-server
 quart==0.20.0
     # via -r requirements-development.piptools
+referencing==0.37.0
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+    #   jupyter-events
+requests==2.34.2
+    # via
+    #   great-docs
+    #   jupyterlab-server
+rfc3339-validator==0.1.4
+    # via
+    #   jsonschema
+    #   jupyter-events
+rfc3986-validator==0.1.1
+    # via
+    #   jsonschema
+    #   jupyter-events
+rfc3987-syntax==1.1.0
+    # via jsonschema
 rich==14.2.0
     # via pytest-clarity
+rpds-py==2026.5.1
+    # via
+    #   jsonschema
+    #   referencing
+ruff==0.15.15
+    # via great-docs
+send2trash==2.1.0
+    # via jupyter-server
 setuptools==80.10.1
-    # via setuptools-scm
+    # via
+    #   jupyterlab
+    #   setuptools-scm
 setuptools-scm==9.2.2
     # via hatch-vcs
+six==1.17.0
+    # via
+    #   python-dateutil
+    #   rfc3339-validator
+soupsieve==2.8.4
+    # via beautifulsoup4
+stack-data==0.6.3
+    # via ipython
 starlette==0.50.0
     # via
     #   -r requirements-development.piptools
     #   fastapi
+terminado==0.18.1
+    # via
+    #   jupyter-server
+    #   jupyter-server-terminals
+tinycss2==1.4.0
+    # via bleach
+tornado==6.5.6
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-server
+    #   jupyterlab
+    #   notebook
+    #   terminado
+traitlets==5.15.0
+    # via
+    #   ipykernel
+    #   ipython
+    #   ipywidgets
+    #   jupyter-client
+    #   jupyter-console
+    #   jupyter-core
+    #   jupyter-events
+    #   jupyter-server
+    #   jupyterlab
+    #   matplotlib-inline
+    #   nbclient
+    #   nbconvert
+    #   nbformat
 trove-classifiers==2026.1.14.14
     # via hatchling
 typing-extensions==4.15.0
     # via
+    #   beautifulsoup4
     #   fastapi
     #   pydantic
     #   pydantic-core
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
+tzdata==2026.2
+    # via arrow
+uri-template==1.3.0
+    # via jsonschema
+urllib3==2.7.0
+    # via requests
 uvicorn==0.40.0
     # via -r requirements-development.piptools
+wcwidth==0.7.0
+    # via prompt-toolkit
+webcolors==25.10.0
+    # via jsonschema
+webencodings==0.5.1
+    # via
+    #   bleach
+    #   tinycss2
+websocket-client==1.9.0
+    # via jupyter-server
 werkzeug==3.1.5
     # via
     #   flask
     #   quart
+widgetsnbextension==4.0.15
+    # via ipywidgets
 wsproto==1.3.2
     # via hypercorn

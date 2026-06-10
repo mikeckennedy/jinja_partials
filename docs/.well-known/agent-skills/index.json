@@ -1,0 +1,11 @@
+{
+  "skills": [
+    {
+      "name": "jinja-partials",
+      "description": "Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks. Use when writing Python code that uses the jinja_partials package.",
+      "files": [
+        "SKILL.md"
+      ]
+    }
+  ]
+}
