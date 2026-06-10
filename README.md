@@ -9,6 +9,10 @@ When building real-world web apps with Jinja2, it's easy to end up with repeated
 Just like organizing code for reuse, it would be ideal to reuse smaller sections of HTML template code.
 That's what this library is all about.
 
+## Documentation
+
+The full documentation is available at [mkennedy.codes/docs/jinja-partials](https://mkennedy.codes/docs/jinja-partials/).
+
 ## Supported Frameworks
 
 Jinja Partials has specific support for the most popular Python web frameworks:
