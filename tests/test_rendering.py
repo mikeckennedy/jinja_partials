@@ -158,8 +158,9 @@ def test_register_extensions_raises_if_starlette_is_not_installed():
 
 def test_partials_jinja_extension():
     """Test that PartialsJinjaExtension works declaratively with Jinja2 Environment."""
-    from jinja2 import Environment, FileSystemLoader
     from pathlib import Path
+
+    from jinja2 import Environment, FileSystemLoader
 
     # Create environment with the extension loaded declaratively
     templates_path = Path(__file__).parent / 'test_templates'
@@ -187,8 +188,9 @@ def test_partials_jinja_extension():
 
 def test_partials_jinja_extension_markup_behavior():
     """Test that PartialsJinjaExtension returns Markup objects by default."""
-    from jinja2 import Environment, FileSystemLoader
     from pathlib import Path
+
+    from jinja2 import Environment, FileSystemLoader
     from markupsafe import Markup
 
     # Create environment with the extension loaded declaratively

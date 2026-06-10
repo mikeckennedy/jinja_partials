@@ -1,7 +1,7 @@
 import flask
+from views import home
 
 import jinja_partials
-from views import home
 
 app = flask.Flask(__name__)
 

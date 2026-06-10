@@ -7,7 +7,7 @@ This shows how to use the jinja_partials extension declaratively
 by adding it to the Jinja2 Environment extensions list.
 """
 
-from jinja2 import Environment, DictLoader
+from jinja2 import DictLoader, Environment
 
 # Create a simple template loader with some example templates
 templates = {

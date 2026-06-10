@@ -1,5 +1,4 @@
 import flask
-
 from services import video_service
 
 blueprint = flask.Blueprint('home', __name__, template_folder='templates')

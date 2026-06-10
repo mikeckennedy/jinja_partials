@@ -1,9 +1,9 @@
 from typing import List
 
+from models.video_model import Video
+
 # noinspection PyPackageRequirements
 from pydantic import BaseModel
-
-from models.video_model import Video
 
 
 class Category(BaseModel):

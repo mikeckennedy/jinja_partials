@@ -16,10 +16,10 @@ jinja_partials.register_fastapi_extensions(app, templates)
 async def index(request: Request):
     items = [
         {
-            "title": "Python Basics",
-            "author": "Alice",
-            "views": 12500,
-            "tag": "beginner",
+            'title': 'Python Basics',
+            'author': 'Alice',
+            'views': 12500,
+            'tag': 'beginner',
         },
         {'title': 'Async Patterns', 'author': 'Bob', 'views': 8750, 'tag': 'advanced'},
         {
