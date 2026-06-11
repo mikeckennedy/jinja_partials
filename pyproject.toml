@@ -8,6 +8,16 @@ keywords = [
     "web",
     "html",
     "templates",
+    "jinja",
+    "jinja2",
+    "partials",
+    "htmx",
+    "components",
+    "fragments",
+    "flask",
+    "quart",
+    "fastapi",
+    "starlette",
 ]
 authors = [
     { name = "Michael Kennedy", email = "michael@talkpython.fm" },
@@ -28,7 +38,7 @@ classifiers = [
 dependencies = [
     "jinja2",
 ]
-version = "0.3.1"
+version = "0.3.2"
 
 
 [project.urls]
