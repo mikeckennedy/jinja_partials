@@ -40,6 +40,11 @@ dependencies = [
 ]
 version = "0.3.2"
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
 
 [project.urls]
 Homepage = "https://github.com/mikeckennedy/jinja_partials"
