@@ -214,8 +214,11 @@ def register_quart_extensions(app: 'Quart', max_workers: int = 4) -> None:
     """Register jinja_partials with a Quart application.
 
     This creates a dedicated ThreadPoolExecutor for rendering partials in async
-    environments. The executor lifecycle is tied to the Quart app - it will be
-    properly shut down when the app stops.
+    environments. The executor is created when the app starts serving and shut
+    down when it stops, so the app can be started and stopped repeatedly (an
+    executor left behind by a failed startup is replaced on the next start).
+    Outside a serving cycle, partials render via a per-registration fallback
+    executor with the same max_workers.
 
     Args:
         app: The Quart application instance.
@@ -228,22 +231,36 @@ def register_quart_extensions(app: 'Quart', max_workers: int = 4) -> None:
     if quart is None:
         raise PartialsException('Install Quart to use `register_quart_extensions`')
 
-    # Create a dedicated executor for this app
-    executor = ThreadPoolExecutor(max_workers=max_workers)
+    # The dedicated executor exists only while the app is serving; out-of-cycle
+    # renders use a per-registration fallback honoring max_workers (a
+    # ThreadPoolExecutor starts no threads until first use)
+    fallback_executor = ThreadPoolExecutor(max_workers=max_workers)
+    app.extensions['jinja_partials_executor'] = None
 
-    # Store executor on the app for potential access/debugging
-    app.extensions['jinja_partials_executor'] = executor  # type: ignore[index]
+    @app.before_serving
+    async def startup_executor() -> None:
+        # A failed startup (a later before_serving hook raising) skips
+        # after_serving and leaves a stale executor; replace it
+        stale = app.extensions.get('jinja_partials_executor')
+        if stale is not None:
+            stale.shutdown(wait=False)
+        app.extensions['jinja_partials_executor'] = ThreadPoolExecutor(max_workers=max_workers)
 
     @app.after_serving
-    async def shutdown_executor():
-        executor.shutdown(wait=True)
+    async def shutdown_executor() -> None:
+        executor = app.extensions.get('jinja_partials_executor')
+        app.extensions['jinja_partials_executor'] = None
+        if executor is not None:
+            executor.shutdown(wait=True)
 
     def renderer(template_name: str, **data: Any) -> str:
         env = app.jinja_env
         template = env.get_template(template_name)
 
         if env.is_async:
-            # Run async render in the app's dedicated thread pool
+            # Run async render in the app's dedicated thread pool while serving,
+            # falling back to the per-registration executor outside a serving cycle
+            executor = app.extensions.get('jinja_partials_executor') or fallback_executor
             future = executor.submit(_run_async_render, template, data)
             return future.result()
 
@@ -265,9 +282,12 @@ def register_fastapi_extensions(
     """Register jinja_partials with a FastAPI application.
 
     This creates a dedicated ThreadPoolExecutor for rendering partials in async
-    environments. The executor lifecycle is tied to the FastAPI app via its
-    lifespan - it is shut down when the lifespan exits normally (one
-    startup/shutdown cycle per registration).
+    environments. The executor is created when the app's lifespan starts and is
+    shut down when the lifespan exits - even if startup or shutdown raises - so
+    the app can be started and stopped repeatedly (e.g. multiple TestClient
+    cycles). Outside a lifespan cycle, partials render directly for sync
+    environments, or via a per-registration fallback executor with the same
+    max_workers for async (enable_async=True) environments.
 
     Args:
         app: The FastAPI application instance.
@@ -292,25 +312,31 @@ def register_fastapi_extensions(
     if fastapi is None:
         raise PartialsException('Install FastAPI to use `register_fastapi_extensions`')
 
-    # Create a dedicated executor for this app
-    executor = ThreadPoolExecutor(max_workers=max_workers)
-
-    # Store executor on app state for potential access/debugging
-    app.state.jinja_partials_executor = executor
+    # The dedicated executor exists only during a lifespan cycle; out-of-cycle
+    # renders (e.g. lifespan disabled) use a per-registration fallback honoring
+    # max_workers (a ThreadPoolExecutor starts no threads until first use)
+    fallback_executor = ThreadPoolExecutor(max_workers=max_workers)
+    app.state.jinja_partials_executor = None
 
     # Wrap existing lifespan if present
     original_lifespan = app.router.lifespan_context
 
     @asynccontextmanager
     async def lifespan_wrapper(app_instance: 'FastAPI') -> AsyncIterator[dict[str, Any]]:
-        # Run original lifespan startup
-        if original_lifespan is not None:
-            async with original_lifespan(app_instance) as state:
-                yield state if state else {}  # type: ignore
-        else:
-            yield {}
-        # Shutdown executor after app stops
-        executor.shutdown(wait=True)
+        executor = ThreadPoolExecutor(max_workers=max_workers)
+        app_instance.state.jinja_partials_executor = executor
+        try:
+            # Run original lifespan startup
+            if original_lifespan is not None:
+                async with original_lifespan(app_instance) as state:
+                    yield state if state else {}  # type: ignore
+            else:
+                yield {}
+        finally:
+            # Shut down even if startup/shutdown raised; cleared first so new
+            # renders fall back to the per-registration executor
+            app_instance.state.jinja_partials_executor = None
+            executor.shutdown(wait=True)
 
     app.router.lifespan_context = lifespan_wrapper
 
@@ -320,7 +346,9 @@ def register_fastapi_extensions(
         template = env.get_template(template_name)
 
         if env.is_async:
-            # Run async render in the app's dedicated thread pool
+            # Run async render in the app's dedicated thread pool during the
+            # lifespan, falling back to the per-registration executor outside it
+            executor = getattr(app.state, 'jinja_partials_executor', None) or fallback_executor
             future = executor.submit(_run_async_render, template, data)
             return future.result()
 
@@ -341,9 +369,11 @@ def register_starlette_extensions(
 ) -> None:
     """Register jinja_partials with Starlette templates.
 
-    If an app is provided, creates a dedicated ThreadPoolExecutor that is shut
-    down when the app's lifespan exits normally (one startup/shutdown cycle per
-    registration). Otherwise, falls back to the previous behavior: partials
+    If an app is provided, creates a dedicated ThreadPoolExecutor when the
+    app's lifespan starts and shuts it down when the lifespan exits - even if
+    startup or shutdown raises - so the app can be started and stopped
+    repeatedly; outside lifespan cycles, async renders use a per-registration
+    fallback executor with the same max_workers. Without an app, partials
     render directly for sync environments, or via a shared module-level
     executor for async (enable_async=True) environments.
 
@@ -377,25 +407,31 @@ def register_starlette_extensions(
     env = templates.env
 
     if app is not None:
-        # Create a dedicated executor for this app with lifecycle management
-        executor = ThreadPoolExecutor(max_workers=max_workers)
-
-        # Store executor on app state for potential access/debugging
-        app.state.jinja_partials_executor = executor
+        # The dedicated executor exists only during a lifespan cycle; out-of-cycle
+        # renders use a per-registration fallback honoring max_workers (a
+        # ThreadPoolExecutor starts no threads until first use)
+        fallback_executor = ThreadPoolExecutor(max_workers=max_workers)
+        app.state.jinja_partials_executor = None
 
         # Wrap existing lifespan if present
         original_lifespan = app.router.lifespan_context
 
         @asynccontextmanager
         async def lifespan_wrapper(app_instance: 'Starlette') -> AsyncIterator[dict[str, Any]]:
-            # Run original lifespan startup
-            if original_lifespan is not None:
-                async with original_lifespan(app_instance) as state:
-                    yield state if state else {}  # type: ignore
-            else:
-                yield {}
-            # Shutdown executor after app stops
-            executor.shutdown(wait=True)
+            executor = ThreadPoolExecutor(max_workers=max_workers)
+            app_instance.state.jinja_partials_executor = executor
+            try:
+                # Run original lifespan startup
+                if original_lifespan is not None:
+                    async with original_lifespan(app_instance) as state:
+                        yield state if state else {}  # type: ignore
+                else:
+                    yield {}
+            finally:
+                # Shut down even if startup/shutdown raised; cleared first so
+                # new renders fall back to the per-registration executor
+                app_instance.state.jinja_partials_executor = None
+                executor.shutdown(wait=True)
 
         app.router.lifespan_context = lifespan_wrapper
 
@@ -403,6 +439,7 @@ def register_starlette_extensions(
             template = env.get_template(template_name)
 
             if env.is_async:
+                executor = getattr(app.state, 'jinja_partials_executor', None) or fallback_executor
                 future = executor.submit(_run_async_render, template, data)
                 return future.result()
 
@@ -416,7 +453,7 @@ def register_starlette_extensions(
     else:
         # Backwards compatible: use global executor
         def renderer(template_name: str, **data: Any) -> str:
-            return _render_template_blocking(env, template_name, **data)  # type: ignore
+            return _render_template_blocking(env, template_name, **data)
 
         env.globals.update(render_partial=generate_render_partial(renderer))
 

@@ -14,7 +14,7 @@ register_quart_extensions(
 ```
 
 
-This creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor lifecycle is tied to the Quart app - it will be properly shut down when the app stops.
+This creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor is created when the app starts serving and shut down when it stops, so the app can be started and stopped repeatedly (an executor left behind by a failed startup is replaced on the next start). Outside a serving cycle, partials render via a per-registration fallback executor with the same max_workers.
 
 
 ## Parameters

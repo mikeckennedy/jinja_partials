@@ -4,7 +4,7 @@
     "href": "reference/register_quart_extensions.html",
     "title": "register_quart_extensions()",
     "section": "",
-    "text": "Register jinja_partials with a Quart application.\n\n\nUsage\nSource\n\n\nregister_quart_extensions(app, max_workers=4)\n\n\nThis creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor lifecycle is tied to the Quart app - it will be properly shut down when the app stops.\n\n\nParameters\n\n\napp: Quart\n\nThe Quart application instance.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf Quart is not installed.",
+    "text": "Register jinja_partials with a Quart application.\n\n\nUsage\nSource\n\n\nregister_quart_extensions(app, max_workers=4)\n\n\nThis creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor is created when the app starts serving and shut down when it stops, so the app can be started and stopped repeatedly (an executor left behind by a failed startup is replaced on the next start). Outside a serving cycle, partials render via a per-registration fallback executor with the same max_workers.\n\n\nParameters\n\n\napp: Quart\n\nThe Quart application instance.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf Quart is not installed.",
     "crumbs": [
       "API Reference",
       "Framework registration",
@@ -28,7 +28,7 @@
     "href": "reference/register_starlette_extensions.html",
     "title": "register_starlette_extensions()",
     "section": "",
-    "text": "Register jinja_partials with Starlette templates.\n\n\nUsage\nSource\n\n\nregister_starlette_extensions(templates, app=None, max_workers=4)\n\n\nIf an app is provided, creates a dedicated ThreadPoolExecutor that is shut down when the app’s lifespan exits normally (one startup/shutdown cycle per registration). Otherwise, falls back to the previous behavior: partials render directly for sync environments, or via a shared module-level executor for async (enable_async=True) environments.\n\n\nParameters\n\n\ntemplates: Jinja2Templates\n\nThe Jinja2Templates instance used for rendering.\n\napp: Optional[Starlette] = None\n\nOptional Starlette application instance for lifecycle management.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Only used when app is provided. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf Starlette is not installed.\n\n\n\n\n\nExample\nWith lifecycle management:\nfrom starlette.applications import Starlette\nfrom starlette.templating import Jinja2Templates\nimport jinja_partials\n\ntemplates = Jinja2Templates(directory=\"templates\")\napp = Starlette(...)\njinja_partials.register_starlette_extensions(templates, app=app)\nWithout lifecycle management (backwards compatible):\njinja_partials.register_starlette_extensions(templates)",
+    "text": "Register jinja_partials with Starlette templates.\n\n\nUsage\nSource\n\n\nregister_starlette_extensions(templates, app=None, max_workers=4)\n\n\nIf an app is provided, creates a dedicated ThreadPoolExecutor when the app’s lifespan starts and shuts it down when the lifespan exits - even if startup or shutdown raises - so the app can be started and stopped repeatedly; outside lifespan cycles, async renders use a per-registration fallback executor with the same max_workers. Without an app, partials render directly for sync environments, or via a shared module-level executor for async (enable_async=True) environments.\n\n\nParameters\n\n\ntemplates: Jinja2Templates\n\nThe Jinja2Templates instance used for rendering.\n\napp: Optional[Starlette] = None\n\nOptional Starlette application instance for lifecycle management.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Only used when app is provided. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf Starlette is not installed.\n\n\n\n\n\nExample\nWith lifecycle management:\nfrom starlette.applications import Starlette\nfrom starlette.templating import Jinja2Templates\nimport jinja_partials\n\ntemplates = Jinja2Templates(directory=\"templates\")\napp = Starlette(...)\njinja_partials.register_starlette_extensions(templates, app=app)\nWithout lifecycle management (backwards compatible):\njinja_partials.register_starlette_extensions(templates)",
     "crumbs": [
       "API Reference",
       "Framework registration",
@@ -114,6 +114,13 @@
     "title": "Jinja Partials",
     "section": "Overview",
     "text": "Overview\nWhen building real-world web apps with Jinja2, it’s easy to end up with repeated HTML fragments. Just like organizing code for reuse, it would be ideal to reuse smaller sections of HTML template code. That’s what this library is all about."
+  },
+  {
+    "objectID": "index.html#documentation",
+    "href": "index.html#documentation",
+    "title": "Jinja Partials",
+    "section": "Documentation",
+    "text": "Documentation\nThe full documentation is available at mkennedy.codes/docs/jinja-partials."
   },
   {
     "objectID": "index.html#supported-frameworks",
@@ -242,7 +249,7 @@
     "href": "reference/register_fastapi_extensions.html",
     "title": "register_fastapi_extensions()",
     "section": "",
-    "text": "Register jinja_partials with a FastAPI application.\n\n\nUsage\nSource\n\n\nregister_fastapi_extensions(app, templates, max_workers=4)\n\n\nThis creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor lifecycle is tied to the FastAPI app via its lifespan - it is shut down when the lifespan exits normally (one startup/shutdown cycle per registration).\n\n\nParameters\n\n\napp: FastAPI\n\nThe FastAPI application instance.\n\ntemplates: FastAPIJinja2Templates\n\nThe Jinja2Templates instance used for rendering.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf FastAPI is not installed.\n\n\n\n\n\nExample\nRegister during app setup:\nfrom fastapi import FastAPI\nfrom fastapi.templating import Jinja2Templates\nimport jinja_partials\n\napp = FastAPI()\ntemplates = Jinja2Templates(directory=\"templates\")\njinja_partials.register_fastapi_extensions(app, templates)",
+    "text": "Register jinja_partials with a FastAPI application.\n\n\nUsage\nSource\n\n\nregister_fastapi_extensions(app, templates, max_workers=4)\n\n\nThis creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor is created when the app’s lifespan starts and is shut down when the lifespan exits - even if startup or shutdown raises - so the app can be started and stopped repeatedly (e.g. multiple TestClient cycles). Outside a lifespan cycle, partials render directly for sync environments, or via a per-registration fallback executor with the same max_workers for async (enable_async=True) environments.\n\n\nParameters\n\n\napp: FastAPI\n\nThe FastAPI application instance.\n\ntemplates: FastAPIJinja2Templates\n\nThe Jinja2Templates instance used for rendering.\n\nmax_workers: int = 4\n\nMaximum number of worker threads for rendering partials. Defaults to 4.\n\n\n\n\n\nRaises\n\n\n PartialsException\n\nIf FastAPI is not installed.\n\n\n\n\n\nExample\nRegister during app setup:\nfrom fastapi import FastAPI\nfrom fastapi.templating import Jinja2Templates\nimport jinja_partials\n\napp = FastAPI()\ntemplates = Jinja2Templates(directory=\"templates\")\njinja_partials.register_fastapi_extensions(app, templates)",
     "crumbs": [
       "API Reference",
       "Framework registration",

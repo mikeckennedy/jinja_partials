@@ -15,7 +15,7 @@ register_fastapi_extensions(
 ```
 
 
-This creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor lifecycle is tied to the FastAPI app via its lifespan - it is shut down when the lifespan exits normally (one startup/shutdown cycle per registration).
+This creates a dedicated ThreadPoolExecutor for rendering partials in async environments. The executor is created when the app's lifespan starts and is shut down when the lifespan exits - even if startup or shutdown raises - so the app can be started and stopped repeatedly (e.g. multiple TestClient cycles). Outside a lifespan cycle, partials render directly for sync environments, or via a per-registration fallback executor with the same max_workers for async (enable_async=True) environments.
 
 
 ## Parameters

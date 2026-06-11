@@ -26,9 +26,12 @@ register_fastapi_extensions(app: 'FastAPI', templates: 'FastAPIJinja2Templates',
 Register jinja_partials with a FastAPI application.
 
 This creates a dedicated ThreadPoolExecutor for rendering partials in async
-environments. The executor lifecycle is tied to the FastAPI app via its
-lifespan - it is shut down when the lifespan exits normally (one
-startup/shutdown cycle per registration).
+environments. The executor is created when the app's lifespan starts and is
+shut down when the lifespan exits - even if startup or shutdown raises - so
+the app can be started and stopped repeatedly (e.g. multiple TestClient
+cycles). Outside a lifespan cycle, partials render directly for sync
+environments, or via a per-registration fallback executor with the same
+max_workers for async (enable_async=True) environments.
 
 Args:
     app: The FastAPI application instance.
@@ -54,9 +57,11 @@ register_starlette_extensions(templates: 'Jinja2Templates', app: ForwardRef('Sta
 
 Register jinja_partials with Starlette templates.
 
-If an app is provided, creates a dedicated ThreadPoolExecutor that is shut
-down when the app's lifespan exits normally (one startup/shutdown cycle per
-registration). Otherwise, falls back to the previous behavior: partials
+If an app is provided, creates a dedicated ThreadPoolExecutor when the
+app's lifespan starts and shuts it down when the lifespan exits - even if
+startup or shutdown raises - so the app can be started and stopped
+repeatedly; outside lifespan cycles, async renders use a per-registration
+fallback executor with the same max_workers. Without an app, partials
 render directly for sync environments, or via a shared module-level
 executor for async (enable_async=True) environments.
 
@@ -89,8 +94,11 @@ register_quart_extensions(app: 'Quart', max_workers: int = 4) -> None
 Register jinja_partials with a Quart application.
 
 This creates a dedicated ThreadPoolExecutor for rendering partials in async
-environments. The executor lifecycle is tied to the Quart app - it will be
-properly shut down when the app stops.
+environments. The executor is created when the app starts serving and shut
+down when it stops, so the app can be started and stopped repeatedly (an
+executor left behind by a failed startup is replaced on the next start).
+Outside a serving cycle, partials render via a per-registration fallback
+executor with the same max_workers.
 
 Args:
     app: The Quart application instance.

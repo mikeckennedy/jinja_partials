@@ -1,4 +1,5 @@
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 from typing import Callable, Union
 
@@ -184,6 +185,442 @@ def test_partials_jinja_extension():
     assert 'Alice' in html
     assert '30' in html
     assert '<span>Your name is Alice and age is 30</span>' in html
+
+
+# Tests for executor lifecycle management (re-entrant startup/shutdown cycles)
+def _track_executors(monkeypatch):
+    """Patch jinja_partials.ThreadPoolExecutor to record every pool created and its submissions."""
+    created = []
+
+    class RecordingExecutor(ThreadPoolExecutor):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.submitted = 0
+            self.requested_max_workers = kwargs.get('max_workers')
+            created.append(self)
+
+        def submit(self, *args, **kwargs):
+            self.submitted += 1
+            return super().submit(*args, **kwargs)
+
+    monkeypatch.setattr(jinja_partials, 'ThreadPoolExecutor', RecordingExecutor)
+    return created
+
+
+def _async_templates():
+    from pathlib import Path
+
+    from fastapi.templating import Jinja2Templates
+    from jinja2 import Environment, FileSystemLoader
+
+    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'test_templates'), enable_async=True)
+    return Jinja2Templates(env=env)
+
+
+def test_fastapi_executor_lifecycle_reentrant(monkeypatch):
+    """Each lifespan cycle gets a fresh executor and renders go through it."""
+    import asyncio
+    from pathlib import Path
+
+    from fastapi import FastAPI
+    from fastapi.templating import Jinja2Templates
+    from jinja2 import Environment, FileSystemLoader
+
+    created = _track_executors(monkeypatch)
+    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'test_templates'), enable_async=True)
+    templates = Jinja2Templates(env=env)
+    app = FastAPI()
+    jinja_partials.register_fastapi_extensions(app, templates)
+    fallback = created[0]
+    render = templates.env.globals['render_partial']
+
+    async def cycle():
+        async with app.router.lifespan_context(app):
+            executor = app.state.jinja_partials_executor
+            assert executor is not None
+            html = render('render/bare.html')
+            assert '<h1>This is bare HTML fragment</h1>' in html
+            assert executor.submitted == 1  # the render used the per-cycle executor
+            return executor
+
+    first = asyncio.run(cycle())
+    second = asyncio.run(cycle())
+
+    assert first is not second
+    for executor in (first, second):
+        with pytest.raises(RuntimeError):
+            executor.submit(print)
+
+    # Outside a lifespan cycle, rendering uses the per-registration fallback
+    assert app.state.jinja_partials_executor is None
+    assert fallback.submitted == 0
+    html = render('render/bare.html')
+    assert '<h1>This is bare HTML fragment</h1>' in html
+    assert fallback.submitted == 1
+
+
+def test_fastapi_executor_shutdown_on_lifespan_error():
+    """The executor is shut down even when the wrapped lifespan raises."""
+    import asyncio
+    from contextlib import asynccontextmanager
+    from pathlib import Path
+
+    from fastapi import FastAPI
+    from fastapi.templating import Jinja2Templates
+    from jinja2 import Environment, FileSystemLoader
+
+    @asynccontextmanager
+    async def failing_lifespan(app):
+        yield {}
+        raise RuntimeError('boom in shutdown')
+
+    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'test_templates'), enable_async=True)
+    templates = Jinja2Templates(env=env)
+    app = FastAPI(lifespan=failing_lifespan)
+    jinja_partials.register_fastapi_extensions(app, templates)
+
+    captured = {}
+
+    async def cycle():
+        async with app.router.lifespan_context(app):
+            captured['executor'] = app.state.jinja_partials_executor
+
+    with pytest.raises(RuntimeError, match='boom in shutdown'):
+        asyncio.run(cycle())
+
+    assert app.state.jinja_partials_executor is None
+    with pytest.raises(RuntimeError):
+        captured['executor'].submit(print)
+
+
+def test_fastapi_executor_shutdown_on_startup_error(monkeypatch):
+    """The executor is shut down even when the wrapped lifespan raises during startup."""
+    import asyncio
+    from contextlib import asynccontextmanager
+    from pathlib import Path
+
+    from fastapi import FastAPI
+    from fastapi.templating import Jinja2Templates
+    from jinja2 import Environment, FileSystemLoader
+
+    created = _track_executors(monkeypatch)
+
+    @asynccontextmanager
+    async def failing_lifespan(app):
+        raise RuntimeError('boom in startup')
+        yield {}  # unreachable, makes this an async generator
+
+    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'test_templates'), enable_async=True)
+    templates = Jinja2Templates(env=env)
+    app = FastAPI(lifespan=failing_lifespan)
+    jinja_partials.register_fastapi_extensions(app, templates)
+    render = templates.env.globals['render_partial']
+
+    async def cycle():
+        async with app.router.lifespan_context(app):
+            pass  # never reached, startup fails
+
+    with pytest.raises(RuntimeError, match='boom in startup'):
+        asyncio.run(cycle())
+
+    # The per-cycle executor (created after the registration fallback) was shut down
+    assert app.state.jinja_partials_executor is None
+    with pytest.raises(RuntimeError):
+        created[1].submit(print)
+
+    # Rendering still works via the per-registration fallback
+    html = render('render/bare.html')
+    assert '<h1>This is bare HTML fragment</h1>' in html
+
+
+def test_starlette_executor_lifecycle_reentrant(monkeypatch):
+    """Each lifespan cycle gets a fresh executor and renders go through it."""
+    import asyncio
+    from pathlib import Path
+
+    from jinja2 import Environment, FileSystemLoader
+    from starlette.applications import Starlette
+    from starlette.templating import Jinja2Templates
+
+    created = _track_executors(monkeypatch)
+    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'test_templates'), enable_async=True)
+    templates = Jinja2Templates(env=env)
+    app = Starlette()
+    jinja_partials.register_starlette_extensions(templates, app=app)
+    fallback = created[0]
+    render = templates.env.globals['render_partial']
+
+    async def cycle():
+        async with app.router.lifespan_context(app):
+            executor = app.state.jinja_partials_executor
+            assert executor is not None
+            html = render('render/bare.html')
+            assert '<h1>This is bare HTML fragment</h1>' in html
+            assert executor.submitted == 1  # the render used the per-cycle executor
+            return executor
+
+    first = asyncio.run(cycle())
+    second = asyncio.run(cycle())
+
+    assert first is not second
+
+    # Outside a lifespan cycle, rendering uses the per-registration fallback
+    assert app.state.jinja_partials_executor is None
+    assert fallback.submitted == 0
+    html = render('render/bare.html')
+    assert '<h1>This is bare HTML fragment</h1>' in html
+    assert fallback.submitted == 1
+
+
+def test_starlette_executor_shutdown_on_lifespan_error():
+    """The executor is shut down even when the wrapped lifespan raises."""
+    import asyncio
+    from contextlib import asynccontextmanager
+    from pathlib import Path
+
+    from jinja2 import Environment, FileSystemLoader
+    from starlette.applications import Starlette
+    from starlette.templating import Jinja2Templates
+
+    @asynccontextmanager
+    async def failing_lifespan(app):
+        yield
+        raise RuntimeError('boom in shutdown')
+
+    env = Environment(loader=FileSystemLoader(Path(__file__).parent / 'test_templates'), enable_async=True)
+    templates = Jinja2Templates(env=env)
+    app = Starlette(lifespan=failing_lifespan)
+    jinja_partials.register_starlette_extensions(templates, app=app)
+
+    captured = {}
+
+    async def cycle():
+        async with app.router.lifespan_context(app):
+            captured['executor'] = app.state.jinja_partials_executor
+
+    with pytest.raises(RuntimeError, match='boom in shutdown'):
+        asyncio.run(cycle())
+
+    assert app.state.jinja_partials_executor is None
+    with pytest.raises(RuntimeError):
+        captured['executor'].submit(print)
+
+
+def test_quart_executor_lifecycle_reentrant(monkeypatch):
+    """Each serving cycle gets a fresh executor and renders go through it."""
+    import asyncio
+    from pathlib import Path
+
+    from quart import Quart
+
+    created = _track_executors(monkeypatch)
+    folder = (Path(__file__).parent / 'test_templates').as_posix()
+    app = Quart(__name__, template_folder=folder)
+    jinja_partials.register_quart_extensions(app)
+    fallback = created[0]
+    render = app.jinja_env.globals['render_partial']
+
+    async def cycle():
+        async with app.test_app():
+            executor = app.extensions['jinja_partials_executor']
+            assert executor is not None
+            html = render('render/bare.html')
+            assert '<h1>This is bare HTML fragment</h1>' in html
+            assert executor.submitted == 1  # the render used the per-cycle executor
+            return executor
+
+    first = asyncio.run(cycle())
+    second = asyncio.run(cycle())
+
+    assert first is not second
+
+    # Outside a serving cycle, rendering uses the per-registration fallback
+    assert app.extensions['jinja_partials_executor'] is None
+    assert fallback.submitted == 0
+    html = render('render/bare.html')
+    assert '<h1>This is bare HTML fragment</h1>' in html
+    assert fallback.submitted == 1
+
+
+def test_starlette_executor_shutdown_on_startup_error(monkeypatch):
+    """The executor is shut down even when the wrapped lifespan raises during startup."""
+    import asyncio
+    from contextlib import asynccontextmanager
+
+    from starlette.applications import Starlette
+
+    created = _track_executors(monkeypatch)
+
+    @asynccontextmanager
+    async def failing_lifespan(app):
+        raise RuntimeError('boom in startup')
+        yield  # unreachable, makes this an async generator
+
+    templates = _async_templates()
+    app = Starlette(lifespan=failing_lifespan)
+    jinja_partials.register_starlette_extensions(templates, app=app)
+    render = templates.env.globals['render_partial']
+
+    async def cycle():
+        async with app.router.lifespan_context(app):
+            pass  # never reached, startup fails
+
+    with pytest.raises(RuntimeError, match='boom in startup'):
+        asyncio.run(cycle())
+
+    # The per-cycle executor (created after the registration fallback) was shut down
+    assert app.state.jinja_partials_executor is None
+    with pytest.raises(RuntimeError):
+        created[1].submit(print)
+
+    # Rendering still works via the per-registration fallback
+    html = render('render/bare.html')
+    assert '<h1>This is bare HTML fragment</h1>' in html
+
+
+def test_fastapi_lifespan_state_passthrough():
+    """Wrapping preserves the user lifespan: both phases run and state passes through."""
+    import asyncio
+    from contextlib import asynccontextmanager
+
+    from fastapi import FastAPI
+
+    ran = {'startup': False, 'shutdown': False}
+
+    @asynccontextmanager
+    async def user_lifespan(app):
+        ran['startup'] = True
+        yield {'answer': 42}
+        ran['shutdown'] = True
+
+    templates = _async_templates()
+    app = FastAPI(lifespan=user_lifespan)
+    jinja_partials.register_fastapi_extensions(app, templates)
+
+    async def cycle():
+        async with app.router.lifespan_context(app) as state:
+            assert ran['startup']
+            assert state == {'answer': 42}
+
+    asyncio.run(cycle())
+    assert ran['shutdown']
+
+
+def test_fastapi_render_before_first_startup(monkeypatch):
+    """Partials render via the per-registration fallback before any lifespan cycle."""
+    from fastapi import FastAPI
+
+    created = _track_executors(monkeypatch)
+    templates = _async_templates()
+    app = FastAPI()
+    jinja_partials.register_fastapi_extensions(app, templates)
+
+    html = templates.env.globals['render_partial']('render/bare.html')
+    assert '<h1>This is bare HTML fragment</h1>' in html
+    assert created[0].submitted == 1  # the registration fallback did the work
+
+
+def test_fastapi_nested_partials_in_cycle():
+    """Nested partials render through the executor without deadlocking."""
+    import asyncio
+
+    from fastapi import FastAPI
+
+    templates = _async_templates()
+    app = FastAPI()
+    jinja_partials.register_fastapi_extensions(app, templates)
+    render = templates.env.globals['render_partial']
+
+    async def cycle():
+        async with app.router.lifespan_context(app):
+            html = render('render/recursive.html', message='outer message', inner='inner message')
+            assert 'outer message' in html
+            assert 'inner message' in html
+            assert '<h1>This is inner html</h1>' in html
+
+    asyncio.run(cycle())
+
+
+def test_executor_max_workers_passthrough(monkeypatch):
+    """The requested max_workers reaches both the per-cycle and fallback executors."""
+    import asyncio
+    from pathlib import Path
+
+    from fastapi import FastAPI
+    from quart import Quart
+    from starlette.applications import Starlette
+
+    created = _track_executors(monkeypatch)
+
+    fastapi_app = FastAPI()
+    jinja_partials.register_fastapi_extensions(fastapi_app, _async_templates(), max_workers=7)
+
+    starlette_app = Starlette()
+    jinja_partials.register_starlette_extensions(_async_templates(), app=starlette_app, max_workers=7)
+
+    quart_app = Quart(__name__, template_folder=(Path(__file__).parent / 'test_templates').as_posix())
+    jinja_partials.register_quart_extensions(quart_app, max_workers=7)
+
+    async def cycles():
+        async with fastapi_app.router.lifespan_context(fastapi_app):
+            pass
+        async with starlette_app.router.lifespan_context(starlette_app):
+            pass
+        async with quart_app.test_app():
+            pass
+
+    asyncio.run(cycles())
+
+    # 3 registration fallbacks + 3 per-cycle executors, all with the requested size
+    assert len(created) == 6
+    assert all(executor.requested_max_workers == 7 for executor in created)
+
+
+def test_quart_executor_recovers_from_failed_startup():
+    """A failed startup leaves a stale executor; the next start replaces and shuts it down."""
+    import asyncio
+    from pathlib import Path
+
+    from quart import Quart
+
+    folder = (Path(__file__).parent / 'test_templates').as_posix()
+    app = Quart(__name__, template_folder=folder)
+    jinja_partials.register_quart_extensions(app)
+
+    fail = {'on': True}
+
+    @app.before_serving
+    async def maybe_fail():
+        if fail['on']:
+            raise RuntimeError('boom in startup')
+
+    async def failed_cycle():
+        async with app.test_app():
+            pass  # never reached, startup fails
+
+    with pytest.raises(Exception, match='boom in startup'):
+        asyncio.run(failed_cycle())
+
+    # after_serving never ran, so the slot still holds the orphaned executor
+    stale = app.extensions['jinja_partials_executor']
+    assert stale is not None
+
+    fail['on'] = False
+
+    async def clean_cycle():
+        async with app.test_app():
+            fresh = app.extensions['jinja_partials_executor']
+            assert fresh is not None
+            assert fresh is not stale
+            html = app.jinja_env.globals['render_partial']('render/bare.html')
+            assert '<h1>This is bare HTML fragment</h1>' in html
+
+    asyncio.run(clean_cycle())
+
+    # The self-healing startup shut the stale executor down
+    with pytest.raises(RuntimeError):
+        stale.submit(print)
+    assert app.extensions['jinja_partials_executor'] is None
 
 
 def test_partials_jinja_extension_markup_behavior():

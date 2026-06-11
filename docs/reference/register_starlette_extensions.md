@@ -15,7 +15,7 @@ register_starlette_extensions(
 ```
 
 
-If an app is provided, creates a dedicated ThreadPoolExecutor that is shut down when the app's lifespan exits normally (one startup/shutdown cycle per registration). Otherwise, falls back to the previous behavior: partials render directly for sync environments, or via a shared module-level executor for async (enable_async=True) environments.
+If an app is provided, creates a dedicated ThreadPoolExecutor when the app's lifespan starts and shuts it down when the lifespan exits - even if startup or shutdown raises - so the app can be started and stopped repeatedly; outside lifespan cycles, async renders use a per-registration fallback executor with the same max_workers. Without an app, partials render directly for sync environments, or via a shared module-level executor for async (enable_async=True) environments.
 
 
 ## Parameters
