@@ -106,7 +106,7 @@
     "href": "index.html",
     "title": "Jinja Partials",
     "section": "",
-    "text": "View on PyPI Tracker Source\n\n\n\nSkills llms.txt llms-full.txt\n\n\n\n\n\n\nMichael Kennedy\n\n\n\nAuthor\n\n  \n\n\n\n\nFull license MIT\n\n\n\nRequires: Python &gt;=3.10"
+    "text": "View on PyPI Tracker Source\n\n\n\nSkills llms.txt llms-full.txt\n\n\n\n\n\n\nMichael Kennedy\n\n\n\nAuthor\n\n  \n\n\n\n\nFull license MIT\n\n\n\nRequires: Python &gt;=3.10 Provides-Extra: dev"
   },
   {
     "objectID": "index.html#overview",
@@ -174,6 +174,13 @@
   {
     "objectID": "changelog.html#section",
     "href": "changelog.html#section",
+    "title": "Changelog",
+    "section": "[0.3.2] - 2026-06-11",
+    "text": "[0.3.2] - 2026-06-11\n\nFixed\n\nAsync executor lifecycle is now exception-safe and re-entrant. Apps registered with register_fastapi_extensions, register_starlette_extensions, or register_quart_extensions can now start and stop repeatedly (e.g. multiple TestClient cycles) without failing, and an exception during a wrapped lifespan no longer leaks the executor (#14).\nRenders that happen outside a lifespan/serving cycle now use a lazy per-registration fallback executor that honors max_workers, instead of degrading to a shared 4-worker pool.\n\n\n\nChanged\n\nThe FastAPI and Starlette example apps now use enable_async=True environments and render pages via render_async, exercising the executor lifecycle.\nAdded more package keywords (Jinja, HTMX, components, fragments, and the supported frameworks) for better PyPI discoverability."
+  },
+  {
+    "objectID": "changelog.html#section-1",
+    "href": "changelog.html#section-1",
     "title": "Changelog",
     "section": "[0.3.1] - 2026-01-28",
     "text": "[0.3.1] - 2026-01-28\n\nAdded\n\nregister_quart_extensions(app, max_workers) - Lifecycle-managed registration for Quart apps\nregister_fastapi_extensions(app, templates, max_workers) - Lifecycle-managed registration for FastAPI apps\nUpdated register_starlette_extensions(templates, app, max_workers) - Optional app parameter for lifecycle management\nExample apps for FastAPI, Starlette, and Quart in examples/ directory\n\n\n\nFixed\n\nAsync rendering now works with Quart, FastAPI, and Starlette frameworks\nFixed “asyncio.run() cannot be called from a running event loop” error when using render_partial in async environments\nTemplates compiled with enable_async=True now render correctly via ThreadPoolExecutor\n\n\n\nChanged\n\nMinimum Python version is now 3.10\nVersion info now uses package metadata instead of hardcoded value\nReorganized examples: example/ renamed to examples/ with multiple framework examples"

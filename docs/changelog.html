@@ -96,7 +96,7 @@ ul.task-list li input[type="checkbox"] {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">Jinja Partials <span class="version-badge" title="Released 2026-01-28">v0.3.1</span></span>
+    <span class="navbar-title">Jinja Partials <span class="version-badge" title="Released 2026-06-11">v0.3.2</span></span>
     </a>
   </div>
             <div id="quarto-search" class=""></div>
@@ -136,9 +136,13 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul class="collapse">
-  <li><a href="#v0.3.1" id="toc-v0.3.1" class="nav-link active" data-scroll-target="#v0.3.1">v0.3.1</a>
+  <li><a href="#v0.3.2" id="toc-v0.3.2" class="nav-link active" data-scroll-target="#v0.3.2">v0.3.2</a>
   <ul class="collapse">
-  <li><a href="#section" id="toc-section" class="nav-link" data-scroll-target="#section">[0.3.1] - 2026-01-28</a></li>
+  <li><a href="#section" id="toc-section" class="nav-link" data-scroll-target="#section">[0.3.2] - 2026-06-11</a></li>
+  </ul></li>
+  <li><a href="#v0.3.1" id="toc-v0.3.1" class="nav-link" data-scroll-target="#v0.3.1">v0.3.1</a>
+  <ul class="collapse">
+  <li><a href="#section-1" id="toc-section-1" class="nav-link" data-scroll-target="#section-1">[0.3.1] - 2026-01-28</a></li>
   </ul></li>
   <li><a href="#v0.3.0" id="toc-v0.3.0" class="nav-link" data-scroll-target="#v0.3.0">v0.3.0</a>
   <ul class="collapse">
@@ -176,11 +180,32 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>This changelog is generated automatically from <a href="https://github.com/mikeckennedy/jinja_partials/releases">GitHub Releases</a>.</p>
+<section id="v0.3.2" class="level1 changelog-version">
+<h1 class="changelog-version">v0.3.2</h1>
+<p><em>2026-06-11</em> · <a href="https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.2">GitHub</a></p>
+<section id="section" class="level2">
+<h2 class="anchored" data-anchor-id="section">[0.3.2] - 2026-06-11</h2>
+<section id="fixed" class="level3">
+<h3 class="anchored" data-anchor-id="fixed">Fixed</h3>
+<ul>
+<li>Async executor lifecycle is now exception-safe and re-entrant. Apps registered with <a href="reference/register_fastapi_extensions.html#jinja_partials.register_fastapi_extensions" class="gdls-link gdls-code">register_fastapi_extensions</a>, <a href="reference/register_starlette_extensions.html#jinja_partials.register_starlette_extensions" class="gdls-link gdls-code">register_starlette_extensions</a>, or <a href="reference/register_quart_extensions.html#jinja_partials.register_quart_extensions" class="gdls-link gdls-code">register_quart_extensions</a> can now start and stop repeatedly (e.g.&nbsp;multiple <code>TestClient</code> cycles) without failing, and an exception during a wrapped lifespan no longer leaks the executor (<a href="https://github.com/mikeckennedy/jinja_partials/issues/14">#14</a>).</li>
+<li>Renders that happen outside a lifespan/serving cycle now use a lazy per-registration fallback executor that honors <code>max_workers</code>, instead of degrading to a shared 4-worker pool.</li>
+</ul>
+</section>
+<section id="changed" class="level3">
+<h3 class="anchored" data-anchor-id="changed">Changed</h3>
+<ul>
+<li>The FastAPI and Starlette example apps now use <code>enable_async=True</code> environments and render pages via <code>render_async</code>, exercising the executor lifecycle.</li>
+<li>Added more package keywords (Jinja, HTMX, components, fragments, and the supported frameworks) for better PyPI discoverability.</li>
+</ul>
+</section>
+</section>
+</section>
 <section id="v0.3.1" class="level1 changelog-version">
 <h1 class="changelog-version">v0.3.1</h1>
 <p><em>2026-01-28</em> · <a href="https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.1">GitHub</a></p>
-<section id="section" class="level2">
-<h2 class="anchored" data-anchor-id="section">[0.3.1] - 2026-01-28</h2>
+<section id="section-1" class="level2">
+<h2 class="anchored" data-anchor-id="section-1">[0.3.1] - 2026-01-28</h2>
 <section id="added" class="level3">
 <h3 class="anchored" data-anchor-id="added">Added</h3>
 <ul>
@@ -190,16 +215,16 @@ ul.task-list li input[type="checkbox"] {
 <li>Example apps for FastAPI, Starlette, and Quart in <code>examples/</code> directory</li>
 </ul>
 </section>
-<section id="fixed" class="level3">
-<h3 class="anchored" data-anchor-id="fixed">Fixed</h3>
+<section id="fixed-1" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-1">Fixed</h3>
 <ul>
 <li>Async rendering now works with Quart, FastAPI, and Starlette frameworks</li>
 <li>Fixed “asyncio.run() cannot be called from a running event loop” error when using <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> in async environments</li>
 <li>Templates compiled with <code>enable_async=True</code> now render correctly via ThreadPoolExecutor</li>
 </ul>
 </section>
-<section id="changed" class="level3">
-<h3 class="anchored" data-anchor-id="changed">Changed</h3>
+<section id="changed-1" class="level3">
+<h3 class="anchored" data-anchor-id="changed-1">Changed</h3>
 <ul>
 <li>Minimum Python version is now 3.10</li>
 <li>Version info now uses package metadata instead of hardcoded value</li>

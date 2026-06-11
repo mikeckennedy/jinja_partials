@@ -3,6 +3,26 @@
 This changelog is generated automatically from [GitHub Releases](https://github.com/mikeckennedy/jinja_partials/releases).
 
 
+# v0.3.2
+
+*2026-06-11* · [GitHub](https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.2)
+
+
+## \[0.3.2\] - 2026-06-11
+
+
+### Fixed
+
+- Async executor lifecycle is now exception-safe and re-entrant. Apps registered with [register_fastapi_extensions](reference/register_fastapi_extensions.html#jinja_partials.register_fastapi_extensions), [register_starlette_extensions](reference/register_starlette_extensions.html#jinja_partials.register_starlette_extensions), or [register_quart_extensions](reference/register_quart_extensions.html#jinja_partials.register_quart_extensions) can now start and stop repeatedly (e.g. multiple `TestClient` cycles) without failing, and an exception during a wrapped lifespan no longer leaks the executor ([\#14](https://github.com/mikeckennedy/jinja_partials/issues/14)).
+- Renders that happen outside a lifespan/serving cycle now use a lazy per-registration fallback executor that honors `max_workers`, instead of degrading to a shared 4-worker pool.
+
+
+### Changed
+
+- The FastAPI and Starlette example apps now use `enable_async=True` environments and render pages via `render_async`, exercising the executor lifecycle.
+- Added more package keywords (Jinja, HTMX, components, fragments, and the supported frameworks) for better PyPI discoverability.
+
+
 # v0.3.1
 
 *2026-01-28* · [GitHub](https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.1)

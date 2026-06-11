@@ -43,6 +43,7 @@ version = "0.3.2"
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "great-docs",
 ]
 
 
