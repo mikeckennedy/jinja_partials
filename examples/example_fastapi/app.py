@@ -1,19 +1,29 @@
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+import jinja2
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 import jinja_partials
 
 app = FastAPI()
-templates = Jinja2Templates(directory=Path(__file__).parent / 'templates')
+
+# enable_async=True is the case the executor machinery exists for; partials
+# inside these templates render on the executor managed by register_fastapi_extensions.
+env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(Path(__file__).parent / 'templates'),
+    autoescape=True,
+    enable_async=True,
+)
+templates = Jinja2Templates(env=env)
 
 # Register jinja_partials with FastAPI (ties executor lifecycle to app)
 jinja_partials.register_fastapi_extensions(app, templates)
 
 
 @app.get('/')
-async def index(request: Request):
+async def index() -> HTMLResponse:
     items = [
         {
             'title': 'Python Basics',
@@ -29,7 +39,10 @@ async def index(request: Request):
             'tag': 'intermediate',
         },
     ]
-    return templates.TemplateResponse(request, 'home/index.html', {'items': items})
+    # An async environment renders pages via render_async; TemplateResponse would
+    # call asyncio.run() inside the running event loop and fail.
+    template = templates.get_template('home/index.html')
+    return HTMLResponse(await template.render_async(items=items))
 
 
 if __name__ == '__main__':

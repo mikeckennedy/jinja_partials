@@ -132,3 +132,5 @@ dmypy.json
 .pyre/
 .vscode/settings.json
 docs/build-timings.json
+
+.ruff_cache/

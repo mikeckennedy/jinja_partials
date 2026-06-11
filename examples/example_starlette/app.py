@@ -1,12 +1,21 @@
 from pathlib import Path
 
+import jinja2
 from starlette.applications import Starlette
+from starlette.responses import HTMLResponse
 from starlette.routing import Route
 from starlette.templating import Jinja2Templates
 
 import jinja_partials
 
-templates = Jinja2Templates(directory=Path(__file__).parent / 'templates')
+# enable_async=True is the case the executor machinery exists for; partials
+# inside these templates render on the executor managed by register_starlette_extensions.
+env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(Path(__file__).parent / 'templates'),
+    autoescape=True,
+    enable_async=True,
+)
+templates = Jinja2Templates(env=env)
 
 
 async def index(request):
@@ -25,7 +34,10 @@ async def index(request):
             'tag': 'intermediate',
         },
     ]
-    return templates.TemplateResponse(request, 'home/index.html', {'items': items})
+    # An async environment renders pages via render_async; TemplateResponse would
+    # call asyncio.run() inside the running event loop and fail.
+    template = templates.get_template('home/index.html')
+    return HTMLResponse(await template.render_async(items=items))
 
 
 app = Starlette(debug=True, routes=[Route('/', index)])
