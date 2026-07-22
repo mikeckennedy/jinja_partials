@@ -135,3 +135,4 @@ docs/build-timings.json
 
 .ruff_cache/
 docs/build-timings.json
+.DS_Store
