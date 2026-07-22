@@ -39,6 +39,39 @@ include_in_header:
 pre_render:
   - scripts/fix_readme_code_comments.py
 
+skill:
+  # Hand-written prose injected into the generated skill body — wiring, explicit
+  # data flow, layout conventions, and the async rendering model — things the API
+  # signatures can't convey. Adapted from the jinja-partials_reference.md agent guide.
+  extra_body: skill_extra_body.md
+  gotchas:
+    - "register_starlette_extensions takes templates FIRST with app as an optional keyword — the argument order differs from register_fastapi_extensions(app, templates)."
+    - "register_environment defaults markup=False while every other registration path uses markup=True; with autoescaping on, forgetting markup=True makes partials show up as escaped HTML text."
+    - "PartialsJinjaExtension on a Flask app renders partials through the Jinja environment, not flask.render_template — context processors, g, and request are unavailable inside partials; use register_extensions(app) if you need them."
+    - "render_partial with no renderer falls back to flask.render_template and raises PartialsException('No renderer specified') when Flask is not installed — pass a renderer or use generate_render_partial outside Flask."
+    - "Calling register_fastapi_extensions or register_starlette_extensions twice on the same app double-wraps the lifespan (no idempotency guard) — register exactly once at startup."
+    - "On an enable_async=True FastAPI/Starlette environment, render pages with await template.render_async(...) + HTMLResponse; templates.TemplateResponse(...) calls asyncio.run() inside the running event loop and crashes."
+  best_practices:
+    - "Register once at app startup, before the app starts serving, so the partial-rendering executor is tied to the app's lifecycle."
+    - "Pass app= to register_starlette_extensions when you have one — it upgrades from the shared module-level executor to a lifespan-managed one."
+    - "Keep partials in templates/shared/partials/ and pass model data explicitly as keyword arguments; partials do not inherit the caller's context."
+    - "Install as `pip install jinja-partials` (hyphen) but import as `jinja_partials` (underscore)."
+  decision_table:
+    - need: "Flask app"
+      use: "jinja_partials.register_extensions(app)"
+    - need: "Quart app"
+      use: "jinja_partials.register_quart_extensions(app)"
+    - need: "FastAPI app"
+      use: "jinja_partials.register_fastapi_extensions(app, templates)"
+    - need: "Starlette app"
+      use: "jinja_partials.register_starlette_extensions(templates, app=app)"
+    - need: "Plain Jinja2 environment or unsupported framework"
+      use: "jinja_partials.register_environment(env, markup=True)"
+    - need: "Declarative environment configuration"
+      use: "Environment(extensions=['jinja_partials.PartialsJinjaExtension'])"
+    - need: "Custom render pipeline"
+      use: "generate_render_partial(renderer) installed as a Jinja global"
+
 authors:
   - name: Michael Kennedy
     role: Author

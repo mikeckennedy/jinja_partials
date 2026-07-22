@@ -4,3 +4,7 @@ User-agent: *
 Allow: /
 
 Sitemap: https://mkennedy.codes/docs/jinja-partials/sitemap.xml
+
+# AI agent context files
+Llms-txt: https://mkennedy.codes/docs/jinja-partials/llms.txt
+Llms-txt: https://mkennedy.codes/docs/jinja-partials/llms-full.txt
