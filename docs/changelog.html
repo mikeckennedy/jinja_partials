@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.11.9">
+<meta name="generator" content="quarto-1.9.38">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,13 +12,10 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -38,15 +35,14 @@ ul.task-list li input[type="checkbox"] {
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-9411a706d08770b9e0c434f3159337ed.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-ad5e7127987c8b4ffd7127f7681b6323.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -99,18 +95,19 @@ ul.task-list li input[type="checkbox"] {
   <meta name="twitter:description" content="This changelog is generated automatically from GitHub Releases.">
 </head>
 
-<body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+<body class="nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
-    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">Jinja Partials <span class="version-badge" title="Released 2026-06-11">v0.3.2</span></span>
+    <span class="navbar-title">Jinja Partials <span class="version-badge" title="Released 2026-11-06">v0.4.0</span></span>
     </a>
   </div>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+            <div id="quarto-search" class=""></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
@@ -131,14 +128,13 @@ ul.task-list li input[type="checkbox"] {
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
     <span class="nav-link">
-<div id="github-widget" data-owner="mikeckennedy" data-repo="jinja_partials" data-stars="235" data-forks="8"></div>
+<div id="github-widget" data-owner="mikeckennedy" data-repo="jinja_partials" data-stars="234" data-forks="8"></div>
     </span>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
 </div>
-            <div id="quarto-search" class=""></div>
       </div> <!-- /container-fluid -->
     </nav>
 </header>
@@ -147,33 +143,39 @@ ul.task-list li input[type="checkbox"] {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+        <nav id="TOC" role="doc-toc" class="toc-active">
     <h2 id="toc-title">On this page</h2>
    
   <ul class="collapse">
-  <li><a href="#v0.3.2" id="toc-v0.3.2" class="nav-link active" data-scroll-target="#v0.3.2">v0.3.2</a>
+  <li><a href="#v0.4.0" id="toc-v0.4.0" class="nav-link active" data-scroll-target="#v0.4.0">v0.4.0</a>
   <ul class="collapse">
-  <li><a href="#section" id="toc-section" class="nav-link" data-scroll-target="#section">[0.3.2] - 2026-06-11</a></li>
+  <li><a href="#section" id="toc-section" class="nav-link" data-scroll-target="#section">[0.4.0] - 2026-11-06</a></li>
+  </ul></li>
+  <li><a href="#v0.3.2" id="toc-v0.3.2" class="nav-link" data-scroll-target="#v0.3.2">v0.3.2</a>
+  <ul class="collapse">
+  <li><a href="#section-1" id="toc-section-1" class="nav-link" data-scroll-target="#section-1">[0.3.2] - 2026-06-11</a></li>
   </ul></li>
   <li><a href="#v0.3.1" id="toc-v0.3.1" class="nav-link" data-scroll-target="#v0.3.1">v0.3.1</a>
   <ul class="collapse">
-  <li><a href="#section-1" id="toc-section-1" class="nav-link" data-scroll-target="#section-1">[0.3.1] - 2026-01-28</a></li>
+  <li><a href="#section-2" id="toc-section-2" class="nav-link" data-scroll-target="#section-2">[0.3.1] - 2026-01-28</a></li>
   </ul></li>
   <li><a href="#v0.3.0" id="toc-v0.3.0" class="nav-link" data-scroll-target="#v0.3.0">v0.3.0</a>
   <ul class="collapse">
   <li><a href="#new-features" id="toc-new-features" class="nav-link" data-scroll-target="#new-features">🚀 New Features</a></li>
   <li><a href="#improvements" id="toc-improvements" class="nav-link" data-scroll-target="#improvements">🔧 Improvements</a></li>
-  <li><a href="#documentation" id="toc-documentation" class="nav-link" data-scroll-target="#documentation">📚 Documentation</a></li>
+  <li><a href="#documentation-1" id="toc-documentation-1" class="nav-link" data-scroll-target="#documentation-1">📚 Documentation</a></li>
   <li><a href="#security" id="toc-security" class="nav-link" data-scroll-target="#security">🔒 Security</a></li>
   <li><a href="#infrastructure" id="toc-infrastructure" class="nav-link" data-scroll-target="#infrastructure">🏗️ Infrastructure</a></li>
   </ul></li>
   <li><a href="#v0.2.1" id="toc-v0.2.1" class="nav-link" data-scroll-target="#v0.2.1">v0.2.1</a></li>
   <li><a href="#v0.2.0" id="toc-v0.2.0" class="nav-link" data-scroll-target="#v0.2.0">v0.2.0</a></li>
+  <li><a href="#v0.1.1" id="toc-v0.1.1" class="nav-link" data-scroll-target="#v0.1.1">v0.1.1</a></li>
+  <li><a href="#v0.1.0" id="toc-v0.1.0" class="nav-link" data-scroll-target="#v0.1.0">v0.1.0</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content" tabindex="-1">
+<main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
@@ -195,13 +197,46 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>This changelog is generated automatically from <a href="https://github.com/mikeckennedy/jinja_partials/releases">GitHub Releases</a>.</p>
+<section id="v0.4.0" class="level1 changelog-version">
+<h1 class="changelog-version">v0.4.0</h1>
+<p><em>2026-11-07</em> · <a href="https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.4.0">GitHub</a></p>
+<section id="section" class="level2">
+<h2 class="anchored" data-anchor-id="section">[0.4.0] - 2026-11-06</h2>
+<section id="fixed" class="level3">
+<h3 class="anchored" data-anchor-id="fixed">Fixed</h3>
+<ul>
+<li>Nested partials in async apps (Quart, FastAPI, Starlette, and async Jinja2 environments) no longer deadlock the render thread pool. A nested <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> call used to wait on the same pool its outer partial was occupying, so nesting as deep as <code>max_workers</code>, or enough concurrent requests with nested partials, hung every request. Nested renders now run on their own short-lived thread, and nesting depth no longer counts against <code>max_workers</code>.</li>
+<li>A partial that renders itself, or a cycle of partials, in an async environment (Quart, FastAPI, Starlette, or <code>enable_async=True</code> Jinja2) now raises <code>RecursionError</code> at <code>MAX_NESTED_RENDERS</code> (100) levels, as a sync environment already did on its own. Each nested async render runs on its own thread with its own event loop, so Python’s recursion limit never applied; the render kept creating threads, each slower than the last and holding file descriptors, until the process ran out.</li>
+</ul>
+</section>
+<section id="added" class="level3">
+<h3 class="anchored" data-anchor-id="added">Added</h3>
+<ul>
+<li>Regression tests that names leaving the templates folder (<code>..</code> segments, leading whitespace, absolute paths, backslashes, directory names) raise <code>TemplateNotFound</code> on every registration path. Jinja’s loader already refused them; the tests pin that the built-in renderers pass names to it untouched.</li>
+</ul>
+</section>
+<section id="documentation" class="level3">
+<h3 class="anchored" data-anchor-id="documentation">Documentation</h3>
+<ul>
+<li>Added a user guide to the documentation site: why partials, installation, quickstart, frameworks, troubleshooting, testing, how it works, and FAQ. The guide pages are included in <code>llms-full.txt</code>.</li>
+<li>Replaced the generated agent skill with a hand-written <code>skills/jinja-partials/SKILL.md</code> that documents the rules of the package (explicit data flow, markup defaults, Starlette argument order, the async page-level rule, registration once) rather than only its API names.</li>
+<li>Every public name now has an example in its docstring, and the module docstring names the entry points.</li>
+<li>Corrected the note about <a href="reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a> on Flask: only context processors and the <code>template_rendered</code> signal are skipped inside partials; <code>g</code>, <code>request</code>, and <code>session</code> remain available.</li>
+<li>Corrected the README note about older Python versions: 0.3.0 already had synchronous Starlette support.</li>
+<li><code>scripts/build_docs.py</code> now fails when <code>llms.txt</code>, <code>llms-full.txt</code>, or the skill files are missing from the build output, or when <code>llms-full.txt</code> has no user guide section.</li>
+<li>The docs now build with great-docs 0.17.0 (the dev lockfile was recompiled from 0.13.0), and <code>scripts/postprocess_site.py</code> repairs two more output bugs: the <code>**data</code> parameter rendered as <code>data: Any = {}</code> in the <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> signatures, and parameter defaults wrapped in nested backticks in the Markdown reference companions.</li>
+<li><a href="reference/generate_render_partial.html#jinja_partials.generate_render_partial" class="gdls-link gdls-code">generate_render_partial</a> now says that a custom renderer is responsible for refusing names that leave its templates folder, and the user guide explains how to let a request choose a partial safely (map the value to a name you wrote).</li>
+</ul>
+</section>
+</section>
+</section>
 <section id="v0.3.2" class="level1 changelog-version">
 <h1 class="changelog-version">v0.3.2</h1>
 <p><em>2026-06-11</em> · <a href="https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.2">GitHub</a></p>
-<section id="section" class="level2">
-<h2 class="anchored" data-anchor-id="section">[0.3.2] - 2026-06-11</h2>
-<section id="fixed" class="level3">
-<h3 class="anchored" data-anchor-id="fixed">Fixed</h3>
+<section id="section-1" class="level2">
+<h2 class="anchored" data-anchor-id="section-1">[0.3.2] - 2026-06-11</h2>
+<section id="fixed-1" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-1">Fixed</h3>
 <ul>
 <li>Async executor lifecycle is now exception-safe and re-entrant. Apps registered with <a href="reference/register_fastapi_extensions.html#jinja_partials.register_fastapi_extensions" class="gdls-link gdls-code">register_fastapi_extensions</a>, <a href="reference/register_starlette_extensions.html#jinja_partials.register_starlette_extensions" class="gdls-link gdls-code">register_starlette_extensions</a>, or <a href="reference/register_quart_extensions.html#jinja_partials.register_quart_extensions" class="gdls-link gdls-code">register_quart_extensions</a> can now start and stop repeatedly (e.g.&nbsp;multiple <code>TestClient</code> cycles) without failing, and an exception during a wrapped lifespan no longer leaks the executor (<a href="https://github.com/mikeckennedy/jinja_partials/issues/14">#14</a>).</li>
 <li>Renders that happen outside a lifespan/serving cycle now use a lazy per-registration fallback executor that honors <code>max_workers</code>, instead of degrading to a shared 4-worker pool.</li>
@@ -219,10 +254,10 @@ ul.task-list li input[type="checkbox"] {
 <section id="v0.3.1" class="level1 changelog-version">
 <h1 class="changelog-version">v0.3.1</h1>
 <p><em>2026-01-28</em> · <a href="https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.1">GitHub</a></p>
-<section id="section-1" class="level2">
-<h2 class="anchored" data-anchor-id="section-1">[0.3.1] - 2026-01-28</h2>
-<section id="added" class="level3">
-<h3 class="anchored" data-anchor-id="added">Added</h3>
+<section id="section-2" class="level2">
+<h2 class="anchored" data-anchor-id="section-2">[0.3.1] - 2026-01-28</h2>
+<section id="added-1" class="level3">
+<h3 class="anchored" data-anchor-id="added-1">Added</h3>
 <ul>
 <li><code>register_quart_extensions(app, max_workers)</code> - Lifecycle-managed registration for Quart apps</li>
 <li><code>register_fastapi_extensions(app, templates, max_workers)</code> - Lifecycle-managed registration for FastAPI apps</li>
@@ -230,8 +265,8 @@ ul.task-list li input[type="checkbox"] {
 <li>Example apps for FastAPI, Starlette, and Quart in <code>examples/</code> directory</li>
 </ul>
 </section>
-<section id="fixed-1" class="level3">
-<h3 class="anchored" data-anchor-id="fixed-1">Fixed</h3>
+<section id="fixed-2" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-2">Fixed</h3>
 <ul>
 <li>Async rendering now works with Quart, FastAPI, and Starlette frameworks</li>
 <li>Fixed “asyncio.run() cannot be called from a running event loop” error when using <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> in async environments</li>
@@ -267,8 +302,8 @@ ul.task-list li input[type="checkbox"] {
 <li><strong>Workspace Setup</strong>: Added a workspace in Visual Studio Code for better type checking and navigation.</li>
 </ul>
 </section>
-<section id="documentation" class="level2">
-<h2 class="anchored" data-anchor-id="documentation">📚 Documentation</h2>
+<section id="documentation-1" class="level2">
+<h2 class="anchored" data-anchor-id="documentation-1">📚 Documentation</h2>
 <ul>
 <li>Added new environment feature and how to use it with Flask.</li>
 </ul>
@@ -295,6 +330,29 @@ ul.task-list li input[type="checkbox"] {
 <h1 class="changelog-version">v0.2.0</h1>
 <p><em>2024-02-02</em> · <a href="https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.2.0">GitHub</a></p>
 <p>This release adds a <code>register_environment(environment)</code> method to allow using partials with Jinja outside of a web framework like Flask. See <a href="https://github.com/mikeckennedy/jinja_partials/issues/4">#4</a> for details. Thank you to <a href="https://github.com/sam-kleiner"><span class="citation" data-cites="sam-kleiner">@sam-kleiner</span></a> for this feature.</p>
+</section>
+<section id="v0.1.1" class="level1 changelog-version">
+<h1 class="changelog-version">v0.1.1</h1>
+<p><em>2026-11-07</em> · <a href="https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.1.1">GitHub</a></p>
+<p>Published to PyPI on 2021-12-14.</p>
+<ul>
+<li>The package is now framework-agnostic: <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> and <a href="reference/generate_render_partial.html#jinja_partials.generate_render_partial" class="gdls-link gdls-code">generate_render_partial</a> accept a custom renderer, and Flask is no longer required.</li>
+<li>Added FastAPI / Starlette support with a usage example in the README (<a href="https://github.com/mikeckennedy/jinja_partials/issues/2">#2</a>, thanks <a href="https://github.com/vrslev"><span class="citation" data-cites="vrslev">@vrslev</span></a>).</li>
+<li>Added a test suite for the library.</li>
+<li>README: discussion of how partials compare with Jinja’s <code>include</code> and <code>macro</code>.</li>
+</ul>
+<p><em>This GitHub release was created after the fact to match the version on <a href="https://pypi.org/project/jinja-partials/0.1.1/">PyPI</a>.</em></p>
+</section>
+<section id="v0.1.0" class="level1 changelog-version">
+<h1 class="changelog-version">v0.1.0</h1>
+<p><em>2026-11-07</em> · <a href="https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.1.0">GitHub</a></p>
+<p>Initial release of jinja-partials, published to PyPI on 2021-07-26.</p>
+<ul>
+<li>Adds the <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial()</a> Jinja global, so HTML fragments can be composed and nested with explicitly passed data.</li>
+<li>Flask integration via <code>jinja_partials.register_extensions(app)</code>.</li>
+<li>Includes a Flask demo app.</li>
+</ul>
+<p><em>This GitHub release was created after the fact to match the version on <a href="https://pypi.org/project/jinja-partials/0.1.0/">PyPI</a>.</em></p>
 
 
 </section>
@@ -316,8 +374,7 @@ ul.task-list li input[type="checkbox"] {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-      window.quartoDecorateExternalLinks = function (root) {
-     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -326,69 +383,8 @@ ul.task-list li input[type="checkbox"] {
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
-          if (!link.classList.contains('no-external-icon')) {
-          }
         }
       }
-      };
-      window.quartoDecorateExternalLinks(window.document);
-    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
-    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
-    const hideOnEscAndFocusOut = {
-      name: 'hideOnEscAndFocusOut',
-      defaultValue: true,
-      fn(instance) {
-        const dismiss = () => {
-          // A show scheduled by the trigger delay would otherwise reopen it
-          instance.clearDelayTimeouts();
-          instance.hide();
-        };
-        const onKeyDown = (event) => {
-          if (event.key !== 'Escape') {
-            return;
-          }
-          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
-          // except an open reveal.js slide menu, which Esc should close too.
-          // The menu handles keys only when its keyboard option is on.
-          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
-            window.Reveal.getConfig().menu?.keyboard !== false;
-          if (!menuHandlesEsc) {
-            event.stopPropagation();
-          }
-          if (instance.popper.contains(window.document.activeElement)) {
-            // Disabled while refocusing so the focus trigger does not reopen it
-            instance.disable();
-            instance.reference.focus();
-            instance.enable();
-          }
-          dismiss();
-        };
-        const onFocusOut = (event) => {
-          const target = event.relatedTarget;
-          if (target && !instance.reference.contains(target) &&
-              !instance.popper.contains(target)) {
-            dismiss();
-          }
-        };
-        // On the trigger too: a click trigger (code-annotations: select) has no
-        // blur handling. Attached for the instance's lifetime so leaving the
-        // trigger also cancels a show still pending on the trigger delay.
-        instance.reference.addEventListener('focusout', onFocusOut);
-        return {
-          onShow() {
-            window.document.addEventListener('keydown', onKeyDown, true);
-            instance.popper.addEventListener('focusout', onFocusOut);
-          },
-          onHide() {
-            window.document.removeEventListener('keydown', onKeyDown, true);
-            instance.popper.removeEventListener('focusout', onFocusOut);
-          },
-          onDestroy() {
-            instance.reference.removeEventListener('focusout', onFocusOut);
-          },
-        };
-      },
-    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -402,7 +398,6 @@ ul.task-list li input[type="checkbox"] {
         interactiveBorder: 10,
         theme: 'quarto',
         placement: 'bottom-start',
-        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;
@@ -565,54 +560,44 @@ ul.task-list li input[type="checkbox"] {
           const lineIds = lines.map((line) => {
             return targetCell + "-" + line;
           })
-          // Each band is positioned against its own containing block, which is
-          // not the offsetParent of the lines, so place it from client rects.
-          const placeBand = (band, firstEl, lastEl, codeBlock) => {
-            const container = band.offsetParent;
-            if (container === null) {
-              return;
-            }
-            const containerRect = container.getBoundingClientRect();
-            // Reveal.js scales slides with a transform, so convert client
-            // pixels back to the CSS pixels of the container.
-            const scale = containerRect.height / container.offsetHeight || 1;
-            const firstRect = firstEl.getBoundingClientRect();
-            const lastRect = lastEl.getBoundingClientRect();
-            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
-            const height = (lastRect.bottom - firstRect.top) / scale;
-            band.style.top = top - 2 + "px";
-            band.style.height = height + 4 + "px";
-            if (codeBlock) {
-              // Without the copy button wrapper, the containing block is wider
-              // than the code block, so span the code block explicitly.
-              const blockRect = codeBlock.getBoundingClientRect();
-              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
-              band.style.width = blockRect.width / scale + "px";
-            }
-          };
+          let top = null;
+          let height = null;
+          let parent = null;
           if (lineIds.length > 0) {
-            const el = window.document.getElementById(lineIds[0]);
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const parent = el.parentElement.parentElement;
-            // cook up a div (if necessary) and position it
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
             }
-            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
             }
-            placeBand(gutterDiv, el, lastEl);
             selectedAnnoteEl = annoteEl;
           }
         };
@@ -710,9 +695,6 @@ ul.task-list li input[type="checkbox"] {
       }
     }
   });
-  </script>
-  <script type="application/javascript">
-  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
   </script>
 </div> <!-- /content -->
 <footer class="footer">

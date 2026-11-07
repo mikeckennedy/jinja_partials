@@ -3,6 +3,37 @@
 This changelog is generated automatically from [GitHub Releases](https://github.com/mikeckennedy/jinja_partials/releases).
 
 
+# v0.4.0
+
+*2026-11-07* · [GitHub](https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.4.0)
+
+
+## \[0.4.0\] - 2026-11-06
+
+
+### Fixed
+
+- Nested partials in async apps (Quart, FastAPI, Starlette, and async Jinja2 environments) no longer deadlock the render thread pool. A nested [render_partial](reference/render_partial.html#jinja_partials.render_partial) call used to wait on the same pool its outer partial was occupying, so nesting as deep as `max_workers`, or enough concurrent requests with nested partials, hung every request. Nested renders now run on their own short-lived thread, and nesting depth no longer counts against `max_workers`.
+- A partial that renders itself, or a cycle of partials, in an async environment (Quart, FastAPI, Starlette, or `enable_async=True` Jinja2) now raises `RecursionError` at `MAX_NESTED_RENDERS` (100) levels, as a sync environment already did on its own. Each nested async render runs on its own thread with its own event loop, so Python's recursion limit never applied; the render kept creating threads, each slower than the last and holding file descriptors, until the process ran out.
+
+
+### Added
+
+- Regression tests that names leaving the templates folder (`..` segments, leading whitespace, absolute paths, backslashes, directory names) raise `TemplateNotFound` on every registration path. Jinja's loader already refused them; the tests pin that the built-in renderers pass names to it untouched.
+
+
+### Documentation
+
+- Added a user guide to the documentation site: why partials, installation, quickstart, frameworks, troubleshooting, testing, how it works, and FAQ. The guide pages are included in `llms-full.txt`.
+- Replaced the generated agent skill with a hand-written `skills/jinja-partials/SKILL.md` that documents the rules of the package (explicit data flow, markup defaults, Starlette argument order, the async page-level rule, registration once) rather than only its API names.
+- Every public name now has an example in its docstring, and the module docstring names the entry points.
+- Corrected the note about [PartialsJinjaExtension](reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension) on Flask: only context processors and the `template_rendered` signal are skipped inside partials; `g`, `request`, and `session` remain available.
+- Corrected the README note about older Python versions: 0.3.0 already had synchronous Starlette support.
+- `scripts/build_docs.py` now fails when `llms.txt`, `llms-full.txt`, or the skill files are missing from the build output, or when `llms-full.txt` has no user guide section.
+- The docs now build with great-docs 0.17.0 (the dev lockfile was recompiled from 0.13.0), and `scripts/postprocess_site.py` repairs two more output bugs: the `**data` parameter rendered as `data: Any = {}` in the [render_partial](reference/render_partial.html#jinja_partials.render_partial) signatures, and parameter defaults wrapped in nested backticks in the Markdown reference companions.
+- [generate_render_partial](reference/generate_render_partial.html#jinja_partials.generate_render_partial) now says that a custom renderer is responsible for refusing names that leave its templates folder, and the user guide explains how to let a request choose a partial safely (map the value to a name you wrote).
+
+
 # v0.3.2
 
 *2026-06-11* · [GitHub](https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.2)
@@ -64,7 +95,7 @@ Jinja_Partials Release Notes
 
 ## 🚀 New Features
 
-- **PartialsJinjaExtension**: Added a declarative Jinja2 extension for easy integration of partials and templates. Thank you [<span class="citation" data-cites="jenisys">@jenisys</span>](https://github.com/jenisys)!
+- **PartialsJinjaExtension**: Added a declarative Jinja2 extension for easy integration of partials and templates. Thank you [<span class="citation" cites="jenisys">@jenisys</span>](https://github.com/jenisys)!
 - **Versioning**: Enhanced the `__all__` import list to include version information, making it easier to manage updates.
 
 
@@ -100,4 +131,31 @@ Solves [\#9](https://github.com/mikeckennedy/jinja_partials/issues/9) requiremen
 
 *2024-02-02* · [GitHub](https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.2.0)
 
-This release adds a `register_environment(environment)` method to allow using partials with Jinja outside of a web framework like Flask. See [\#4](https://github.com/mikeckennedy/jinja_partials/issues/4) for details. Thank you to [<span class="citation" data-cites="sam-kleiner">@sam-kleiner</span>](https://github.com/sam-kleiner) for this feature.
+This release adds a `register_environment(environment)` method to allow using partials with Jinja outside of a web framework like Flask. See [\#4](https://github.com/mikeckennedy/jinja_partials/issues/4) for details. Thank you to [<span class="citation" cites="sam-kleiner">@sam-kleiner</span>](https://github.com/sam-kleiner) for this feature.
+
+
+# v0.1.1
+
+*2026-11-07* · [GitHub](https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.1.1)
+
+Published to PyPI on 2021-12-14.
+
+- The package is now framework-agnostic: [render_partial](reference/render_partial.html#jinja_partials.render_partial) and [generate_render_partial](reference/generate_render_partial.html#jinja_partials.generate_render_partial) accept a custom renderer, and Flask is no longer required.
+- Added FastAPI / Starlette support with a usage example in the README ([\#2](https://github.com/mikeckennedy/jinja_partials/issues/2), thanks [<span class="citation" cites="vrslev">@vrslev</span>](https://github.com/vrslev)).
+- Added a test suite for the library.
+- README: discussion of how partials compare with Jinja's `include` and `macro`.
+
+*This GitHub release was created after the fact to match the version on [PyPI](https://pypi.org/project/jinja-partials/0.1.1/).*
+
+
+# v0.1.0
+
+*2026-11-07* · [GitHub](https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.1.0)
+
+Initial release of jinja-partials, published to PyPI on 2021-07-26.
+
+- Adds the [render_partial()](reference/render_partial.html#jinja_partials.render_partial) Jinja global, so HTML fragments can be composed and nested with explicitly passed data.
+- Flask integration via `jinja_partials.register_extensions(app)`.
+- Includes a Flask demo app.
+
+*This GitHub release was created after the fact to match the version on [PyPI](https://pypi.org/project/jinja-partials/0.1.0/).*

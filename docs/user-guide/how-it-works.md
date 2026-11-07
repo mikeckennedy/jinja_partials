@@ -19,7 +19,6 @@ That recipe is also the extension point. A framework the library has never heard
 def renderer(template_name: str, **data) -> str:
     return my_env.get_template(template_name).render(**data)
 
-
 my_env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))
 ```
 

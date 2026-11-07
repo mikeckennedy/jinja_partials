@@ -60,11 +60,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Version info now uses package metadata instead of hardcoded value
 - Reorganized examples: `example/` renamed to `examples/` with multiple framework examples
 
-## [0.3.0] - Previous release
+## [0.3.0] - 2025-05-31
 
-See [GitHub releases](https://github.com/mikeckennedy/jinja_partials/releases) for earlier history.
+### Added
+
+- `PartialsJinjaExtension`, a Jinja2 extension for declarative registration: `Environment(extensions=['jinja_partials.PartialsJinjaExtension'])` makes `render_partial` available with markup enabled. Thanks to @jenisys.
+- `__version__` is now included in `__all__`.
+- An example of using `register_environment` with a plain Jinja2 environment, and README docs for it.
+- More tests, and a `pytest.ini` so the suite runs with a bare `pytest`.
+
+### Changed
+
+- Packaging moved to `pyproject.toml`. `setup.py` is kept for Conda builds.
+- `generate_render_partial` is now annotated as returning `Markup | str`, matching its `markup` argument.
+
+### Fixed
+
+- The demo app works with Pydantic 2.
+
+## [0.2.1] - 2024-04-12
+
+### Fixed
+
+- `setup.py` now declares the `jinja2` dependency in `install_requires` instead of reading it from `requirements.txt`, so Conda packaging works ([#9](https://github.com/mikeckennedy/jinja_partials/issues/9)).
+
+### Added
+
+- An optional `pyproject.toml` for building with Hatch.
+
+## [0.2.0] - 2024-02-01
+
+### Added
+
+- `register_environment(env, markup=False)` adds `render_partial` to any Jinja2 `Environment`, so partials work outside a web framework ([#4](https://github.com/mikeckennedy/jinja_partials/issues/4), [#6](https://github.com/mikeckennedy/jinja_partials/pull/6)). Thanks to @sam-kleiner.
+- A `markup` argument on `render_partial` and `generate_render_partial` (default `True`). Pass `False` to get a plain `str` instead of `Markup`.
+
+### Changed
+
+- The project is formatted and linted with Ruff.
+
+## [0.1.1] - 2021-12-14
+
+### Added
+
+- Framework-agnostic rendering: `render_partial` accepts a `renderer` callable, and `generate_render_partial(renderer)` binds one. Flask is no longer required.
+- `register_starlette_extensions(templates)` for Starlette and FastAPI ([#2](https://github.com/mikeckennedy/jinja_partials/pull/2)). Thanks to @vrslev.
+- A test suite.
+- README discussion of how partials compare with Jinja's `include` and `macro`.
+
+## [0.1.0] - 2021-07-26
+
+### Added
+
+- First release: the `render_partial()` Jinja global and `register_extensions(app)` for Flask, with a demo app.
 
 [0.4.0]: https://github.com/mikeckennedy/jinja_partials/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/mikeckennedy/jinja_partials/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/mikeckennedy/jinja_partials/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.0
+[0.3.0]: https://github.com/mikeckennedy/jinja_partials/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/mikeckennedy/jinja_partials/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/mikeckennedy/jinja_partials/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/mikeckennedy/jinja_partials/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.1.0

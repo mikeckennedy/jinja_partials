@@ -29,16 +29,23 @@ Fixes:
 10. In the reference/*.md parameter lists a default value is wrapped in its
     own backticks inside the code span ('`markup: bool = ``True`'), which
     Markdown renders as a broken span. Collapsed to '`markup: bool = True`'.
+11. The navbar version badge comes from the latest GitHub Release, so docs
+    built before that release is published show the previous version. The
+    badge is rewritten to the pyproject.toml version, dated from that version's
+    change-log.md heading, so docs can be built before the release exists.
 """
 
 from __future__ import annotations
 
 import re
 import sys
+import tomllib
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent
 BASE_URL = 'https://mkennedy.codes/docs/jinja-partials/'
-DOCS = Path(__file__).resolve().parent.parent / 'docs'
+DOCS = ROOT / 'docs'
+_VERSION_BADGE = re.compile(r'<span class="version-badge"[^>]*>[^<]*</span>')
 
 HOME_TITLE = 'Jinja Partials – Partial HTML templates for Python web frameworks'
 DOUBLE_STRIP = ".href.replace(/\\/[^\\/]*$/,'').replace(/\\/[^\\/]*$/,'')+'/color-swatch.js'"
@@ -80,6 +87,17 @@ def fix_code_spans(text: str, pattern: re.Pattern[str]) -> tuple[str, int]:
     return pattern.sub(repl, text), fixed
 
 
+def version_badge() -> str:
+    """Badge HTML for the pyproject.toml version, dated from its change-log.md heading."""
+    version = tomllib.loads((ROOT / 'pyproject.toml').read_text(encoding='utf-8'))['project']['version']
+    changelog = (ROOT / 'change-log.md').read_text(encoding='utf-8')
+    m = re.search(rf'^## \[{re.escape(version)}\] - (\d{{4}}-\d{{2}}-\d{{2}})', changelog, re.MULTILINE)
+    if not m:
+        print(f'[postprocess_site] WARNING: no dated change-log.md heading for {version}', file=sys.stderr)
+        return f'<span class="version-badge">v{version}</span>'
+    return f'<span class="version-badge" title="Released {m.group(1)}">v{version}</span>'
+
+
 def canonical_url(rel: Path) -> str:
     posix = rel.as_posix()
     if posix == 'index.html':
@@ -102,12 +120,17 @@ def main() -> int:
         'ext_sig': 0,
         'data_sig': 0,
         'md_default': 0,
+        'version_badge': 0,
     }
+    badge = version_badge()
 
     for page in sorted(DOCS.rglob('*.html')):
         rel = page.relative_to(DOCS)
         text = page.read_text(encoding='utf-8')
         original = text
+
+        text, n = _VERSION_BADGE.subn(badge, text)
+        counts['version_badge'] += n
 
         if '<link rel="canonical"' not in text and '</head>' in text:
             tag = f'<link rel="canonical" href="{canonical_url(rel)}">\n'
@@ -176,7 +199,8 @@ def main() -> int:
         f'extension signatures: {counts["ext_sig"]}, '
         f'**data signatures: {counts["data_sig"]}, '
         f'md nested defaults: {counts["md_default"]}, '
-        f'search.json skill->skills: {skill_fixes}'
+        f'search.json skill->skills: {skill_fixes}, '
+        f'version badges ({badge}): {counts["version_badge"]}'
     )
     return 0
 
