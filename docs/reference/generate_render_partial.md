@@ -45,5 +45,6 @@ Install a custom renderer as the [render_partial](render_partial.md#jinja_partia
 def renderer(template_name: str, **data) -> str:
     return env.get_template(template_name).render(**data)
 
+
 env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))
 ```

@@ -18,8 +18,7 @@ def registered_extension():
     app = flask.Flask(__name__, template_folder=folder)
 
     @app.get('/hello')
-    def hello():
-        ...
+    def hello(): ...
 
     with app.test_request_context('/hello', method='POST'):
         jinja_partials.register_extensions(app)
