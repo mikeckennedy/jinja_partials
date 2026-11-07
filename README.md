@@ -83,7 +83,7 @@ from fastapi.templating import Jinja2Templates
 import jinja_partials
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory='templates')
 
 jinja_partials.register_fastapi_extensions(app, templates)
 ```
@@ -97,7 +97,7 @@ from starlette.applications import Starlette
 from starlette.templating import Jinja2Templates
 import jinja_partials
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory='templates')
 app = Starlette(routes=[...])
 
 jinja_partials.register_starlette_extensions(templates, app=app)
@@ -137,7 +137,7 @@ No framework, or one the library has not heard of? Register with the environment
 from jinja2 import Environment, FileSystemLoader
 import jinja_partials
 
-environment = Environment(loader=FileSystemLoader("templates"))
+environment = Environment(loader=FileSystemLoader('templates'))
 jinja_partials.register_environment(environment, markup=True)
 ```
 
@@ -173,8 +173,7 @@ from jinja2 import Environment, FileSystemLoader
 
 # Declarative registration - extension automatically registers render_partial
 environment = Environment(
-    loader=FileSystemLoader("tests/test_templates"),
-    extensions=["jinja_partials.PartialsJinjaExtension"]
+    loader=FileSystemLoader('tests/test_templates'), extensions=['jinja_partials.PartialsJinjaExtension']
 )
 # render_partial is now available in templates, no additional setup needed!
 ```

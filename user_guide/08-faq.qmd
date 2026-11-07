@@ -26,6 +26,10 @@ Yes, and it is the best way to test one. In a Flask request context, `jinja_part
 
 Only the keyword arguments you passed, plus the environment's globals. On the Flask `register_extensions` path, context processors, `g`, `request`, and `session` are applied too, because partials render through `flask.render_template` there. Everywhere else, if you did not pass it, it is not there, by design.
 
+## Can a request choose which partial renders?
+
+Not directly. The built-in renderers pass the name to Jinja's loader, which refuses `..` segments and absolute paths, so `render_partial(f'cards/{slug}.html')` cannot reach outside the templates folder. It can still reach any template inside it, though, so map the request value to names you wrote: `PARTIALS = {'card': 'cards/card.html', 'row': 'cards/row.html'}` and `render_partial(PARTIALS[kind], ...)`. A custom renderer built with `generate_render_partial` gets no checking from the library; see [How it works](07-how-it-works.qmd#one-primitive-and-some-sugar).
+
 ## Why is my fragment escaped?
 
 `render_partial` returned a `str` instead of `Markup`. On the plain Jinja2 path, pass `markup=True` to `register_environment`. [Troubleshooting](05-troubleshooting.qmd#the-partial-shows-up-as-text-not-html) has the details.

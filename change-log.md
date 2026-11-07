@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- A partial that renders itself, or a cycle of partials, in an async environment (Quart, FastAPI, Starlette, or `enable_async=True` Jinja2) now raises `RecursionError` at `MAX_NESTED_RENDERS` (100) levels, as a sync environment already did on its own. Each nested async render runs on its own thread with its own event loop, so Python's recursion limit never applied; the render kept creating threads, each slower than the last and holding file descriptors, until the process ran out.
+
+### Added
+
+- Regression tests that names leaving the templates folder (`..` segments, leading whitespace, absolute paths, backslashes, directory names) raise `TemplateNotFound` on every registration path. Jinja's loader already refused them; the tests pin that the built-in renderers pass names to it untouched.
+
+### Documentation
+
+- `generate_render_partial` now says that a custom renderer is responsible for refusing names that leave its templates folder, and the user guide explains how to let a request choose a partial safely (map the value to a name you wrote).
+
 ## [0.4.0] - 2026-11-06
 
 ### Fixed

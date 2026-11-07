@@ -54,8 +54,13 @@ __all__ = [
 # Thread pool for running async renders from sync context
 _async_render_executor = ThreadPoolExecutor(max_workers=4)
 
-# Marks threads that are currently inside an async render (see _render_async_blocking)
+# Tracks how deeply the current thread is nested in async renders (see _render_async_blocking)
 _render_thread_state = threading.local()
+
+# Deepest nesting of async partial renders before RecursionError is raised. Each nested level
+# is its own thread and event loop, so Python's recursion limit would never trip on its own;
+# this mirrors the RecursionError a sync environment raises for a partial that renders itself.
+MAX_NESTED_RENDERS = 100
 
 try:
     import flask
@@ -190,7 +195,9 @@ def render_partial(
 
     Args:
         template_name: Path of the template within the templates folder,
-            e.g. `shared/partials/video_image.html`.
+            e.g. `shared/partials/video_image.html`. Names that leave the folder
+            raise ``jinja2.TemplateNotFound``; map any request-supplied value to a
+            name you wrote rather than building the path from it.
         renderer: Callable that renders the template with the given keyword
             arguments. Defaults to flask.render_template when Flask is installed.
         markup: When True (the default), wrap the result in markupsafe.Markup
@@ -249,6 +256,12 @@ def generate_render_partial(renderer: Callable[..., Any], markup: bool = True) -
 
     Returns:
         A callable with the same signature as render_partial that uses the bound renderer.
+
+    Note:
+        The template name reaches ``renderer`` exactly as the template wrote it. The
+        built-in renderers hand it to Jinja's loader, which refuses names that leave
+        the templates folder (``..`` segments, absolute paths); a custom renderer that
+        loads files some other way must enforce that itself.
 
     Example:
         Install a custom renderer as the ``render_partial`` global:
@@ -554,18 +567,22 @@ def register_starlette_extensions(
         env.globals.update(render_partial=generate_render_partial(renderer))
 
 
-def _run_async_render(template: Any, data: dict[str, Any]) -> str:
-    """Run async template render in a new event loop (called from a thread)."""
+def _run_async_render(template: Any, data: dict[str, Any], depth: int = 1) -> str:
+    """Run async template render in a new event loop (called from a thread).
+
+    ``depth`` is how many async renders are nested on this call path, counting this one;
+    it is recorded on the thread so a nested ``render_partial`` can carry it forward.
+    """
 
     async def _do_render() -> str:
         return await template.render_async(**data)
 
-    previous = getattr(_render_thread_state, 'in_render', False)
-    _render_thread_state.in_render = True
+    previous = getattr(_render_thread_state, 'depth', 0)
+    _render_thread_state.depth = depth
     try:
         return asyncio.run(_do_render())
     finally:
-        _render_thread_state.in_render = previous
+        _render_thread_state.depth = previous
 
 
 def _render_async_blocking(executor: ThreadPoolExecutor, template: Any, data: dict[str, Any]) -> str:
@@ -576,15 +593,27 @@ def _render_async_blocking(executor: ThreadPoolExecutor, template: Any, data: di
     would wait on a worker that may never free up (depth >= max_workers, or
     enough concurrent requests), so nested renders run on a short-lived thread
     instead. Nesting depth therefore never counts against max_workers.
+
+    Each nested level is a new thread with its own event loop and its own
+    recursion counter, so a partial that renders itself would never hit
+    Python's recursion limit; it is stopped at MAX_NESTED_RENDERS with a
+    RecursionError instead, as a sync environment would do on its own.
     """
-    if not getattr(_render_thread_state, 'in_render', False):
-        return executor.submit(_run_async_render, template, data).result()
+    depth = getattr(_render_thread_state, 'depth', 0)
+    if depth == 0:
+        return executor.submit(_run_async_render, template, data, 1).result()
+
+    if depth >= MAX_NESTED_RENDERS:
+        raise RecursionError(
+            f'Partials are nested more than {MAX_NESTED_RENDERS} levels deep; '
+            f'is a partial rendering itself? (template {template.name!r})'
+        )
 
     outcome: dict[str, Any] = {}
 
     def target() -> None:
         try:
-            outcome['value'] = _run_async_render(template, data)
+            outcome['value'] = _run_async_render(template, data, depth + 1)
         except BaseException as e:
             outcome['error'] = e
 

@@ -1,5 +1,6 @@
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Callable, Union
 
@@ -10,27 +11,29 @@ from markupsafe import Markup
 
 import jinja_partials
 
+_TEMPLATES_DIR = Path(__file__).parent / 'test_templates'
 
-def test_render_empty(registered_extension):  # type: ignore
+
+def test_render_empty(registered_extension):
     html: Union[Markup, str] = jinja_partials.render_partial('render/bare.html')
     assert '<h1>This is bare HTML fragment</h1>' in html
 
 
-def test_render_with_data(registered_extension):  # type: ignore
+def test_render_with_data(registered_extension):
     name = 'Sarah'
     age = 32
     html: Union[Markup, str] = jinja_partials.render_partial('render/with_data.html', name=name, age=age)
     assert f'<span>Your name is {name} and age is {age}</span>' in html
 
 
-def test_render_with_layout(registered_extension):  # type: ignore
+def test_render_with_layout(registered_extension):
     value_text = 'The message is clear'
     html: Union[Markup, str] = jinja_partials.render_partial('render/with_layout.html', message=value_text)
     assert '<title>Jinja Partials Test Template</title>' in html
     assert value_text in html
 
 
-def test_render_recursive(registered_extension):  # type: ignore
+def test_render_recursive(registered_extension):
     value_text = 'The message is clear'
     inner_text = 'The message is recursive'
 
@@ -41,7 +44,7 @@ def test_render_recursive(registered_extension):  # type: ignore
     assert inner_text in html
 
 
-def test_missing_template(registered_extension):  # type: ignore
+def test_missing_template(registered_extension):
     with pytest.raises(TemplateNotFound):
         jinja_partials.render_partial('no-way.pt', message=7)
 
@@ -52,7 +55,7 @@ def test_not_registered():
 
 
 # Tests for markup parameter
-def test_render_partial_markup_false(registered_extension):  # type: ignore
+def test_render_partial_markup_false(registered_extension):
     """Test render_partial with markup=False returns a string instead of Markup."""
     html = jinja_partials.render_partial('render/bare.html', markup=False)
     assert isinstance(html, str)
@@ -60,7 +63,7 @@ def test_render_partial_markup_false(registered_extension):  # type: ignore
     assert '<h1>This is bare HTML fragment</h1>' in html
 
 
-def test_render_partial_markup_true_explicit(registered_extension):  # type: ignore
+def test_render_partial_markup_true_explicit(registered_extension):
     """Test render_partial with markup=True (explicit) returns Markup."""
     html = jinja_partials.render_partial('render/bare.html', markup=True)
     assert isinstance(html, Markup)
@@ -68,13 +71,13 @@ def test_render_partial_markup_true_explicit(registered_extension):  # type: ign
 
 
 # Tests for template name edge cases
-def test_render_partial_empty_template_name(registered_extension):  # type: ignore
+def test_render_partial_empty_template_name(registered_extension):
     """Test render_partial with empty string template name."""
     with pytest.raises(TemplateNotFound):
         jinja_partials.render_partial('')
 
 
-def test_render_partial_none_template_name(registered_extension):  # type: ignore
+def test_render_partial_none_template_name(registered_extension):
     """Test render_partial with None template name."""
     from jinja2.exceptions import TemplatesNotFound
 
@@ -83,7 +86,7 @@ def test_render_partial_none_template_name(registered_extension):  # type: ignor
 
 
 # New test for template rendering verification
-def test_data_passed_through_correctly(registered_extension):  # type: ignore
+def test_data_passed_through_correctly(registered_extension):
     """Test that data is actually passed through correctly to templates."""
     # Test with various data types
     test_data = {
@@ -710,3 +713,114 @@ def test_concurrent_nested_partials_do_not_exhaust_pool():
     assert not worker.is_alive(), 'nested renders deadlocked the pool'
     assert len(results) == 2
     assert all('<span>The inner text is inner message</span>' in html for html in results)
+
+
+# Tests for template names that leave the templates folder. Jinja's loader refuses them; these pin the
+# contract that every built-in renderer hands the name to that loader untouched.
+_ESCAPING_NAMES = [
+    '../conftest.py',
+    ' ../conftest.py',
+    '\t../conftest.py',
+    '\n../conftest.py',
+    'render/ ../../conftest.py',
+    'render\\..\\..\\conftest.py',
+    '/etc/hosts',
+    str(_TEMPLATES_DIR.parent / 'conftest.py'),  # absolute path to a real file
+    'render',
+    'render/',
+    ' render/bare.html',
+]
+_REGISTRATION_PATHS = ['flask', 'jinja', 'jinja_async', 'fastapi', 'starlette', 'quart']
+
+
+@pytest.fixture
+def every_render_partial(registered_extension):
+    """The installed render_partial global of each registration path, none inside a serving cycle."""
+    from fastapi import FastAPI
+    from fastapi.templating import Jinja2Templates
+    from jinja2 import Environment, FileSystemLoader
+    from quart import Quart
+
+    sync_env = Environment(loader=FileSystemLoader(_TEMPLATES_DIR))
+    jinja_partials.register_environment(sync_env)
+    async_env = Environment(loader=FileSystemLoader(_TEMPLATES_DIR), enable_async=True)
+    jinja_partials.register_environment(async_env)
+    fastapi_templates = Jinja2Templates(directory=_TEMPLATES_DIR)
+    jinja_partials.register_fastapi_extensions(FastAPI(), fastapi_templates)
+    starlette_templates = Jinja2Templates(directory=_TEMPLATES_DIR)
+    jinja_partials.register_starlette_extensions(starlette_templates)
+    quart_app = Quart(__name__, template_folder=str(_TEMPLATES_DIR))
+    jinja_partials.register_quart_extensions(quart_app)
+
+    return {
+        'flask': jinja_partials.render_partial,
+        'jinja': sync_env.globals['render_partial'],
+        'jinja_async': async_env.globals['render_partial'],
+        'fastapi': fastapi_templates.env.globals['render_partial'],
+        'starlette': starlette_templates.env.globals['render_partial'],
+        'quart': quart_app.jinja_env.globals['render_partial'],
+    }
+
+
+@pytest.mark.parametrize('path', _REGISTRATION_PATHS)
+def test_names_inside_the_folder_render_on_every_path(every_render_partial, path):
+    assert '<h1>This is bare HTML fragment</h1>' in every_render_partial[path]('render/bare.html')
+
+
+@pytest.mark.parametrize('name', _ESCAPING_NAMES, ids=repr)
+@pytest.mark.parametrize('path', _REGISTRATION_PATHS)
+def test_names_outside_the_folder_are_not_found(every_render_partial, path, name):
+    with pytest.raises(TemplateNotFound):
+        every_render_partial[path](name)
+
+
+# Tests for runaway nesting: a partial that renders itself must end in RecursionError, not a crash or a stall.
+# In an async environment every nested level is its own thread and event loop, so the library caps the depth.
+def _nested_render_threads():
+    import threading
+
+    return [t for t in threading.enumerate() if t.name == 'jinja_partials-nested-render']
+
+
+def _plain_render_partial(is_async: bool):
+    from jinja2 import Environment, FileSystemLoader
+
+    env = Environment(loader=FileSystemLoader(_TEMPLATES_DIR), enable_async=is_async)
+    jinja_partials.register_environment(env)
+    return env.globals['render_partial']
+
+
+@pytest.mark.parametrize('is_async', [False, True], ids=['sync', 'async'])
+def test_partial_rendering_itself_raises_recursion_error(is_async):
+    render = _plain_render_partial(is_async)
+    with pytest.raises(RecursionError):
+        render('render/self_cycle.html', n=0)
+    assert not _nested_render_threads(), 'nested render threads were left behind'
+    # The per-thread depth is restored on the way out, so later renders still work
+    assert '<h1>This is bare HTML fragment</h1>' in render('render/bare.html')
+
+
+def test_async_nesting_depth_is_capped(monkeypatch):
+    """The cap is MAX_NESTED_RENDERS levels, the first on the pool and each further level on one thread."""
+    import threading
+
+    started = []
+    original_start = threading.Thread.start
+
+    def counting_start(self):
+        started.append(self.name)
+        original_start(self)
+
+    monkeypatch.setattr(threading.Thread, 'start', counting_start)
+    render = _plain_render_partial(is_async=True)
+    with pytest.raises(RecursionError, match='render/self_cycle.html'):
+        render('render/self_cycle.html', n=0)
+    nested = [name for name in started if name == 'jinja_partials-nested-render']
+    assert len(nested) == jinja_partials.MAX_NESTED_RENDERS - 1
+
+
+@pytest.mark.parametrize('is_async', [False, True], ids=['sync', 'async'])
+def test_deeply_nested_partials_still_render(is_async):
+    render = _plain_render_partial(is_async)
+    assert '<span>bottom 20</span>' in render('render/deep.html', n=0, limit=20)
+    assert not _nested_render_threads()

@@ -17,8 +17,8 @@ def registered_extension():
     folder = (Path(__file__).parent / 'test_templates').as_posix()
     app = flask.Flask(__name__, template_folder=folder)
 
-    @app.get('/hello')  # type: ignore
-    def hello():  # type: ignore
+    @app.get('/hello')
+    def hello():
         ...
 
     with app.test_request_context('/hello', method='POST'):
@@ -37,7 +37,7 @@ def starlette_render_partial():
     jinja_partials.register_starlette_extensions(templates)
 
     def renderer(template_name: str, **data: Any) -> str:
-        return templates.get_template(template_name).render(**data)  # type: ignore
+        return templates.get_template(template_name).render(**data)
 
     return partial(jinja_partials.render_partial, renderer=renderer)
 
