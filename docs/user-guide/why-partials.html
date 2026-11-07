@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="The problem jinja_partials solves and how render_partial differs from Jinja’s include and macro.">
+<meta name="description" content="The problem jinja_partials solves, told through the fourteenth copy of a video card, and how render_partial differs from Jinja’s include and macro.">
 
 <title>Why partials – Jinja Partials | Jinja Partials</title>
 <style>
@@ -127,12 +127,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <link rel="canonical" href="https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Why partials – Jinja Partials | Jinja Partials">
-  <meta property="og:description" content="The problem jinja_partials solves and how render_partial differs from Jinja’s include and macro.">
+  <meta property="og:description" content="The problem jinja_partials solves, told through the fourteenth copy of a video card, and how render_partial differs from Jinja’s include and macro.">
   <meta property="og:url" content="https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html">
   <meta property="og:site_name" content="Jinja Partials">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Why partials – Jinja Partials | Jinja Partials">
-  <meta name="twitter:description" content="The problem jinja_partials solves and how render_partial differs from Jinja’s include and macro.">
+  <meta name="twitter:description" content="The problem jinja_partials solves, told through the fourteenth copy of a video card, and how render_partial differs from Jinja’s include and macro.">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -276,8 +276,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul class="collapse">
-  <li><a href="#what-is-wrong-with-include-and-macro" id="toc-what-is-wrong-with-include-and-macro" class="nav-link active" data-scroll-target="#what-is-wrong-with-include-and-macro">What is wrong with include and macro</a></li>
-  <li><a href="#what-you-get" id="toc-what-you-get" class="nav-link" data-scroll-target="#what-you-get">What you get</a></li>
+  <li><a href="#but-jinja-already-has-include-and-macro" id="toc-but-jinja-already-has-include-and-macro" class="nav-link active" data-scroll-target="#but-jinja-already-has-include-and-macro">But Jinja already has include and macro</a></li>
+  <li><a href="#what-is-in-the-box" id="toc-what-is-in-the-box" class="nav-link" data-scroll-target="#what-is-in-the-box">What is in the box</a></li>
   </ul>
 </nav>
     </div>
@@ -291,7 +291,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    The problem jinja_partials solves and how render_partial differs from Jinja’s include and macro.
+    The problem jinja_partials solves, told through the fourteenth copy of a video card, and how render_partial differs from Jinja’s include and macro.
   </div>
 </div>
 
@@ -308,27 +308,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>When you build a real web app with Jinja2, the same HTML fragments show up again and again: a video card, a badge, a pagination control, a row in a table. Copying the markup into every page works until the design changes and you have to find every copy. The fix in Python code is a function with explicit arguments. jinja_partials gives templates the same thing: a <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial()</a> global that renders a fragment file with exactly the data you pass it.</p>
+<p>It is Friday afternoon. The designer drops by with good news: the video card on your site is getting a small refresh. A rounded thumbnail, a view count with thousands separators, the author’s name as a link. Fifteen minutes of work, they say. You open the templates folder and start counting. The home page has a card. The listing page has a card. The search results have a card. The “related videos” sidebar has a smaller card that is really the same card with a class on it. The email digest has a card too, and that one was copied from the listing page sometime last spring and never updated. You stop counting at fourteen.</p>
+<p>Every one of those cards started as a copy and paste, because Jinja templates made copying easy and reuse awkward. In Python you would never tolerate fourteen copies of a function. You would write it once, give it parameters, and call it. jinja_partials lets templates do exactly that:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{% for v in videos %}</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    {{ render_partial('shared/partials/video_square.html', video=v) }}</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>{% endfor %}</span></code></pre></div>
-<p>The fragment is an ordinary template file. It sees <code>video</code> and nothing else, so you can read its inputs at the call site, rename at the boundary (the loop variable <code>v</code> becomes <code>video</code> inside), and nest partials inside partials as deep as the design needs.</p>
-<section id="what-is-wrong-with-include-and-macro" class="level1">
-<h1>What is wrong with include and macro</h1>
-<p>Jinja already has two reuse mechanisms, and both fall short in a different way.</p>
-<p><code>{% include %}</code> hands the fragment the caller’s entire context. Nothing at the call site says what the fragment needs, and renaming a variable means wrapping the include in <code>{% with %}</code>. A fragment that quietly depends on a page-level variable breaks when you reuse it somewhere that variable does not exist.</p>
-<p><code>{% macro %}</code> has explicit parameters, which is the right idea, but a macro lives inside a template file that every page has to <code>{% import %}</code>, and a macro is not a file you can render on its own. With partials, the same <code>video_square.html</code> renders inside a page and also serves as an HTMX fragment response straight from a route.</p>
-<p>The longer discussion is in <a href="https://github.com/mikeckennedy/jinja_partials/issues/1">issue #1</a> on GitHub.</p>
+<p><a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> takes the path of a fragment file and the data it needs, renders it, and hands back safe HTML. The fragment sees <code>video</code> and nothing else. It cannot quietly depend on some page-level variable, because it never receives any. You can read its inputs at the call site, rename at the boundary (the loop’s <code>v</code> becomes the card’s <code>video</code>), and nest fragments inside fragments as deep as the design needs. The designer’s fifteen minutes become fifteen minutes.</p>
+<section id="but-jinja-already-has-include-and-macro" class="level1">
+<h1>But Jinja already has include and macro</h1>
+<p>It does, and both are nearly right, which is exactly why they are frustrating.</p>
+<p><code>{% include %}</code> is a copy and paste that happens at render time. The fragment receives the entire context of whoever included it: every variable on the page, whether the fragment needs it or not. Nothing at the call site tells you what the fragment reads. Rename a variable on one page and the fragment breaks on that page only, and the fix is a <code>{% with %}</code> wrapper around the include, which is a parameter list wearing a disguise.</p>
+<p><code>{% macro %}</code> gets the parameters right. The trouble is where macros live. A macro is defined inside a template file, so every page that wants the card has to <code>{% import %}</code> that file first. And a macro is not itself a template you can render. When HTMX asks your server for just one card to swap into the page, you cannot hand it a macro. With partials, the same <code>video_square.html</code> renders inside a page and also serves as a fragment response straight from a route, because it was a plain template all along.</p>
+<p>The original back-and-forth on this question is preserved in <a href="https://github.com/mikeckennedy/jinja_partials/issues/1">issue #1</a>, if you enjoy that sort of thing.</p>
 </section>
-<section id="what-you-get" class="level1">
-<h1>What you get</h1>
+<section id="what-is-in-the-box" class="level1">
+<h1>What is in the box</h1>
 <ul>
-<li>One registration call per app, at startup, for Flask, Quart, FastAPI, Starlette, or any Jinja2 environment.</li>
-<li>A <code>render_partial(template_name, **data)</code> global inside every template, returning safe <code>Markup</code> so autoescaping does not re-escape the fragment.</li>
-<li>The same function callable from Python, for example in tests.</li>
-<li>Async-ready: in Quart, FastAPI, and Starlette apps with <code>enable_async=True</code> environments, partials render on a small thread pool tied to the app’s lifespan, and templates do not change.</li>
+<li>One registration call per app, at startup. Flask, Quart, FastAPI, Starlette, or any Jinja2 environment you have lying around.</li>
+<li>A <code>render_partial(template_name, **data)</code> global inside every template. It returns <code>Markup</code>, so autoescaping leaves your fragment alone.</li>
+<li>The same function callable from Python, which makes a partial the easiest thing in your app to unit test.</li>
+<li>Async apps are welcome. Quart, FastAPI, and Starlette with <code>enable_async=True</code> environments render partials on a small thread pool tied to the app’s lifespan, and your templates do not change at all. The mechanics are in <a href="../user-guide/how-it-works.html">How it works</a>, and they are more interesting than they sound.</li>
 </ul>
-<p>Continue with <a href="../user-guide/installation.html">Installation</a> and the <a href="../user-guide/quickstart.html">Quickstart</a>.</p>
+<p>Two minutes to <a href="../user-guide/installation.html">install</a>, then the <a href="../user-guide/quickstart.html">Quickstart</a> builds that video card properly, once.</p>
 
 
 </section>

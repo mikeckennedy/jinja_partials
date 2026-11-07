@@ -1,6 +1,8 @@
 # Why partials
 
-When you build a real web app with Jinja2, the same HTML fragments show up again and again: a video card, a badge, a pagination control, a row in a table. Copying the markup into every page works until the design changes and you have to find every copy. The fix in Python code is a function with explicit arguments. jinja_partials gives templates the same thing: a [render_partial()](../reference/render_partial.md#jinja_partials.render_partial) global that renders a fragment file with exactly the data you pass it.
+It is Friday afternoon. The designer drops by with good news: the video card on your site is getting a small refresh. A rounded thumbnail, a view count with thousands separators, the author's name as a link. Fifteen minutes of work, they say. You open the templates folder and start counting. The home page has a card. The listing page has a card. The search results have a card. The "related videos" sidebar has a smaller card that is really the same card with a class on it. The email digest has a card too, and that one was copied from the listing page sometime last spring and never updated. You stop counting at fourteen.
+
+Every one of those cards started as a copy and paste, because Jinja templates made copying easy and reuse awkward. In Python you would never tolerate fourteen copies of a function. You would write it once, give it parameters, and call it. jinja_partials lets templates do exactly that:
 
 ``` html
 {% for v in videos %}
@@ -8,25 +10,25 @@ When you build a real web app with Jinja2, the same HTML fragments show up again
 {% endfor %}
 ```
 
-The fragment is an ordinary template file. It sees `video` and nothing else, so you can read its inputs at the call site, rename at the boundary (the loop variable `v` becomes `video` inside), and nest partials inside partials as deep as the design needs.
+[render_partial](../reference/render_partial.md#jinja_partials.render_partial) takes the path of a fragment file and the data it needs, renders it, and hands back safe HTML. The fragment sees `video` and nothing else. It cannot quietly depend on some page-level variable, because it never receives any. You can read its inputs at the call site, rename at the boundary (the loop's `v` becomes the card's `video`), and nest fragments inside fragments as deep as the design needs. The designer's fifteen minutes become fifteen minutes.
 
 
-# What is wrong with include and macro
+# But Jinja already has include and macro
 
-Jinja already has two reuse mechanisms, and both fall short in a different way.
+It does, and both are nearly right, which is exactly why they are frustrating.
 
-`{% include %}` hands the fragment the caller's entire context. Nothing at the call site says what the fragment needs, and renaming a variable means wrapping the include in `{% with %}`. A fragment that quietly depends on a page-level variable breaks when you reuse it somewhere that variable does not exist.
+`{% include %}` is a copy and paste that happens at render time. The fragment receives the entire context of whoever included it: every variable on the page, whether the fragment needs it or not. Nothing at the call site tells you what the fragment reads. Rename a variable on one page and the fragment breaks on that page only, and the fix is a `{% with %}` wrapper around the include, which is a parameter list wearing a disguise.
 
-`{% macro %}` has explicit parameters, which is the right idea, but a macro lives inside a template file that every page has to `{% import %}`, and a macro is not a file you can render on its own. With partials, the same `video_square.html` renders inside a page and also serves as an HTMX fragment response straight from a route.
+`{% macro %}` gets the parameters right. The trouble is where macros live. A macro is defined inside a template file, so every page that wants the card has to `{% import %}` that file first. And a macro is not itself a template you can render. When HTMX asks your server for just one card to swap into the page, you cannot hand it a macro. With partials, the same `video_square.html` renders inside a page and also serves as a fragment response straight from a route, because it was a plain template all along.
 
-The longer discussion is in [issue \#1](https://github.com/mikeckennedy/jinja_partials/issues/1) on GitHub.
+The original back-and-forth on this question is preserved in [issue \#1](https://github.com/mikeckennedy/jinja_partials/issues/1), if you enjoy that sort of thing.
 
 
-# What you get
+# What is in the box
 
-- One registration call per app, at startup, for Flask, Quart, FastAPI, Starlette, or any Jinja2 environment.
-- A `render_partial(template_name, **data)` global inside every template, returning safe `Markup` so autoescaping does not re-escape the fragment.
-- The same function callable from Python, for example in tests.
-- Async-ready: in Quart, FastAPI, and Starlette apps with `enable_async=True` environments, partials render on a small thread pool tied to the app's lifespan, and templates do not change.
+- One registration call per app, at startup. Flask, Quart, FastAPI, Starlette, or any Jinja2 environment you have lying around.
+- A `render_partial(template_name, **data)` global inside every template. It returns `Markup`, so autoescaping leaves your fragment alone.
+- The same function callable from Python, which makes a partial the easiest thing in your app to unit test.
+- Async apps are welcome. Quart, FastAPI, and Starlette with `enable_async=True` environments render partials on a small thread pool tied to the app's lifespan, and your templates do not change at all. The mechanics are in [How it works](how-it-works.md), and they are more interesting than they sound.
 
-Continue with [Installation](installation.md) and the [Quickstart](quickstart.md).
+Two minutes to [install](installation.md), then the [Quickstart](quickstart.md) builds that video card properly, once.

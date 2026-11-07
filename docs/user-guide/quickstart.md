@@ -1,6 +1,6 @@
 # Quickstart
 
-This page builds the smallest useful example with Flask. Every other framework differs only in the registration line, covered in [Frameworks](frameworks.md).
+Remember the fourteen video cards from [Why partials](why-partials.md)? This page builds one, properly, with Flask. Every other framework differs only in the registration line, and [Frameworks](frameworks.md) has those. Four files and a few minutes.
 
 
 # 1. Register once at startup
@@ -19,12 +19,12 @@ def index():
     return flask.render_template('home/index.html', videos=get_videos())
 ```
 
-Registration installs [render_partial](../reference/render_partial.md#jinja_partials.render_partial) as a global in the app's Jinja environment. Do it once, when the app is built, before it starts serving.
+That one line installs [render_partial](../reference/render_partial.md#jinja_partials.render_partial) as a global in the app's Jinja environment. Do it where the app is built, before it starts serving, and do it once. There is no need to import anything in your templates; the function is simply there, like `url_for`.
 
 
-# 2. Lay out the templates
+# 2. Give the partials a home
 
-Partials are ordinary templates. The convention this project uses is a `partials` folder under `templates/shared`:
+Partials are ordinary templates, so they can live anywhere your loader can see. The convention this project uses, and the one the examples follow, is a `partials` folder under `templates/shared`:
 
 ``` text
 templates/
@@ -37,12 +37,12 @@ templates/
         └── video_square.html
 ```
 
-Template names passed to [render_partial](../reference/render_partial.md#jinja_partials.render_partial) are paths relative to the templates root, with forward slashes and the file extension, exactly like the names you pass to `render_template`.
+When you call [render_partial](../reference/render_partial.md#jinja_partials.render_partial), the name you pass is the path relative to the templates root, forward slashes and file extension included, exactly as you would write it for `render_template`. Nothing clever, which is the point.
 
 
-# 3. Write the partials
+# 3. Write the partials, smallest first
 
-The innermost fragment renders a YouTube thumbnail. It receives a `video` object and an optional list of CSS classes:
+The innermost fragment is the YouTube thumbnail. It takes a `video` and an optional list of CSS classes:
 
 ``` html
 <!-- templates/shared/partials/video_image.html -->
@@ -52,7 +52,9 @@ The innermost fragment renders a YouTube thumbnail. It receives a `video` object
      title="{{ video.title }}">
 ```
 
-Partials nest. The video card renders the image partial inside itself:
+Notice `classes | default([])`. The fragment declares that `classes` is optional by handling its absence itself. Callers that do not care never have to know it exists.
+
+Now the card. It wraps the thumbnail in a link, adds the author and the view count, and it does so by rendering the image partial inside itself. Partials nest; that is half their charm.
 
 ``` html
 <!-- templates/shared/partials/video_square.html -->
@@ -64,7 +66,7 @@ Partials nest. The video card renders the image partial inside itself:
 ```
 
 
-# 4. Use them from a page
+# 4. Call it from a page
 
 ``` html
 <!-- templates/home/index.html -->
@@ -78,12 +80,12 @@ Partials nest. The video card renders the image partial inside itself:
 {% endblock %}
 ```
 
-The loop variable is `v` in the page and `video` inside the partial. That renaming is the normal way to use partials: the fragment declares what it needs, and the caller maps its own data onto those names.
+The page calls the loop variable `v`. The card calls it `video`. That renaming at the boundary is not a workaround; it is how partials are meant to be used. The fragment names what it needs, and each caller maps its own data onto those names. The listing page, the search results, and the email digest can all call this one file with whatever they happen to have.
 
 
 # 5. What you should see
 
-Run the app and open the page. Each video renders as a card like this, with the image fragment inlined where the nested [render_partial](../reference/render_partial.md#jinja_partials.render_partial) call was:
+Run the app and open the page. Each video renders as a card like this, with the thumbnail inlined where the nested [render_partial](../reference/render_partial.md#jinja_partials.render_partial) call used to be:
 
 ``` html
 
@@ -97,6 +99,6 @@ Run the app and open the page. Each video renders as a card like this, with the 
 
 ```
 
-If instead you see the markup itself on the page as text (`<div>` and friends), the partial was inserted as an escaped string. That happens on the plain Jinja2 path when `markup=True` was not passed. [Troubleshooting](troubleshooting.md) covers that and the other errors you can hit.
+If instead the page shows you the HTML itself as text, angle brackets and all, the fragment was inserted as an escaped string rather than as markup. On Flask that does not happen, but on the plain Jinja2 path it is the single most common surprise, and [Troubleshooting](troubleshooting.md) has the one-word fix along with every other error you are likely to meet.
 
-The full version of this app, with the layout, CSS, and a small JSON database, is the [Flask example](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask) in the repository.
+The complete version of this app, with the layout, the CSS, and a small JSON database of videos, is the [Flask example](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask) in the repository. It is the app behind the screenshot on the README.

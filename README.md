@@ -5,9 +5,7 @@ Simple reuse of partial HTML page templates in the Jinja template language for P
 
 ## Overview
 
-When building real-world web apps with Jinja2, it's easy to end up with repeated HTML fragments.
-Just like organizing code for reuse, it would be ideal to reuse smaller sections of HTML template code.
-That's what this library is all about.
+Every real Jinja2 app ends up with the same HTML fragment copied into a dozen templates: a video card, a badge, a table row. The day the design changes, you go hunting for every copy. In Python you would write a function with parameters and call it. jinja_partials lets your templates do exactly that: `render_partial('shared/partials/video_square.html', video=v)` renders a fragment file with the data you hand it, and nothing else. Fragments nest, the data flow is explicit, and the same fragment can serve a full page or an HTMX swap.
 
 ## Documentation
 

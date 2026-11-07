@@ -1,10 +1,10 @@
 ---
 title: "Frameworks"
-description: "Registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and what differs between them."
+description: "One template-side API, five ways in: registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and the one rule async apps must follow."
 guide-section: "Using jinja_partials"
 ---
 
-Every framework gets the same template-side API. What differs is the one registration call and, for async apps, how pages themselves are rendered. Register exactly once per app, at startup.
+Your templates never find out which framework is running them. `{{ render_partial(...) }}` looks identical in a Flask app from 2019 and a FastAPI app you started this morning. What changes is one registration line, and for the async frameworks, how you render the page that contains the partials. Register exactly once per app, at startup, and the rest of this page is about which line to write.
 
 ## Flask
 
@@ -16,7 +16,7 @@ app = flask.Flask(__name__)
 jinja_partials.register_extensions(app)
 ```
 
-This is the only path that renders partials through `flask.render_template`. Context processors, the `template_rendered` signal, `g`, `request`, and `session` all work inside partials exactly as in a page.
+Flask is the original home of this library, and it gets the richest behavior. This is the only path that renders partials through `flask.render_template`, so everything you expect in a page is also there in a partial: context processors, the `template_rendered` signal, `g`, `request`, and `session`. If a partial wants the current user from a context processor, this is the registration that gives it one.
 
 ## Quart
 
@@ -28,7 +28,7 @@ app = Quart(__name__)
 jinja_partials.register_quart_extensions(app)
 ```
 
-Quart templates are async. Registration adds `before_serving` and `after_serving` hooks that create and shut down a dedicated thread pool for rendering partials. Pages render with `await render_template(...)` as usual.
+Quart templates are async, which is where things get interesting (see [the page-level rule](#the-page-level-rule-for-async-environments) below and [How it works](07-how-it-works.qmd) for the full story). Registration adds `before_serving` and `after_serving` hooks that create and later shut down a dedicated thread pool for rendering partials. Pages render with `await render_template(...)` exactly as they always did.
 
 ## FastAPI
 
@@ -42,7 +42,7 @@ templates = Jinja2Templates(directory='templates')
 jinja_partials.register_fastapi_extensions(app, templates)
 ```
 
-Registration wraps the app's lifespan so the render pool lives exactly as long as the app is serving. An existing `lifespan=` on the app keeps running, including the state it yields.
+Registration wraps the app's lifespan, so the render pool exists for exactly as long as the app is serving and not a moment longer. If you already pass `lifespan=` to FastAPI, it keeps running, startup and shutdown both, and whatever state it yields still reaches your routes.
 
 ## Starlette
 
@@ -56,11 +56,11 @@ app = Starlette(routes=[...])
 jinja_partials.register_starlette_extensions(templates, app=app)
 ```
 
-Note the argument order: `templates` comes first and `app` is a keyword. Passing the app is optional but recommended. Without it, async renders go through a shared module-level pool instead of one tied to the app's lifespan, and `max_workers` has no effect.
+Read that last line twice. `templates` comes first, and `app` is a keyword. It is the reverse of the FastAPI call, for the historical reason that Starlette support predates the app-aware version and the signature kept its original first argument. Passing the app is optional but recommended: with it you get a pool tied to the lifespan and a working `max_workers`; without it, async renders go through a shared module-level pool and `max_workers` is ignored.
 
 ## The page-level rule for async environments
 
-Quart, FastAPI, and Starlette apps commonly use a Jinja environment created with `enable_async=True`. jinja_partials handles partials in those environments without any template changes. The page itself is your responsibility: render it with `await template.render_async(...)` and return an `HTMLResponse`.
+Quart, FastAPI, and Starlette apps usually create their Jinja environment with `enable_async=True`. jinja_partials handles partials in those environments without any template changes. The page that contains them is your job, and there is exactly one rule: render it with `await template.render_async(...)` and return an `HTMLResponse`.
 
 ```python
 from fastapi.responses import HTMLResponse
@@ -72,13 +72,13 @@ async def index() -> HTMLResponse:
     return HTMLResponse(await template.render_async(items=items))
 ```
 
-`templates.TemplateResponse(...)` on an async environment calls the synchronous `render()`, which runs `asyncio.run()` inside the already running event loop and fails with `RuntimeError: asyncio.run() cannot be called from a running event loop`. On a synchronous environment, `TemplateResponse` is fine and partials still work.
+The tempting alternative, `templates.TemplateResponse(...)`, calls the synchronous `render()`. On an async template that means `asyncio.run()` being invoked from inside the event loop that is already running your request, and Python declines with `RuntimeError: asyncio.run() cannot be called from a running event loop`. The partials were never the problem; the page was. On a synchronous environment, `TemplateResponse` is perfectly fine and partials work the same way.
 
-The [FastAPI](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_fastapi), [Starlette](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_starlette), and [Quart](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_quart) examples in the repository all run this way.
+The [FastAPI](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_fastapi), [Starlette](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_starlette), and [Quart](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_quart) examples in the repository all follow this rule, so you can copy a working route rather than remembering it.
 
 ## Plain Jinja2
 
-For any other framework, or for rendering outside a web app, register with the environment directly:
+No framework? A framework the library has not heard of? Rendering email templates from a worker process? Register with the environment directly:
 
 ```python
 from jinja2 import Environment, FileSystemLoader
@@ -88,11 +88,11 @@ env = Environment(loader=FileSystemLoader('templates'), autoescape=True)
 jinja_partials.register_environment(env, markup=True)
 ```
 
-`register_environment` is the one registration function whose `markup` parameter defaults to `False`. With autoescaping on, leaving it at the default inserts the fragment as escaped text. Pass `markup=True`.
+The `markup=True` is not decoration. `register_environment` is the one registration function whose `markup` defaults to `False`, kept that way for backwards compatibility. With autoescaping on, the default inserts your fragment as escaped text, and you get a page full of visible angle brackets. Pass `markup=True` and move on with your life.
 
 ## The declarative extension
 
-`PartialsJinjaExtension` does the same registration (always with `markup=True`) from the environment's `extensions` list, which suits frameworks that configure Jinja declaratively:
+`PartialsJinjaExtension` performs the same registration (always with `markup=True`) from the environment's `extensions` list. It suits frameworks and settings files that configure Jinja declaratively rather than in code:
 
 ```python
 from jinja2 import Environment, FileSystemLoader
@@ -103,9 +103,9 @@ env = Environment(
 )
 ```
 
-On a Flask app you can add it with `app.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')`. Partials then render through the Jinja environment rather than `flask.render_template`, so context processor values and the `template_rendered` signal are not applied inside partials. `g`, `request`, and `session` remain available because Flask installs them as environment globals. If your partials read context processor values, use `register_extensions(app)` instead.
+On a Flask app you can add it with `app.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')`, and it works, with one subtlety. Partials then render through the Jinja environment rather than `flask.render_template`, so context processor values and the `template_rendered` signal are not applied inside them. `g`, `request`, and `session` are still there, because Flask installs those as environment globals rather than through context processors. If your partials read context processor values, use `register_extensions(app)` and keep the extension for environments that are not Flask.
 
-## Summary of the differences
+## The same table, at a glance
 
 | Registration | Partials render through | `markup` | Flask context processors in partials |
 | --- | --- | --- | --- |
@@ -117,4 +117,4 @@ On a Flask app you can add it with `app.jinja_env.add_extension('jinja_partials.
 | `register_environment(env, markup=...)` | `env` | defaults to `False` | no |
 | `PartialsJinjaExtension` | the environment it is loaded into | always `True` | no |
 
-Every one of these is built on `generate_render_partial(renderer)`. [How it works](07-how-it-works.qmd) explains the pieces, and [Troubleshooting](05-troubleshooting.qmd) lists the errors each path can produce.
+Every row is built on the same primitive, `generate_render_partial(renderer)`, and [How it works](07-how-it-works.qmd) shows how little code sits behind this table. When one of these paths misbehaves, [Troubleshooting](05-troubleshooting.qmd) names the symptom and the fix.

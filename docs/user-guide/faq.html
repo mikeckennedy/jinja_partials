@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Short answers about partials versus include and macro, HTMX, layouts, calling render_partial from Python, and the async thread pool.">
+<meta name="description" content="Short answers to the questions that come up most about jinja_partials: include and macro, HTMX, layouts, calling from Python, the thread pool, and registering twice.">
 
 <title>FAQ – Jinja Partials | Jinja Partials</title>
 <style>
@@ -92,12 +92,12 @@ ul.task-list li input[type="checkbox"] {
   <link rel="canonical" href="https://mkennedy.codes/docs/jinja-partials/user-guide/faq.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="FAQ – Jinja Partials | Jinja Partials">
-  <meta property="og:description" content="Short answers about partials versus include and macro, HTMX, layouts, calling render_partial from Python, and the async thread pool.">
+  <meta property="og:description" content="Short answers to the questions that come up most about jinja_partials: include and macro, HTMX, layouts, calling from Python, the thread pool, and registering twice.">
   <meta property="og:url" content="https://mkennedy.codes/docs/jinja-partials/user-guide/faq.html">
   <meta property="og:site_name" content="Jinja Partials">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="FAQ – Jinja Partials | Jinja Partials">
-  <meta name="twitter:description" content="Short answers about partials versus include and macro, HTMX, layouts, calling render_partial from Python, and the async thread pool.">
+  <meta name="twitter:description" content="Short answers to the questions that come up most about jinja_partials: include and macro, HTMX, layouts, calling from Python, the thread pool, and registering twice.">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -248,7 +248,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#what-does-a-partial-see" id="toc-what-does-a-partial-see" class="nav-link" data-scroll-target="#what-does-a-partial-see">What does a partial see?</a></li>
   <li><a href="#why-is-my-fragment-escaped" id="toc-why-is-my-fragment-escaped" class="nav-link" data-scroll-target="#why-is-my-fragment-escaped">Why is my fragment escaped?</a></li>
   <li><a href="#do-my-templates-change-for-async-apps" id="toc-do-my-templates-change-for-async-apps" class="nav-link" data-scroll-target="#do-my-templates-change-for-async-apps">Do my templates change for async apps?</a></li>
-  <li><a href="#is-the-thread-pool-safe-to-use-under-load" id="toc-is-the-thread-pool-safe-to-use-under-load" class="nav-link" data-scroll-target="#is-the-thread-pool-safe-to-use-under-load">Is the thread pool safe to use under load?</a></li>
+  <li><a href="#is-the-thread-pool-safe-under-load" id="toc-is-the-thread-pool-safe-under-load" class="nav-link" data-scroll-target="#is-the-thread-pool-safe-under-load">Is the thread pool safe under load?</a></li>
   <li><a href="#what-happens-if-i-register-twice" id="toc-what-happens-if-i-register-twice" class="nav-link" data-scroll-target="#what-happens-if-i-register-twice">What happens if I register twice?</a></li>
   <li><a href="#is-there-a-version-for-other-template-languages" id="toc-is-there-a-version-for-other-template-languages" class="nav-link" data-scroll-target="#is-there-a-version-for-other-template-languages">Is there a version for other template languages?</a></li>
   <li><a href="#which-python-versions-are-supported" id="toc-which-python-versions-are-supported" class="nav-link" data-scroll-target="#which-python-versions-are-supported">Which Python versions are supported?</a></li>
@@ -265,7 +265,7 @@ ul.task-list li input[type="checkbox"] {
 
 <div>
   <div class="description">
-    Short answers about partials versus include and macro, HTMX, layouts, calling render_partial from Python, and the async thread pool.
+    Short answers to the questions that come up most about jinja_partials: include and macro, HTMX, layouts, calling from Python, the thread pool, and registering twice.
   </div>
 </div>
 
@@ -282,42 +282,42 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Short answers to the questions that come up most. Each links to the page with the full explanation.</p>
+<p>Short answers, each with a link to the page that has the long one.</p>
 <section id="why-not-just-use-include-or-macro" class="level1">
 <h1>Why not just use include or macro?</h1>
-<p>They are close, and each falls short differently. <code>{% include %}</code> passes the whole caller context implicitly, so a fragment’s inputs are invisible at the call site. <code>{% macro %}</code> has explicit parameters but must be imported into every page and is not a file you can render on its own. <a href="../user-guide/why-partials.html">Why partials</a> has the longer version, and <a href="https://github.com/mikeckennedy/jinja_partials/issues/1">issue #1</a> has the original discussion.</p>
+<p>Because each is nearly right in a different way. <code>{% include %}</code> hands the fragment the entire caller context, so nothing at the call site says what the fragment reads. <code>{% macro %}</code> has proper parameters but must be imported into every page and is not a file you can render on its own. <a href="../user-guide/why-partials.html">Why partials</a> tells the story, and <a href="https://github.com/mikeckennedy/jinja_partials/issues/1">issue #1</a> has the original debate.</p>
 </section>
 <section id="does-this-work-with-htmx" class="level1">
 <h1>Does this work with HTMX?</h1>
-<p>Yes, and it is a good fit. A partial is an ordinary template, so a route can return it directly for an <code>hx-get</code> swap with <code>flask.render_template('shared/partials/video_square.html', video=v)</code>, while pages keep rendering the same fragment inline with <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a>.</p>
+<p>It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an <code>hx-get</code> swap with <code>flask.render_template('shared/partials/video_square.html', video=v)</code>, while your pages keep rendering the very same file inline with <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a>. One card, two delivery routes.</p>
 </section>
 <section id="can-a-partial-extend-a-layout" class="level1">
 <h1>Can a partial extend a layout?</h1>
-<p>Yes. A partial is rendered like any other template, so <code>{% extends %}</code>, <code>{% block %}</code>, <code>{% include %}</code>, and macros all work inside it. The library’s tests render a partial that extends a layout.</p>
+<p>Yes. A partial is rendered like any other template, so <code>{% extends %}</code>, <code>{% block %}</code>, <code>{% include %}</code>, and macros all work inside it. The library’s test suite renders a partial that extends a layout, mostly to prove nobody accidentally forbids it.</p>
 </section>
 <section id="can-i-call-render_partial-from-python" class="level1">
 <h1>Can I call render_partial from Python?</h1>
-<p>Yes. In a Flask request context, <code>jinja_partials.render_partial(name, **data)</code> uses <code>flask.render_template</code>. For other frameworks, the bound function is the <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> global on the environment: <code>templates.env.globals['render_partial'](name, **data)</code>. <a href="../user-guide/testing.html">Testing partials</a> shows both.</p>
+<p>Yes, and it is the best way to test one. In a Flask request context, <code>jinja_partials.render_partial(name, **data)</code> goes through <code>flask.render_template</code>. For the other frameworks, the bound function is the <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> global on the environment: <code>templates.env.globals['render_partial'](name, **data)</code>. <a href="../user-guide/testing.html">Testing partials</a> shows both.</p>
 </section>
 <section id="what-does-a-partial-see" class="level1">
 <h1>What does a partial see?</h1>
-<p>Only the keyword arguments you pass to <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a>, plus the environment’s globals. On the Flask <a href="../reference/register_extensions.html#jinja_partials.register_extensions" class="gdls-link gdls-code">register_extensions</a> path, context processors, <code>g</code>, <code>request</code>, and <code>session</code> are also applied, because partials render through <code>flask.render_template</code> there.</p>
+<p>Only the keyword arguments you passed, plus the environment’s globals. On the Flask <a href="../reference/register_extensions.html#jinja_partials.register_extensions" class="gdls-link gdls-code">register_extensions</a> path, context processors, <code>g</code>, <code>request</code>, and <code>session</code> are applied too, because partials render through <code>flask.render_template</code> there. Everywhere else, if you did not pass it, it is not there, by design.</p>
 </section>
 <section id="why-is-my-fragment-escaped" class="level1">
 <h1>Why is my fragment escaped?</h1>
-<p><a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> returned a <code>str</code> instead of <code>Markup</code>. On the plain Jinja2 path pass <code>markup=True</code> to <a href="../reference/register_environment.html#jinja_partials.register_environment" class="gdls-link gdls-code">register_environment</a>. See <a href="../user-guide/troubleshooting.html#the-partial-shows-up-as-text-not-html">Troubleshooting</a>.</p>
+<p><a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> returned a <code>str</code> instead of <code>Markup</code>. On the plain Jinja2 path, pass <code>markup=True</code> to <a href="../reference/register_environment.html#jinja_partials.register_environment" class="gdls-link gdls-code">register_environment</a>. <a href="../user-guide/troubleshooting.html#the-partial-shows-up-as-text-not-html">Troubleshooting</a> has the details.</p>
 </section>
 <section id="do-my-templates-change-for-async-apps" class="level1">
 <h1>Do my templates change for async apps?</h1>
-<p>No.&nbsp;<code>{ render_partial(...) }</code> is identical in Quart, FastAPI, and Starlette. The one change is at the page level in FastAPI and Starlette: render pages with <code>await template.render_async(...)</code> and return an <code>HTMLResponse</code> when the environment has <code>enable_async=True</code>. See <a href="../user-guide/frameworks.html#the-page-level-rule-for-async-environments">Frameworks</a>.</p>
+<p>No.&nbsp;<code>{ render_partial(...) }</code> is identical in Quart, FastAPI, and Starlette. The one change is at the page level in FastAPI and Starlette: render pages with <code>await template.render_async(...)</code> and return an <code>HTMLResponse</code> when the environment has <code>enable_async=True</code>. See <a href="../user-guide/frameworks.html#the-page-level-rule-for-async-environments">the page-level rule</a>.</p>
 </section>
-<section id="is-the-thread-pool-safe-to-use-under-load" class="level1">
-<h1>Is the thread pool safe to use under load?</h1>
-<p>Yes. Each top-level partial render takes one worker while it runs and queues when the pool is full. Nested partials render on their own thread, so nesting depth cannot exhaust the pool. The pool is created when the app starts serving and shut down when it stops, including after a failed startup. <a href="../user-guide/how-it-works.html">How it works</a> describes the tiers.</p>
+<section id="is-the-thread-pool-safe-under-load" class="level1">
+<h1>Is the thread pool safe under load?</h1>
+<p>Yes. Each top-level partial render takes one worker while it runs and queues when the pool is full. Nested partials render on their own thread, so nesting depth cannot exhaust the pool. The pool is created when the app starts serving and shut down when it stops, including after a failed startup. <a href="../user-guide/how-it-works.html">How it works</a> has the tiers and the reasoning.</p>
 </section>
 <section id="what-happens-if-i-register-twice" class="level1">
 <h1>What happens if I register twice?</h1>
-<p>On Flask and plain Jinja2 the second call simply replaces the global. On FastAPI and Starlette each call wraps the lifespan again and on Quart each call adds another pair of serving hooks, so register once, where the app is built.</p>
+<p>On Flask and plain Jinja2, the second call simply replaces the global. On FastAPI and Starlette, each call wraps the lifespan again; on Quart, each call adds another pair of serving hooks. Register once, where the app is built.</p>
 </section>
 <section id="is-there-a-version-for-other-template-languages" class="level1">
 <h1>Is there a version for other template languages?</h1>
@@ -325,7 +325,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="which-python-versions-are-supported" class="level1">
 <h1>Which Python versions are supported?</h1>
-<p>3.10 and newer. See <a href="../user-guide/installation.html">Installation</a>.</p>
+<p>3.10 and newer. Older interpreters get 0.3.0 from pip; see <a href="../user-guide/installation.html">Installation</a>.</p>
 
 
 </section>

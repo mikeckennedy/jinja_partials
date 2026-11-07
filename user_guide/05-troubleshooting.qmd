@@ -1,73 +1,73 @@
 ---
 title: "Troubleshooting"
-description: "What each jinja_partials error or wrong output means and how to fix it: escaped HTML, PartialsException, TemplateNotFound, UndefinedError, asyncio.run errors, and missing context."
+description: "A field guide to every error and wrong output jinja_partials can produce: what you see, what it means, and the change that fixes it."
 guide-section: "Using jinja_partials"
 ---
 
-Each entry is a symptom you can see on the page or in a traceback, what causes it, and the change that fixes it.
+Think of this page as a field guide. Each entry starts with what you actually see, on the page or in a traceback, because that is what you have in front of you when you arrive here. Then the cause, then the fix. Most of them are one line.
 
 ## The partial shows up as text, not HTML
 
-Symptom: the page displays `<div>` and friends literally, or view-source shows `&lt;div&gt;`.
+What you see: the page displays `<div>` and friends literally, as if someone printed the template. View source shows `&lt;div&gt;`.
 
-Cause: the environment has autoescaping on and `render_partial` returned a plain `str`, so Jinja escaped it on insertion. This happens on the plain Jinja2 path, because `register_environment` defaults to `markup=False`, or when you built your own renderer with `generate_render_partial(renderer, markup=False)`.
+What happened: the environment has autoescaping on, `render_partial` returned a plain `str` instead of `Markup`, and Jinja did its job and escaped it. The guilty party is almost always the plain Jinja2 path, because `register_environment` defaults to `markup=False`. You can also get here by building your own renderer with `generate_render_partial(renderer, markup=False)`.
 
-Fix: pass `markup=True` to `register_environment` or `generate_render_partial`. The framework registrations and `PartialsJinjaExtension` already use `markup=True`. Do not work around it with `| safe` at every call site.
+The fix: pass `markup=True` to `register_environment` or `generate_render_partial`. The framework registrations and `PartialsJinjaExtension` already do. Resist the urge to sprinkle `| safe` over every call site; that fixes the symptom fourteen times and the cause zero times.
 
 ## PartialsException: No renderer specified
 
-Cause: `render_partial` was called from Python with no `renderer` and Flask is not installed, so there is no default renderer to fall back to.
+What happened: `render_partial` was called from Python with no `renderer` argument, and Flask is not installed, so there was no default renderer to fall back to. This is the library telling you it does not know how to render anything yet.
 
-Fix: inside a web app, register with your framework and call the global from templates. From Python, either pass `renderer=` explicitly or bind one once with `generate_render_partial(renderer)`. See [custom renderers](07-how-it-works.qmd#one-primitive-and-some-sugar).
+The fix: inside a web app, register with your framework and use the global from templates. From Python, pass `renderer=` explicitly, or bind one once with `generate_render_partial(renderer)` as shown in [custom renderers](07-how-it-works.qmd#one-primitive-and-some-sugar).
 
 ## PartialsException: Install Flask to use register_extensions
 
-The same message exists for Quart, FastAPI, and Starlette. The registration function was called but its framework could not be imported in this interpreter.
+There are Quart, FastAPI, and Starlette editions of this message too. You called a registration function, and its framework could not be imported in this interpreter. Often this is a second virtual environment, a Docker image missing a dependency, or a test runner with a different Python than the one you ran the app with.
 
-Fix: install the framework into the same environment as jinja_partials. The library never installs frameworks for you.
+The fix: install the framework into the same environment as jinja_partials. The library never installs frameworks on your behalf; see [Installation](02-installation.qmd#bring-your-own-framework).
 
 ## AttributeError: 'Starlette' object has no attribute 'env'
 
-Cause: `register_starlette_extensions` was called with the app first, following the FastAPI argument order.
+What happened: `register_starlette_extensions` was called with the app first, which is the FastAPI order. The function took your app, assumed it was a `Jinja2Templates`, and asked it for `.env`.
 
-Fix: the Starlette signature is `register_starlette_extensions(templates, app=app)`. Templates first, app as a keyword.
+The fix: the Starlette signature is `register_starlette_extensions(templates, app=app)`. Templates first, app as a keyword. Yes, it is the reverse of FastAPI; [Frameworks](04-frameworks.qmd#starlette) explains why.
 
 ## jinja2.exceptions.TemplateNotFound: shared/partials/video_square.html
 
-Cause: the name does not resolve against the environment's loader.
+What happened: the name you passed does not resolve against the environment's loader. The error helpfully prints the name it looked for, so compare it character by character with the file on disk.
 
-Fix: template names are paths relative to the templates root, with forward slashes and the extension. Check the loader's search path, including a blueprint's `template_folder` in Flask, and watch for a stray leading slash or a missing subfolder.
+The fix: template names are paths relative to the templates root, forward slashes, extension included. Look for a stray leading slash, a missing subfolder, or a blueprint in Flask whose `template_folder` is not what you think it is.
 
 ## jinja2.exceptions.UndefinedError: 'video' is undefined
 
-Cause: the partial reads a variable the caller did not pass. Partials never see the caller's context; `{% include %}` does, but `render_partial` is deliberately explicit.
+What happened: the partial reads a variable the caller never passed. This is not a bug in the library; it is the library's whole philosophy showing up in a traceback. Partials never see the caller's context. `{% include %}` would have silently handed over the page's `video`; `render_partial` makes you say it out loud.
 
-Fix: pass every value the fragment needs as a keyword argument, `render_partial('shared/partials/video_square.html', video=v)`, and use `| default(...)` for optional inputs such as `(classes | default([])) | join(' ')`.
+The fix: pass every value the fragment needs as a keyword argument, `render_partial('shared/partials/video_square.html', video=v)`. For optional inputs, let the fragment handle absence with `| default(...)`, the way the thumbnail partial handles `classes`.
 
 ## RuntimeError: asyncio.run() cannot be called from a running event loop
 
-Cause: a FastAPI or Starlette route rendered the page with `templates.TemplateResponse(...)` or `template.render(...)` on an environment created with `enable_async=True`. Synchronous rendering of an async template runs `asyncio.run()` inside the server's event loop.
+What happened: a FastAPI or Starlette route rendered the page with `templates.TemplateResponse(...)` or `template.render(...)` on an environment created with `enable_async=True`. Rendering an async template synchronously means calling `asyncio.run()` from inside the server's event loop, which Python refuses. Note the word page: the partials inside it were not involved.
 
-Fix: render the page with `await template.render_async(...)` and return an `HTMLResponse`. Partials inside the page need no change; jinja_partials renders them on its thread pool. See [the page-level rule](04-frameworks.qmd#the-page-level-rule-for-async-environments).
+The fix: render the page with `await template.render_async(...)` and return an `HTMLResponse`. The partials need no change; jinja_partials renders them on its own thread pool. [The page-level rule](04-frameworks.qmd#the-page-level-rule-for-async-environments) has the code.
 
 ## Context processor values are missing inside a partial
 
-Cause: on Flask, the partial was registered with `PartialsJinjaExtension` and renders through the Jinja environment, which does not apply `@app.context_processor` functions. `g`, `request`, and `session` still work on that path.
+What happened: on Flask, you registered with `PartialsJinjaExtension`, and partials render through the Jinja environment, which does not run `@app.context_processor` functions. `g`, `request`, and `session` still work on that path, which can make the missing value feel random. It is not; only context processors and the `template_rendered` signal are skipped.
 
-Fix: use `jinja_partials.register_extensions(app)`, the only registration that renders partials through `flask.render_template`.
+The fix: use `jinja_partials.register_extensions(app)`, the only registration that renders partials through `flask.render_template`.
 
 ## A request hangs while rendering nested partials
 
-Cause: in versions up to 0.3.2, a nested partial in an async app waited on the same thread pool its outer partial was occupying. Nesting as deep as `max_workers`, or enough concurrent requests with nested partials, blocked the pool permanently.
+What happened: in versions up to 0.3.2, a nested partial in an async app waited on the same thread pool its outer partial was sitting in. Nest as deep as `max_workers`, or get enough concurrent requests with nested partials at once, and every worker was waiting for a worker. The pool never recovered.
 
-Fix: upgrade. Nested renders now run on their own short-lived thread, so nesting depth never counts against `max_workers`. If you cannot upgrade, raise `max_workers` well above the deepest nesting multiplied by expected concurrency.
+The fix: upgrade. Nested renders now run on their own short-lived thread, so nesting depth never counts against `max_workers`. If you cannot upgrade yet, raise `max_workers` well above the deepest nesting multiplied by the concurrency you expect.
 
 ## The lifespan or startup hook runs twice
 
-Cause: `register_fastapi_extensions` or `register_starlette_extensions` was called twice on one app. Each call wraps the current lifespan again; there is no idempotency guard. Quart registration similarly adds a second pair of serving hooks.
+What happened: `register_fastapi_extensions` or `register_starlette_extensions` was called twice on one app. Each call wraps whatever lifespan is there, including the previous wrap; there is no idempotency guard. A second Quart registration likewise adds another pair of serving hooks. The usual culprit is an app factory that registers, plus a module that registers again at import.
 
-Fix: register once, where the app is constructed. If you register inside an app factory, make sure the factory is the only caller.
+The fix: register once, where the app is constructed, and make that the only caller.
 
 ## Nothing above matches
 
-Open an issue at [github.com/mikeckennedy/jinja_partials/issues](https://github.com/mikeckennedy/jinja_partials/issues) with the registration call you used, the framework and its version, and the traceback.
+Open an issue at [github.com/mikeckennedy/jinja_partials/issues](https://github.com/mikeckennedy/jinja_partials/issues) with the registration call you used, the framework and its version, and the traceback. New entries in this field guide come from exactly those reports.

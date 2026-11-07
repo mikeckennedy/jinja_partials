@@ -1,19 +1,19 @@
 # How it works
 
-The whole library is one module. Understanding its three layers explains every behavior described elsewhere in this guide.
+The whole library is one file, and you can read it in a coffee break. This page is the guided tour. There are three layers, and once you have seen them, every rule elsewhere in this guide stops being a rule to memorize and becomes an obvious consequence.
 
 
 # One primitive and some sugar
 
-`render_partial(template_name, renderer=None, markup=True, **data)` is the core. It calls `renderer(template_name, **data)` and, when `markup` is true, wraps the result in `markupsafe.Markup` so autoescaping leaves the fragment alone. With no renderer it falls back to `flask.render_template`, or raises [PartialsException](../reference/PartialsException.md#jinja_partials.PartialsException) when Flask is not installed.
+At the center is `render_partial(template_name, renderer=None, markup=True, **data)`. It does two things. It calls `renderer(template_name, **data)`, and if `markup` is true it wraps the result in `markupsafe.Markup`, which is Jinja's way of saying "this string is already HTML, do not escape it again." With no renderer it falls back to `flask.render_template`, and if Flask is not around either, it raises [PartialsException](../reference/PartialsException.md#jinja_partials.PartialsException) rather than guess.
 
-`generate_render_partial(renderer, markup=True)` is `functools.partial` over [render_partial](../reference/render_partial.md#jinja_partials.render_partial) with the renderer bound. Every `register_*` function builds a framework-specific `renderer(template_name, **data) -> str` and installs the bound function as a Jinja global:
+`generate_render_partial(renderer, markup=True)` is `functools.partial` over that function with the renderer baked in. Every `register_*` function in the library is the same three-step recipe: build a framework-specific `renderer(template_name, **data) -> str`, bind it, install the result as a Jinja global.
 
 ``` python
 env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer, markup=True))
 ```
 
-That is also how you support a framework the library does not know about: write the renderer, bind it, install it.
+That recipe is also the extension point. A framework the library has never heard of needs about three lines:
 
 ``` python
 def renderer(template_name: str, **data) -> str:
@@ -22,34 +22,36 @@ def renderer(template_name: str, **data) -> str:
 my_env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))
 ```
 
-Because a partial renders through its own `renderer` call, it gets a fresh context containing only `data`. That is the mechanism behind the rule that partials see only what you pass them.
+Look at what the renderer receives: a name and `data`, nothing else. Each partial is rendered by its own `renderer` call with a fresh context built from `data` alone. That is the entire mechanism behind "a partial sees only what you pass it." There is no context-hiding code anywhere, because there is no shared context to hide.
 
 
-# Markup defaults
+# Markup defaults, and why one of them is different
 
-[render_partial](../reference/render_partial.md#jinja_partials.render_partial) and [generate_render_partial](../reference/generate_render_partial.md#jinja_partials.generate_render_partial) default to `markup=True`. The framework registrations and [PartialsJinjaExtension](../reference/PartialsJinjaExtension.md#jinja_partials.PartialsJinjaExtension) hardcode `markup=True`. [register_environment](../reference/register_environment.md#jinja_partials.register_environment) defaults to `markup=False` for backwards compatibility, which is why the plain Jinja2 path is the one place you have to say `markup=True` yourself. The type overloads encode this: `markup=True` returns `Markup` and `markup=False` returns `str`.
+[render_partial](../reference/render_partial.md#jinja_partials.render_partial) and [generate_render_partial](../reference/generate_render_partial.md#jinja_partials.generate_render_partial) default to `markup=True`. The framework registrations and [PartialsJinjaExtension](../reference/PartialsJinjaExtension.md#jinja_partials.PartialsJinjaExtension) hardcode `markup=True`. [register_environment](../reference/register_environment.md#jinja_partials.register_environment) alone defaults to `markup=False`, because it did when it was first released and changing it would silently alter output for existing users. So the plain Jinja2 path is the one place you have to say `markup=True` yourself. The type overloads encode all of this: `markup=True` returns `Markup`, `markup=False` returns `str`, and your type checker can tell you which you have.
 
 
 # Bridging async environments
 
-Quart, FastAPI, and Starlette apps typically build their Jinja environment with `enable_async=True`. Templates in such an environment can only be rendered with `await template.render_async(...)`, but a Jinja expression like `{ render_partial(...) }` runs synchronously inside the page render and cannot await anything.
+Here is the interesting part. Quart, FastAPI, and Starlette apps typically build their Jinja environment with `enable_async=True`. A template in such an environment can only be rendered with `await template.render_async(...)`. Meanwhile, `{ render_partial(...) }` is a Jinja expression, evaluated synchronously in the middle of rendering the page, and a Jinja expression cannot await anything. So the partial needs an `await`, and the only place it can run from is a place that cannot `await`.
 
-The renderer therefore submits `asyncio.run(template.render_async(**data))` to a `ThreadPoolExecutor` and blocks on the result. The worker thread has no running loop, so `asyncio.run` is legal there. The calling thread, which may be the server's event loop, waits for the fragment. This blocking is a deliberate tradeoff: partials are small and fast, and the alternative would require changing every template.
+The way across is a thread. The renderer submits `asyncio.run(template.render_async(**data))` to a `ThreadPoolExecutor` and blocks on the result. The worker thread has no event loop of its own, so `asyncio.run` is legal there and spins one up. The calling thread, which may well be the server's event loop, waits for the fragment to come back. That wait is a deliberate tradeoff: partials are small and fast, and the alternative would be a different template syntax for async apps. Templates staying identical across frameworks is worth a short block.
 
-A nested partial is rendered from inside a worker thread that is itself blocked waiting for the outer render. Submitting the nested render back to the same pool could wait on a worker that never frees up, so nested renders run on a short-lived dedicated thread instead. `max_workers` only bounds how many top-level partial renders are in flight at once; nesting depth does not count against it.
+Nesting adds a twist. A nested partial is rendered from inside a worker thread that is itself blocked, waiting for the outer render to finish. If the nested render were submitted to the same pool, it would be waiting for a worker while occupying one. Nest as deep as the pool is wide, or get enough concurrent requests doing it, and every worker is waiting for a worker, forever. That bug shipped in 0.3.2. Nested renders now run on a short-lived dedicated thread instead, so `max_workers` only bounds how many top-level partial renders are in flight at once, and nesting depth does not count against it.
 
 
 # Three executor tiers
 
-Which pool a render uses depends on how you registered and whether the app is serving.
+Which pool a render lands in depends on how you registered and whether the app is serving.
 
-1.  A dedicated pool, created when the app starts serving and shut down when it stops. FastAPI and Starlette get it by wrapping `app.router.lifespan_context`; the pool is stored on `app.state.jinja_partials_executor`. Quart gets it through `before_serving` and `after_serving` hooks; the pool is stored in `app.extensions['jinja_partials_executor']`.
-2.  A lazy per-registration fallback pool, used for renders outside a serving cycle, for example in tests that never start the app. It honors the same `max_workers` and is never shut down.
-3.  A module-level pool shared by [register_environment](../reference/register_environment.md#jinja_partials.register_environment), [PartialsJinjaExtension](../reference/PartialsJinjaExtension.md#jinja_partials.PartialsJinjaExtension), and [register_starlette_extensions](../reference/register_starlette_extensions.md#jinja_partials.register_starlette_extensions) without an app. It has four workers and is never shut down.
+1.  A dedicated pool, created when the app starts serving and shut down when it stops. FastAPI and Starlette get it by wrapping `app.router.lifespan_context`; the pool is parked on `app.state.jinja_partials_executor`. Quart gets it through `before_serving` and `after_serving` hooks; the pool lives in `app.extensions['jinja_partials_executor']`.
+2.  A lazy per-registration fallback pool for renders outside a serving cycle, which mostly means tests that never start the app. It honors the same `max_workers` and is never shut down.
+3.  A module-level pool shared by [register_environment](../reference/register_environment.md#jinja_partials.register_environment), [PartialsJinjaExtension](../reference/PartialsJinjaExtension.md#jinja_partials.PartialsJinjaExtension), and [register_starlette_extensions](../reference/register_starlette_extensions.md#jinja_partials.register_starlette_extensions) without an app. Four workers, never shut down.
 
-The lifecycle is exception-safe and re-entrant. The dedicated pool is created inside the lifespan wrapper and shut down in a `finally`, so a failed startup still cleans up and the app can start and stop repeatedly. The app state is cleared before the pool shuts down so concurrent renders fall back rather than submitting to a dying pool. Quart's startup hook replaces a stale pool left behind by a previously failed startup.
+The lifecycle is built to survive bad days. The dedicated pool is created inside the lifespan wrapper and shut down in a `finally`, so a startup that raises still cleans up and the app can start and stop repeatedly, which is what every `TestClient` context does. The app state is cleared before the pool shuts down, so a render racing with shutdown falls back to tier two instead of submitting to a dying pool. Quart's startup hook replaces a stale pool left behind by a previous failed startup. Each of these has a test, and each test exists because the behavior was once missing.
 
 
 # Sizing max_workers
 
-`max_workers` (default 4) on the Quart, FastAPI, and Starlette registrations sets the size of the dedicated and fallback pools. Each top-level partial render occupies one worker for the duration of that fragment. Renders beyond the pool size queue; they do not fail. Raise it if profiling shows requests waiting on partials under load. It has no effect on [register_starlette_extensions](../reference/register_starlette_extensions.md#jinja_partials.register_starlette_extensions) without an app or on the plain Jinja2 paths, which use the shared module-level pool.
+`max_workers` (default 4) on the Quart, FastAPI, and Starlette registrations sets the size of the dedicated and fallback pools. Each top-level partial render occupies one worker for the duration of that fragment. Renders beyond the pool size queue; they do not fail and they do not deadlock. Raise it if profiling shows requests waiting on partials under load, and leave it alone otherwise. It has no effect on [register_starlette_extensions](../reference/register_starlette_extensions.md#jinja_partials.register_starlette_extensions) without an app or on the plain Jinja2 paths, which use the shared module-level pool.
+
+That is the whole module. The [FAQ](faq.md) answers the questions people usually have at this point.

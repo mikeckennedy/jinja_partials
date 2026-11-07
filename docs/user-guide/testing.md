@@ -1,11 +1,11 @@
 # Testing partials
 
-Partials are plain template files with explicit inputs, which makes them easy to test on their own, without a browser or a full page. The patterns below are the ones the library's own test suite uses.
+A partial has an explicit list of inputs and produces a string. That is about the most testable shape a piece of a web app can have. You do not need a browser, a full page, or a database; you need the fragment's name and a few keyword arguments. The patterns below are the ones the library's own suite uses, so they are known to work.
 
 
 # Flask
 
-[render_partial](../reference/render_partial.md#jinja_partials.render_partial) with no renderer falls back to `flask.render_template`, which needs an app and request context. A fixture provides both:
+[render_partial](../reference/render_partial.md#jinja_partials.render_partial) with no renderer falls back to `flask.render_template`, which needs an app and a request context. A fixture provides both, and every test after that is two lines:
 
 ``` python
 import flask
@@ -26,12 +26,12 @@ def test_video_square(app):
     assert '12,500 views' in html
 ```
 
-A missing template raises `jinja2.TemplateNotFound`, so `pytest.raises(TemplateNotFound)` is the right assertion for a bad name.
+A bad template name raises `jinja2.TemplateNotFound`, so `pytest.raises(TemplateNotFound)` is the right assertion when you want to prove a rename did not leave a dangling reference behind.
 
 
 # FastAPI and Starlette
 
-After registration, the bound function is the [render_partial](../reference/render_partial.md#jinja_partials.render_partial) global on the environment. Call it directly, with or without a running lifespan:
+After registration, the bound function is the [render_partial](../reference/render_partial.md#jinja_partials.render_partial) global on the environment. You can call it directly, and you do not need the app running:
 
 ``` python
 from fastapi import FastAPI
@@ -49,12 +49,12 @@ def test_card_partial():
     assert 'Python Basics' in html
 ```
 
-Outside a lifespan, async environments render through a per-registration fallback pool, so this works in a plain test function. For full request tests, `with TestClient(app) as client:` runs the lifespan; the pool is created on entry and shut down on exit, and the app can be started and stopped as many times as the suite needs.
+Outside a lifespan, async environments render through a per-registration fallback pool, so a plain synchronous test function is enough. When you do want the full request path, `with TestClient(app) as client:` runs the lifespan; the pool is created on entry and shut down on exit, and the app can be started and stopped as many times as the suite likes. That re-entrancy is tested, because it was once broken.
 
 
 # Quart
 
-Quart's `app.test_app()` context runs the `before_serving` and `after_serving` hooks, which is where the render pool lives. Drive it with `asyncio.run` from a synchronous test:
+Quart's `app.test_app()` context runs the `before_serving` and `after_serving` hooks, which is where the render pool lives. Drive it with `asyncio.run` from an ordinary synchronous test:
 
 ``` python
 import asyncio
@@ -89,4 +89,4 @@ def test_fragment():
     assert '<img src=' in html
 ```
 
-Assert on `isinstance(result, Markup)` if your test is specifically about escaping behavior; [render_partial](../reference/render_partial.md#jinja_partials.render_partial) returns `markupsafe.Markup` whenever `markup=True`.
+If a test is specifically about escaping, assert `isinstance(result, Markup)`. [render_partial](../reference/render_partial.md#jinja_partials.render_partial) returns `markupsafe.Markup` whenever `markup=True`, and a plain `str` when it is not, which is the difference between a rendered card and a page full of angle brackets.

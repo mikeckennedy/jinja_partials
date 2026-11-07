@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and what differs between them.">
+<meta name="description" content="One template-side API, five ways in: registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and the one rule async apps must follow.">
 
 <title>Frameworks – Jinja Partials | Jinja Partials</title>
 <style>
@@ -128,12 +128,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <link rel="canonical" href="https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Frameworks – Jinja Partials | Jinja Partials">
-  <meta property="og:description" content="Registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and what differs between them.">
+  <meta property="og:description" content="One template-side API, five ways in: registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and the one rule async apps must follow.">
   <meta property="og:url" content="https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html">
   <meta property="og:site_name" content="Jinja Partials">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Frameworks – Jinja Partials | Jinja Partials">
-  <meta name="twitter:description" content="Registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and what differs between them.">
+  <meta name="twitter:description" content="One template-side API, five ways in: registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and the one rule async apps must follow.">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -284,7 +284,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-page-level-rule-for-async-environments" id="toc-the-page-level-rule-for-async-environments" class="nav-link" data-scroll-target="#the-page-level-rule-for-async-environments">The page-level rule for async environments</a></li>
   <li><a href="#plain-jinja2" id="toc-plain-jinja2" class="nav-link" data-scroll-target="#plain-jinja2">Plain Jinja2</a></li>
   <li><a href="#the-declarative-extension" id="toc-the-declarative-extension" class="nav-link" data-scroll-target="#the-declarative-extension">The declarative extension</a></li>
-  <li><a href="#summary-of-the-differences" id="toc-summary-of-the-differences" class="nav-link" data-scroll-target="#summary-of-the-differences">Summary of the differences</a></li>
+  <li><a href="#the-same-table-at-a-glance" id="toc-the-same-table-at-a-glance" class="nav-link" data-scroll-target="#the-same-table-at-a-glance">The same table, at a glance</a></li>
   </ul>
 </nav>
     </div>
@@ -298,7 +298,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and what differs between them.
+    One template-side API, five ways in: registering jinja_partials with Flask, Quart, FastAPI, Starlette, a plain Jinja2 environment, or the declarative extension, and the one rule async apps must follow.
   </div>
 </div>
 
@@ -315,7 +315,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Every framework gets the same template-side API. What differs is the one registration call and, for async apps, how pages themselves are rendered. Register exactly once per app, at startup.</p>
+<p>Your templates never find out which framework is running them. <code>{ render_partial(...) }</code> looks identical in a Flask app from 2019 and a FastAPI app you started this morning. What changes is one registration line, and for the async frameworks, how you render the page that contains the partials. Register exactly once per app, at startup, and the rest of this page is about which line to write.</p>
 <section id="flask" class="level1">
 <h1>Flask</h1>
 <div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> flask</span>
@@ -323,7 +323,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> flask.Flask(<span class="va">__name__</span>)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_extensions(app)</span></code></pre></div>
-<p>This is the only path that renders partials through <code>flask.render_template</code>. Context processors, the <code>template_rendered</code> signal, <code>g</code>, <code>request</code>, and <code>session</code> all work inside partials exactly as in a page.</p>
+<p>Flask is the original home of this library, and it gets the richest behavior. This is the only path that renders partials through <code>flask.render_template</code>, so everything you expect in a page is also there in a partial: context processors, the <code>template_rendered</code> signal, <code>g</code>, <code>request</code>, and <code>session</code>. If a partial wants the current user from a context processor, this is the registration that gives it one.</p>
 </section>
 <section id="quart" class="level1">
 <h1>Quart</h1>
@@ -332,7 +332,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> Quart(<span class="va">__name__</span>)</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_quart_extensions(app)</span></code></pre></div>
-<p>Quart templates are async. Registration adds <code>before_serving</code> and <code>after_serving</code> hooks that create and shut down a dedicated thread pool for rendering partials. Pages render with <code>await render_template(...)</code> as usual.</p>
+<p>Quart templates are async, which is where things get interesting (see <a href="#the-page-level-rule-for-async-environments">the page-level rule</a> below and <a href="../user-guide/how-it-works.html">How it works</a> for the full story). Registration adds <code>before_serving</code> and <code>after_serving</code> hooks that create and later shut down a dedicated thread pool for rendering partials. Pages render with <code>await render_template(...)</code> exactly as they always did.</p>
 </section>
 <section id="fastapi" class="level1">
 <h1>FastAPI</h1>
@@ -343,7 +343,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> FastAPI()</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">'templates'</span>)</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_fastapi_extensions(app, templates)</span></code></pre></div>
-<p>Registration wraps the app’s lifespan so the render pool lives exactly as long as the app is serving. An existing <code>lifespan=</code> on the app keeps running, including the state it yields.</p>
+<p>Registration wraps the app’s lifespan, so the render pool exists for exactly as long as the app is serving and not a moment longer. If you already pass <code>lifespan=</code> to FastAPI, it keeps running, startup and shutdown both, and whatever state it yields still reaches your routes.</p>
 </section>
 <section id="starlette" class="level1">
 <h1>Starlette</h1>
@@ -354,11 +354,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">'templates'</span>)</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> Starlette(routes<span class="op">=</span>[...])</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_starlette_extensions(templates, app<span class="op">=</span>app)</span></code></pre></div>
-<p>Note the argument order: <code>templates</code> comes first and <code>app</code> is a keyword. Passing the app is optional but recommended. Without it, async renders go through a shared module-level pool instead of one tied to the app’s lifespan, and <code>max_workers</code> has no effect.</p>
+<p>Read that last line twice. <code>templates</code> comes first, and <code>app</code> is a keyword. It is the reverse of the FastAPI call, for the historical reason that Starlette support predates the app-aware version and the signature kept its original first argument. Passing the app is optional but recommended: with it you get a pool tied to the lifespan and a working <code>max_workers</code>; without it, async renders go through a shared module-level pool and <code>max_workers</code> is ignored.</p>
 </section>
 <section id="the-page-level-rule-for-async-environments" class="level1">
 <h1>The page-level rule for async environments</h1>
-<p>Quart, FastAPI, and Starlette apps commonly use a Jinja environment created with <code>enable_async=True</code>. jinja_partials handles partials in those environments without any template changes. The page itself is your responsibility: render it with <code>await template.render_async(...)</code> and return an <code>HTMLResponse</code>.</p>
+<p>Quart, FastAPI, and Starlette apps usually create their Jinja environment with <code>enable_async=True</code>. jinja_partials handles partials in those environments without any template changes. The page that contains them is your job, and there is exactly one rule: render it with <code>await template.render_async(...)</code> and return an <code>HTMLResponse</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi.responses <span class="im">import</span> HTMLResponse</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -366,32 +366,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> index() <span class="op">-&gt;</span> HTMLResponse:</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    template <span class="op">=</span> templates.get_template(<span class="st">'home/index.html'</span>)</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> HTMLResponse(<span class="cf">await</span> template.render_async(items<span class="op">=</span>items))</span></code></pre></div>
-<p><code>templates.TemplateResponse(...)</code> on an async environment calls the synchronous <code>render()</code>, which runs <code>asyncio.run()</code> inside the already running event loop and fails with <code>RuntimeError: asyncio.run() cannot be called from a running event loop</code>. On a synchronous environment, <code>TemplateResponse</code> is fine and partials still work.</p>
-<p>The <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_fastapi">FastAPI</a>, <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_starlette">Starlette</a>, and <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_quart">Quart</a> examples in the repository all run this way.</p>
+<p>The tempting alternative, <code>templates.TemplateResponse(...)</code>, calls the synchronous <code>render()</code>. On an async template that means <code>asyncio.run()</code> being invoked from inside the event loop that is already running your request, and Python declines with <code>RuntimeError: asyncio.run() cannot be called from a running event loop</code>. The partials were never the problem; the page was. On a synchronous environment, <code>TemplateResponse</code> is perfectly fine and partials work the same way.</p>
+<p>The <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_fastapi">FastAPI</a>, <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_starlette">Starlette</a>, and <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_quart">Quart</a> examples in the repository all follow this rule, so you can copy a working route rather than remembering it.</p>
 </section>
 <section id="plain-jinja2" class="level1">
 <h1>Plain Jinja2</h1>
-<p>For any other framework, or for rendering outside a web app, register with the environment directly:</p>
+<p>No framework? A framework the library has not heard of? Rendering email templates from a worker process? Register with the environment directly:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jinja2 <span class="im">import</span> Environment, FileSystemLoader</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>env <span class="op">=</span> Environment(loader<span class="op">=</span>FileSystemLoader(<span class="st">'templates'</span>), autoescape<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_environment(env, markup<span class="op">=</span><span class="va">True</span>)</span></code></pre></div>
-<p><a href="../reference/register_environment.html#jinja_partials.register_environment" class="gdls-link gdls-code">register_environment</a> is the one registration function whose <code>markup</code> parameter defaults to <code>False</code>. With autoescaping on, leaving it at the default inserts the fragment as escaped text. Pass <code>markup=True</code>.</p>
+<p>The <code>markup=True</code> is not decoration. <a href="../reference/register_environment.html#jinja_partials.register_environment" class="gdls-link gdls-code">register_environment</a> is the one registration function whose <code>markup</code> defaults to <code>False</code>, kept that way for backwards compatibility. With autoescaping on, the default inserts your fragment as escaped text, and you get a page full of visible angle brackets. Pass <code>markup=True</code> and move on with your life.</p>
 </section>
 <section id="the-declarative-extension" class="level1">
 <h1>The declarative extension</h1>
-<p><a href="../reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a> does the same registration (always with <code>markup=True</code>) from the environment’s <code>extensions</code> list, which suits frameworks that configure Jinja declaratively:</p>
+<p><a href="../reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a> performs the same registration (always with <code>markup=True</code>) from the environment’s <code>extensions</code> list. It suits frameworks and settings files that configure Jinja declaratively rather than in code:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jinja2 <span class="im">import</span> Environment, FileSystemLoader</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>env <span class="op">=</span> Environment(</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    loader<span class="op">=</span>FileSystemLoader(<span class="st">'templates'</span>),</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    extensions<span class="op">=</span>[<span class="st">'jinja_partials.PartialsJinjaExtension'</span>],</span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
-<p>On a Flask app you can add it with <code>app.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')</code>. Partials then render through the Jinja environment rather than <code>flask.render_template</code>, so context processor values and the <code>template_rendered</code> signal are not applied inside partials. <code>g</code>, <code>request</code>, and <code>session</code> remain available because Flask installs them as environment globals. If your partials read context processor values, use <code>register_extensions(app)</code> instead.</p>
+<p>On a Flask app you can add it with <code>app.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')</code>, and it works, with one subtlety. Partials then render through the Jinja environment rather than <code>flask.render_template</code>, so context processor values and the <code>template_rendered</code> signal are not applied inside them. <code>g</code>, <code>request</code>, and <code>session</code> are still there, because Flask installs those as environment globals rather than through context processors. If your partials read context processor values, use <code>register_extensions(app)</code> and keep the extension for environments that are not Flask.</p>
 </section>
-<section id="summary-of-the-differences" class="level1">
-<h1>Summary of the differences</h1>
+<section id="the-same-table-at-a-glance" class="level1">
+<h1>The same table, at a glance</h1>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -446,7 +446,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>Every one of these is built on <code>generate_render_partial(renderer)</code>. <a href="../user-guide/how-it-works.html">How it works</a> explains the pieces, and <a href="../user-guide/troubleshooting.html">Troubleshooting</a> lists the errors each path can produce.</p>
+<p>Every row is built on the same primitive, <code>generate_render_partial(renderer)</code>, and <a href="../user-guide/how-it-works.html">How it works</a> shows how little code sits behind this table. When one of these paths misbehaves, <a href="../user-guide/troubleshooting.html">Troubleshooting</a> names the symptom and the fix.</p>
 
 
 </section>

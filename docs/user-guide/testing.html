@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Rendering partials directly in tests for Flask, FastAPI, Starlette, Quart, and plain Jinja2 environments.">
+<meta name="description" content="Partials are small and explicit, so test them small: rendering fragments directly in Flask, FastAPI, Starlette, Quart, and plain Jinja2 environments.">
 
 <title>Testing partials – Jinja Partials | Jinja Partials</title>
 <style>
@@ -128,12 +128,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <link rel="canonical" href="https://mkennedy.codes/docs/jinja-partials/user-guide/testing.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Testing partials – Jinja Partials | Jinja Partials">
-  <meta property="og:description" content="Rendering partials directly in tests for Flask, FastAPI, Starlette, Quart, and plain Jinja2 environments.">
+  <meta property="og:description" content="Partials are small and explicit, so test them small: rendering fragments directly in Flask, FastAPI, Starlette, Quart, and plain Jinja2 environments.">
   <meta property="og:url" content="https://mkennedy.codes/docs/jinja-partials/user-guide/testing.html">
   <meta property="og:site_name" content="Jinja Partials">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Testing partials – Jinja Partials | Jinja Partials">
-  <meta name="twitter:description" content="Rendering partials directly in tests for Flask, FastAPI, Starlette, Quart, and plain Jinja2 environments.">
+  <meta name="twitter:description" content="Partials are small and explicit, so test them small: rendering fragments directly in Flask, FastAPI, Starlette, Quart, and plain Jinja2 environments.">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -294,7 +294,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Rendering partials directly in tests for Flask, FastAPI, Starlette, Quart, and plain Jinja2 environments.
+    Partials are small and explicit, so test them small: rendering fragments directly in Flask, FastAPI, Starlette, Quart, and plain Jinja2 environments.
   </div>
 </div>
 
@@ -311,10 +311,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Partials are plain template files with explicit inputs, which makes them easy to test on their own, without a browser or a full page. The patterns below are the ones the library’s own test suite uses.</p>
+<p>A partial has an explicit list of inputs and produces a string. That is about the most testable shape a piece of a web app can have. You do not need a browser, a full page, or a database; you need the fragment’s name and a few keyword arguments. The patterns below are the ones the library’s own suite uses, so they are known to work.</p>
 <section id="flask" class="level1">
 <h1>Flask</h1>
-<p><a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> with no renderer falls back to <code>flask.render_template</code>, which needs an app and request context. A fixture provides both:</p>
+<p><a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> with no renderer falls back to <code>flask.render_template</code>, which needs an app and a request context. A fixture provides both, and every test after that is two lines:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> flask</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pytest</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
@@ -331,11 +331,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_video_square(app):</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    html <span class="op">=</span> jinja_partials.render_partial(<span class="st">'shared/partials/video_square.html'</span>, video<span class="op">=</span>FakeVideo())</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="st">'12,500 views'</span> <span class="kw">in</span> html</span></code></pre></div>
-<p>A missing template raises <code>jinja2.TemplateNotFound</code>, so <code>pytest.raises(TemplateNotFound)</code> is the right assertion for a bad name.</p>
+<p>A bad template name raises <code>jinja2.TemplateNotFound</code>, so <code>pytest.raises(TemplateNotFound)</code> is the right assertion when you want to prove a rename did not leave a dangling reference behind.</p>
 </section>
 <section id="fastapi-and-starlette" class="level1">
 <h1>FastAPI and Starlette</h1>
-<p>After registration, the bound function is the <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> global on the environment. Call it directly, with or without a running lifespan:</p>
+<p>After registration, the bound function is the <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> global on the environment. You can call it directly, and you do not need the app running:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi <span class="im">import</span> FastAPI</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi.templating <span class="im">import</span> Jinja2Templates</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
@@ -349,11 +349,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    render <span class="op">=</span> templates.env.<span class="bu">globals</span>[<span class="st">'render_partial'</span>]</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    html <span class="op">=</span> render(<span class="st">'shared/partials/card.html'</span>, item<span class="op">=</span>{<span class="st">'title'</span>: <span class="st">'Python Basics'</span>})</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="st">'Python Basics'</span> <span class="kw">in</span> html</span></code></pre></div>
-<p>Outside a lifespan, async environments render through a per-registration fallback pool, so this works in a plain test function. For full request tests, <code>with TestClient(app) as client:</code> runs the lifespan; the pool is created on entry and shut down on exit, and the app can be started and stopped as many times as the suite needs.</p>
+<p>Outside a lifespan, async environments render through a per-registration fallback pool, so a plain synchronous test function is enough. When you do want the full request path, <code>with TestClient(app) as client:</code> runs the lifespan; the pool is created on entry and shut down on exit, and the app can be started and stopped as many times as the suite likes. That re-entrancy is tested, because it was once broken.</p>
 </section>
 <section id="quart" class="level1">
 <h1>Quart</h1>
-<p>Quart’s <code>app.test_app()</code> context runs the <code>before_serving</code> and <code>after_serving</code> hooks, which is where the render pool lives. Drive it with <code>asyncio.run</code> from a synchronous test:</p>
+<p>Quart’s <code>app.test_app()</code> context runs the <code>before_serving</code> and <code>after_serving</code> hooks, which is where the render pool lives. Drive it with <code>asyncio.run</code> from an ordinary synchronous test:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> asyncio</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quart <span class="im">import</span> Quart</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
@@ -381,7 +381,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_fragment():</span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    html <span class="op">=</span> env.get_template(<span class="st">'home/index.html'</span>).render(videos<span class="op">=</span>[FakeVideo()])</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="st">'&lt;img src='</span> <span class="kw">in</span> html</span></code></pre></div>
-<p>Assert on <code>isinstance(result, Markup)</code> if your test is specifically about escaping behavior; <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> returns <code>markupsafe.Markup</code> whenever <code>markup=True</code>.</p>
+<p>If a test is specifically about escaping, assert <code>isinstance(result, Markup)</code>. <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> returns <code>markupsafe.Markup</code> whenever <code>markup=True</code>, and a plain <code>str</code> when it is not, which is the difference between a rendered card and a page full of angle brackets.</p>
 
 
 </section>

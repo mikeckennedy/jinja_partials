@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="A first Flask page with a reusable, nested partial, and what the rendered output should look like.">
+<meta name="description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, and know what the rendered output should look like.">
 
 <title>Quickstart – Jinja Partials | Jinja Partials</title>
 <style>
@@ -128,12 +128,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <link rel="canonical" href="https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Quickstart – Jinja Partials | Jinja Partials">
-  <meta property="og:description" content="A first Flask page with a reusable, nested partial, and what the rendered output should look like.">
+  <meta property="og:description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, and know what the rendered output should look like.">
   <meta property="og:url" content="https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html">
   <meta property="og:site_name" content="Jinja Partials">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Quickstart – Jinja Partials | Jinja Partials">
-  <meta name="twitter:description" content="A first Flask page with a reusable, nested partial, and what the rendered output should look like.">
+  <meta name="twitter:description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, and know what the rendered output should look like.">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -278,9 +278,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul class="collapse">
   <li><a href="#register-once-at-startup" id="toc-register-once-at-startup" class="nav-link active" data-scroll-target="#register-once-at-startup">1. Register once at startup</a></li>
-  <li><a href="#lay-out-the-templates" id="toc-lay-out-the-templates" class="nav-link" data-scroll-target="#lay-out-the-templates">2. Lay out the templates</a></li>
-  <li><a href="#write-the-partials" id="toc-write-the-partials" class="nav-link" data-scroll-target="#write-the-partials">3. Write the partials</a></li>
-  <li><a href="#use-them-from-a-page" id="toc-use-them-from-a-page" class="nav-link" data-scroll-target="#use-them-from-a-page">4. Use them from a page</a></li>
+  <li><a href="#give-the-partials-a-home" id="toc-give-the-partials-a-home" class="nav-link" data-scroll-target="#give-the-partials-a-home">2. Give the partials a home</a></li>
+  <li><a href="#write-the-partials-smallest-first" id="toc-write-the-partials-smallest-first" class="nav-link" data-scroll-target="#write-the-partials-smallest-first">3. Write the partials, smallest first</a></li>
+  <li><a href="#call-it-from-a-page" id="toc-call-it-from-a-page" class="nav-link" data-scroll-target="#call-it-from-a-page">4. Call it from a page</a></li>
   <li><a href="#what-you-should-see" id="toc-what-you-should-see" class="nav-link" data-scroll-target="#what-you-should-see">5. What you should see</a></li>
   </ul>
 </nav>
@@ -295,7 +295,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    A first Flask page with a reusable, nested partial, and what the rendered output should look like.
+    Build the video card once with Flask: register at startup, write a nested partial, call it from a page, and know what the rendered output should look like.
   </div>
 </div>
 
@@ -312,7 +312,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>This page builds the smallest useful example with Flask. Every other framework differs only in the registration line, covered in <a href="../user-guide/frameworks.html">Frameworks</a>.</p>
+<p>Remember the fourteen video cards from <a href="../user-guide/why-partials.html">Why partials</a>? This page builds one, properly, with Flask. Every other framework differs only in the registration line, and <a href="../user-guide/frameworks.html">Frameworks</a> has those. Four files and a few minutes.</p>
 <section id="register-once-at-startup" class="level1">
 <h1>1. Register once at startup</h1>
 <div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># app.py</span></span>
@@ -326,11 +326,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">@app.get</span>(<span class="st">'/'</span>)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> index():</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> flask.render_template(<span class="st">'home/index.html'</span>, videos<span class="op">=</span>get_videos())</span></code></pre></div>
-<p>Registration installs <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> as a global in the app’s Jinja environment. Do it once, when the app is built, before it starts serving.</p>
+<p>That one line installs <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> as a global in the app’s Jinja environment. Do it where the app is built, before it starts serving, and do it once. There is no need to import anything in your templates; the function is simply there, like <code>url_for</code>.</p>
 </section>
-<section id="lay-out-the-templates" class="level1">
-<h1>2. Lay out the templates</h1>
-<p>Partials are ordinary templates. The convention this project uses is a <code>partials</code> folder under <code>templates/shared</code>:</p>
+<section id="give-the-partials-a-home" class="level1">
+<h1>2. Give the partials a home</h1>
+<p>Partials are ordinary templates, so they can live anywhere your loader can see. The convention this project uses, and the one the examples follow, is a <code>partials</code> folder under <code>templates/shared</code>:</p>
 <pre class="text"><code>templates/
 ├── home/
 │   └── index.html
@@ -339,17 +339,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     └── partials/
         ├── video_image.html
         └── video_square.html</code></pre>
-<p>Template names passed to <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> are paths relative to the templates root, with forward slashes and the file extension, exactly like the names you pass to <code>render_template</code>.</p>
+<p>When you call <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a>, the name you pass is the path relative to the templates root, forward slashes and file extension included, exactly as you would write it for <code>render_template</code>. Nothing clever, which is the point.</p>
 </section>
-<section id="write-the-partials" class="level1">
-<h1>3. Write the partials</h1>
-<p>The innermost fragment renders a YouTube thumbnail. It receives a <code>video</code> object and an optional list of CSS classes:</p>
+<section id="write-the-partials-smallest-first" class="level1">
+<h1>3. Write the partials, smallest first</h1>
+<p>The innermost fragment is the YouTube thumbnail. It takes a <code>video</code> and an optional list of CSS classes:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- templates/shared/partials/video_image.html --&gt;</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">img</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://img.youtube.com/vi/{{ video.id }}/maxresdefault.jpg"</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ot">     class</span><span class="op">=</span><span class="st">"img img-responsive {{ (classes | default([])) | join(' ') }}"</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ot">     alt</span><span class="op">=</span><span class="st">"{{ video.title }}"</span></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ot">     title</span><span class="op">=</span><span class="st">"{{ video.title }}"</span><span class="dt">&gt;</span></span></code></pre></div>
-<p>Partials nest. The video card renders the image partial inside itself:</p>
+<p>Notice <code>classes | default([])</code>. The fragment declares that <code>classes</code> is optional by handling its absence itself. Callers that do not care never have to know it exists.</p>
+<p>Now the card. It wraps the thumbnail in a link, adds the author and the view count, and it does so by rendering the image partial inside itself. Partials nest; that is half their charm.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- templates/shared/partials/video_square.html --&gt;</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span><span class="dt">&gt;</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">a</span><span class="ot"> href</span><span class="op">=</span><span class="st">"https://www.youtube.com/watch?v={{ video.id }}"</span><span class="ot"> target</span><span class="op">=</span><span class="st">"_blank"</span><span class="dt">&gt;</span></span>
@@ -360,8 +361,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"views"</span><span class="dt">&gt;</span>{{ "{:,}".format(video.views) }} views<span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span></code></pre></div>
 </section>
-<section id="use-them-from-a-page" class="level1">
-<h1>4. Use them from a page</h1>
+<section id="call-it-from-a-page" class="level1">
+<h1>4. Call it from a page</h1>
 <div class="sourceCode" id="cb5"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- templates/home/index.html --&gt;</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>{% extends "shared/_layout.html" %}</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>{% block main_content %}</span>
@@ -371,11 +372,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    {% endfor %}</span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>{% endblock %}</span></code></pre></div>
-<p>The loop variable is <code>v</code> in the page and <code>video</code> inside the partial. That renaming is the normal way to use partials: the fragment declares what it needs, and the caller maps its own data onto those names.</p>
+<p>The page calls the loop variable <code>v</code>. The card calls it <code>video</code>. That renaming at the boundary is not a workaround; it is how partials are meant to be used. The fragment names what it needs, and each caller maps its own data onto those names. The listing page, the search results, and the email digest can all call this one file with whatever they happen to have.</p>
 </section>
 <section id="what-you-should-see" class="level1">
 <h1>5. What you should see</h1>
-<p>Run the app and open the page. Each video renders as a card like this, with the image fragment inlined where the nested <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> call was:</p>
+<p>Run the app and open the page. Each video renders as a card like this, with the thumbnail inlined where the nested <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> call used to be:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"col-md-3 video"</span><span class="dt">&gt;</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">div</span><span class="dt">&gt;</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&lt;</span><span class="kw">a</span><span class="ot"> href</span><span class="op">=</span><span class="st">"https://www.youtube.com/watch?v=abc123"</span><span class="ot"> target</span><span class="op">=</span><span class="st">"_blank"</span><span class="dt">&gt;</span></span>
@@ -385,8 +386,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"views"</span><span class="dt">&gt;</span>12,500 views<span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span></code></pre></div>
-<p>If instead you see the markup itself on the page as text (<code>&amp;lt;div&amp;gt;</code> and friends), the partial was inserted as an escaped string. That happens on the plain Jinja2 path when <code>markup=True</code> was not passed. <a href="../user-guide/troubleshooting.html">Troubleshooting</a> covers that and the other errors you can hit.</p>
-<p>The full version of this app, with the layout, CSS, and a small JSON database, is the <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask">Flask example</a> in the repository.</p>
+<p>If instead the page shows you the HTML itself as text, angle brackets and all, the fragment was inserted as an escaped string rather than as markup. On Flask that does not happen, but on the plain Jinja2 path it is the single most common surprise, and <a href="../user-guide/troubleshooting.html">Troubleshooting</a> has the one-word fix along with every other error you are likely to meet.</p>
+<p>The complete version of this app, with the layout, the CSS, and a small JSON database of videos, is the <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask">Flask example</a> in the repository. It is the app behind the screenshot on the README.</p>
 
 
 </section>

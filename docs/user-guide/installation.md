@@ -1,6 +1,6 @@
 # Installation
 
-Install with uv or pip. The PyPI name uses a hyphen and the import name uses an underscore.
+The whole library is one module with one dependency, so this page is short. Install it with uv or pip:
 
 ``` bash
 uv add jinja-partials
@@ -8,21 +8,23 @@ uv add jinja-partials
 pip install jinja-partials
 ```
 
+One small trap right at the door: the PyPI name has a hyphen and the import has an underscore. Python packaging has its traditions.
+
 ``` python
 import jinja_partials
 ```
 
-The only runtime dependency is `jinja2`. The library is pure Python and fully typed (it ships a `py.typed` marker).
+The only runtime dependency is `jinja2`. The package is pure Python, fully typed, and ships a `py.typed` marker, so your editor and type checker know what [render_partial](../reference/render_partial.md#jinja_partials.render_partial) returns before you do.
 
 
 # Python versions
 
-Python 3.10 or newer is required. On older interpreters, pip resolves to 0.3.0, which has the Flask, plain Jinja2, and synchronous Starlette registration but predates the Quart and FastAPI support and the lifecycle-managed Starlette registration described in this guide.
+Python 3.10 or newer. If you install on an older interpreter, pip does not refuse; it quietly hands you 0.3.0, the last release that supported 3.8 and 3.9. That version has Flask, plain Jinja2, and synchronous Starlette registration, but none of the Quart and FastAPI support or the lifecycle-managed Starlette registration this guide describes. If a function on these pages is mysteriously missing, check which version you actually got.
 
 
-# Frameworks are optional
+# Bring your own framework
 
-jinja_partials imports Flask, Quart, FastAPI, and Starlette only if they are already installed. Nothing pulls them in for you, so install the framework you use alongside the library. Calling a registration function for a framework that is not installed raises [PartialsException](../reference/PartialsException.md#jinja_partials.PartialsException) with a message naming the missing package, for example `Install Quart to use register_quart_extensions`.
+jinja_partials does not install Flask, Quart, FastAPI, or Starlette. It looks for each one at import time, uses it if present, and otherwise carries on without it. Install the framework you use alongside the library, in the same environment. If you call a registration function for a framework that is not there, you get a [PartialsException](../reference/PartialsException.md#jinja_partials.PartialsException) that says so plainly, for example `Install Quart to use register_quart_extensions`. No mystery tracebacks from three layers down.
 
 
 # Check the install
@@ -31,4 +33,4 @@ jinja_partials imports Flask, Quart, FastAPI, and Starlette only if they are alr
 python -c "import jinja_partials; print(jinja_partials.__version__)"
 ```
 
-The version comes from the installed package metadata. Next, the [Quickstart](quickstart.md) builds a first page.
+The version is read from the installed package metadata, so it always tells the truth about what is in the environment. With that done, the [Quickstart](quickstart.md) is next.

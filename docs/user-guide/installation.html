@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Install jinja-partials with uv or pip, supported Python versions, and optional framework dependencies.">
+<meta name="description" content="Install jinja-partials with uv or pip, which Python versions work, and why the frameworks are your responsibility.">
 
 <title>Installation – Jinja Partials | Jinja Partials</title>
 <style>
@@ -128,12 +128,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <link rel="canonical" href="https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Installation – Jinja Partials | Jinja Partials">
-  <meta property="og:description" content="Install jinja-partials with uv or pip, supported Python versions, and optional framework dependencies.">
+  <meta property="og:description" content="Install jinja-partials with uv or pip, which Python versions work, and why the frameworks are your responsibility.">
   <meta property="og:url" content="https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html">
   <meta property="og:site_name" content="Jinja Partials">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Installation – Jinja Partials | Jinja Partials">
-  <meta name="twitter:description" content="Install jinja-partials with uv or pip, supported Python versions, and optional framework dependencies.">
+  <meta name="twitter:description" content="Install jinja-partials with uv or pip, which Python versions work, and why the frameworks are your responsibility.">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -278,7 +278,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul class="collapse">
   <li><a href="#python-versions" id="toc-python-versions" class="nav-link active" data-scroll-target="#python-versions">Python versions</a></li>
-  <li><a href="#frameworks-are-optional" id="toc-frameworks-are-optional" class="nav-link" data-scroll-target="#frameworks-are-optional">Frameworks are optional</a></li>
+  <li><a href="#bring-your-own-framework" id="toc-bring-your-own-framework" class="nav-link" data-scroll-target="#bring-your-own-framework">Bring your own framework</a></li>
   <li><a href="#check-the-install" id="toc-check-the-install" class="nav-link" data-scroll-target="#check-the-install">Check the install</a></li>
   </ul>
 </nav>
@@ -293,7 +293,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Install jinja-partials with uv or pip, supported Python versions, and optional framework dependencies.
+    Install jinja-partials with uv or pip, which Python versions work, and why the frameworks are your responsibility.
   </div>
 </div>
 
@@ -310,24 +310,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Install with uv or pip. The PyPI name uses a hyphen and the import name uses an underscore.</p>
+<p>The whole library is one module with one dependency, so this page is short. Install it with uv or pip:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> add jinja-partials</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install jinja-partials</span></code></pre></div>
+<p>One small trap right at the door: the PyPI name has a hyphen and the import has an underscore. Python packaging has its traditions.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span></code></pre></div>
-<p>The only runtime dependency is <code>jinja2</code>. The library is pure Python and fully typed (it ships a <code>py.typed</code> marker).</p>
+<p>The only runtime dependency is <code>jinja2</code>. The package is pure Python, fully typed, and ships a <code>py.typed</code> marker, so your editor and type checker know what <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> returns before you do.</p>
 <section id="python-versions" class="level1">
 <h1>Python versions</h1>
-<p>Python 3.10 or newer is required. On older interpreters, pip resolves to 0.3.0, which has the Flask, plain Jinja2, and synchronous Starlette registration but predates the Quart and FastAPI support and the lifecycle-managed Starlette registration described in this guide.</p>
+<p>Python 3.10 or newer. If you install on an older interpreter, pip does not refuse; it quietly hands you 0.3.0, the last release that supported 3.8 and 3.9. That version has Flask, plain Jinja2, and synchronous Starlette registration, but none of the Quart and FastAPI support or the lifecycle-managed Starlette registration this guide describes. If a function on these pages is mysteriously missing, check which version you actually got.</p>
 </section>
-<section id="frameworks-are-optional" class="level1">
-<h1>Frameworks are optional</h1>
-<p>jinja_partials imports Flask, Quart, FastAPI, and Starlette only if they are already installed. Nothing pulls them in for you, so install the framework you use alongside the library. Calling a registration function for a framework that is not installed raises <a href="../reference/PartialsException.html#jinja_partials.PartialsException" class="gdls-link gdls-code">PartialsException</a> with a message naming the missing package, for example <code>Install Quart to use register_quart_extensions</code>.</p>
+<section id="bring-your-own-framework" class="level1">
+<h1>Bring your own framework</h1>
+<p>jinja_partials does not install Flask, Quart, FastAPI, or Starlette. It looks for each one at import time, uses it if present, and otherwise carries on without it. Install the framework you use alongside the library, in the same environment. If you call a registration function for a framework that is not there, you get a <a href="../reference/PartialsException.html#jinja_partials.PartialsException" class="gdls-link gdls-code">PartialsException</a> that says so plainly, for example <code>Install Quart to use register_quart_extensions</code>. No mystery tracebacks from three layers down.</p>
 </section>
 <section id="check-the-install" class="level1">
 <h1>Check the install</h1>
 <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-c</span> <span class="st">"import jinja_partials; print(jinja_partials.__version__)"</span></span></code></pre></div>
-<p>The version comes from the installed package metadata. Next, the <a href="../user-guide/quickstart.html">Quickstart</a> builds a first page.</p>
+<p>The version is read from the installed package metadata, so it always tells the truth about what is in the environment. With that done, the <a href="../user-guide/quickstart.html">Quickstart</a> is next.</p>
 
 
 </section>

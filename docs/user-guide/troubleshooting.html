@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="What each jinja_partials error or wrong output means and how to fix it: escaped HTML, PartialsException, TemplateNotFound, UndefinedError, asyncio.run errors, and missing context.">
+<meta name="description" content="A field guide to every error and wrong output jinja_partials can produce: what you see, what it means, and the change that fixes it.">
 
 <title>Troubleshooting – Jinja Partials | Jinja Partials</title>
 <style>
@@ -93,12 +93,12 @@ ul.task-list li input[type="checkbox"] {
   <link rel="canonical" href="https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Troubleshooting – Jinja Partials | Jinja Partials">
-  <meta property="og:description" content="What each jinja_partials error or wrong output means and how to fix it: escaped HTML, PartialsException, TemplateNotFound, UndefinedError, asyncio.run errors, and missing context.">
+  <meta property="og:description" content="A field guide to every error and wrong output jinja_partials can produce: what you see, what it means, and the change that fixes it.">
   <meta property="og:url" content="https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html">
   <meta property="og:site_name" content="Jinja Partials">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Troubleshooting – Jinja Partials | Jinja Partials">
-  <meta name="twitter:description" content="What each jinja_partials error or wrong output means and how to fix it: escaped HTML, PartialsException, TemplateNotFound, UndefinedError, asyncio.run errors, and missing context.">
+  <meta name="twitter:description" content="A field guide to every error and wrong output jinja_partials can produce: what you see, what it means, and the change that fixes it.">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -266,7 +266,7 @@ ul.task-list li input[type="checkbox"] {
 
 <div>
   <div class="description">
-    What each jinja_partials error or wrong output means and how to fix it: escaped HTML, PartialsException, TemplateNotFound, UndefinedError, asyncio.run errors, and missing context.
+    A field guide to every error and wrong output jinja_partials can produce: what you see, what it means, and the change that fixes it.
   </div>
 </div>
 
@@ -283,61 +283,61 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Each entry is a symptom you can see on the page or in a traceback, what causes it, and the change that fixes it.</p>
+<p>Think of this page as a field guide. Each entry starts with what you actually see, on the page or in a traceback, because that is what you have in front of you when you arrive here. Then the cause, then the fix. Most of them are one line.</p>
 <section id="the-partial-shows-up-as-text-not-html" class="level1">
 <h1>The partial shows up as text, not HTML</h1>
-<p>Symptom: the page displays <code>&lt;div&gt;</code> and friends literally, or view-source shows <code>&amp;lt;div&amp;gt;</code>.</p>
-<p>Cause: the environment has autoescaping on and <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> returned a plain <code>str</code>, so Jinja escaped it on insertion. This happens on the plain Jinja2 path, because <a href="../reference/register_environment.html#jinja_partials.register_environment" class="gdls-link gdls-code">register_environment</a> defaults to <code>markup=False</code>, or when you built your own renderer with <code>generate_render_partial(renderer, markup=False)</code>.</p>
-<p>Fix: pass <code>markup=True</code> to <a href="../reference/register_environment.html#jinja_partials.register_environment" class="gdls-link gdls-code">register_environment</a> or <a href="../reference/generate_render_partial.html#jinja_partials.generate_render_partial" class="gdls-link gdls-code">generate_render_partial</a>. The framework registrations and <a href="../reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a> already use <code>markup=True</code>. Do not work around it with <code>| safe</code> at every call site.</p>
+<p>What you see: the page displays <code>&lt;div&gt;</code> and friends literally, as if someone printed the template. View source shows <code>&amp;lt;div&amp;gt;</code>.</p>
+<p>What happened: the environment has autoescaping on, <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> returned a plain <code>str</code> instead of <code>Markup</code>, and Jinja did its job and escaped it. The guilty party is almost always the plain Jinja2 path, because <a href="../reference/register_environment.html#jinja_partials.register_environment" class="gdls-link gdls-code">register_environment</a> defaults to <code>markup=False</code>. You can also get here by building your own renderer with <code>generate_render_partial(renderer, markup=False)</code>.</p>
+<p>The fix: pass <code>markup=True</code> to <a href="../reference/register_environment.html#jinja_partials.register_environment" class="gdls-link gdls-code">register_environment</a> or <a href="../reference/generate_render_partial.html#jinja_partials.generate_render_partial" class="gdls-link gdls-code">generate_render_partial</a>. The framework registrations and <a href="../reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a> already do. Resist the urge to sprinkle <code>| safe</code> over every call site; that fixes the symptom fourteen times and the cause zero times.</p>
 </section>
 <section id="partialsexception-no-renderer-specified" class="level1">
 <h1>PartialsException: No renderer specified</h1>
-<p>Cause: <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> was called from Python with no <code>renderer</code> and Flask is not installed, so there is no default renderer to fall back to.</p>
-<p>Fix: inside a web app, register with your framework and call the global from templates. From Python, either pass <code>renderer=</code> explicitly or bind one once with <code>generate_render_partial(renderer)</code>. See <a href="../user-guide/how-it-works.html#one-primitive-and-some-sugar">custom renderers</a>.</p>
+<p>What happened: <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> was called from Python with no <code>renderer</code> argument, and Flask is not installed, so there was no default renderer to fall back to. This is the library telling you it does not know how to render anything yet.</p>
+<p>The fix: inside a web app, register with your framework and use the global from templates. From Python, pass <code>renderer=</code> explicitly, or bind one once with <code>generate_render_partial(renderer)</code> as shown in <a href="../user-guide/how-it-works.html#one-primitive-and-some-sugar">custom renderers</a>.</p>
 </section>
 <section id="partialsexception-install-flask-to-use-register_extensions" class="level1">
 <h1>PartialsException: Install Flask to use register_extensions</h1>
-<p>The same message exists for Quart, FastAPI, and Starlette. The registration function was called but its framework could not be imported in this interpreter.</p>
-<p>Fix: install the framework into the same environment as jinja_partials. The library never installs frameworks for you.</p>
+<p>There are Quart, FastAPI, and Starlette editions of this message too. You called a registration function, and its framework could not be imported in this interpreter. Often this is a second virtual environment, a Docker image missing a dependency, or a test runner with a different Python than the one you ran the app with.</p>
+<p>The fix: install the framework into the same environment as jinja_partials. The library never installs frameworks on your behalf; see <a href="../user-guide/installation.html#bring-your-own-framework">Installation</a>.</p>
 </section>
 <section id="attributeerror-starlette-object-has-no-attribute-env" class="level1">
 <h1>AttributeError: ‘Starlette’ object has no attribute ‘env’</h1>
-<p>Cause: <a href="../reference/register_starlette_extensions.html#jinja_partials.register_starlette_extensions" class="gdls-link gdls-code">register_starlette_extensions</a> was called with the app first, following the FastAPI argument order.</p>
-<p>Fix: the Starlette signature is <code>register_starlette_extensions(templates, app=app)</code>. Templates first, app as a keyword.</p>
+<p>What happened: <a href="../reference/register_starlette_extensions.html#jinja_partials.register_starlette_extensions" class="gdls-link gdls-code">register_starlette_extensions</a> was called with the app first, which is the FastAPI order. The function took your app, assumed it was a <code>Jinja2Templates</code>, and asked it for <code>.env</code>.</p>
+<p>The fix: the Starlette signature is <code>register_starlette_extensions(templates, app=app)</code>. Templates first, app as a keyword. Yes, it is the reverse of FastAPI; <a href="../user-guide/frameworks.html#starlette">Frameworks</a> explains why.</p>
 </section>
 <section id="jinja2.exceptions.templatenotfound-sharedpartialsvideo_square.html" class="level1">
 <h1>jinja2.exceptions.TemplateNotFound: shared/partials/video_square.html</h1>
-<p>Cause: the name does not resolve against the environment’s loader.</p>
-<p>Fix: template names are paths relative to the templates root, with forward slashes and the extension. Check the loader’s search path, including a blueprint’s <code>template_folder</code> in Flask, and watch for a stray leading slash or a missing subfolder.</p>
+<p>What happened: the name you passed does not resolve against the environment’s loader. The error helpfully prints the name it looked for, so compare it character by character with the file on disk.</p>
+<p>The fix: template names are paths relative to the templates root, forward slashes, extension included. Look for a stray leading slash, a missing subfolder, or a blueprint in Flask whose <code>template_folder</code> is not what you think it is.</p>
 </section>
 <section id="jinja2.exceptions.undefinederror-video-is-undefined" class="level1">
 <h1>jinja2.exceptions.UndefinedError: ‘video’ is undefined</h1>
-<p>Cause: the partial reads a variable the caller did not pass. Partials never see the caller’s context; <code>{% include %}</code> does, but <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> is deliberately explicit.</p>
-<p>Fix: pass every value the fragment needs as a keyword argument, <code>render_partial('shared/partials/video_square.html', video=v)</code>, and use <code>| default(...)</code> for optional inputs such as <code>(classes | default([])) | join(' ')</code>.</p>
+<p>What happened: the partial reads a variable the caller never passed. This is not a bug in the library; it is the library’s whole philosophy showing up in a traceback. Partials never see the caller’s context. <code>{% include %}</code> would have silently handed over the page’s <code>video</code>; <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> makes you say it out loud.</p>
+<p>The fix: pass every value the fragment needs as a keyword argument, <code>render_partial('shared/partials/video_square.html', video=v)</code>. For optional inputs, let the fragment handle absence with <code>| default(...)</code>, the way the thumbnail partial handles <code>classes</code>.</p>
 </section>
 <section id="runtimeerror-asyncio.run-cannot-be-called-from-a-running-event-loop" class="level1">
 <h1>RuntimeError: asyncio.run() cannot be called from a running event loop</h1>
-<p>Cause: a FastAPI or Starlette route rendered the page with <code>templates.TemplateResponse(...)</code> or <code>template.render(...)</code> on an environment created with <code>enable_async=True</code>. Synchronous rendering of an async template runs <code>asyncio.run()</code> inside the server’s event loop.</p>
-<p>Fix: render the page with <code>await template.render_async(...)</code> and return an <code>HTMLResponse</code>. Partials inside the page need no change; jinja_partials renders them on its thread pool. See <a href="../user-guide/frameworks.html#the-page-level-rule-for-async-environments">the page-level rule</a>.</p>
+<p>What happened: a FastAPI or Starlette route rendered the page with <code>templates.TemplateResponse(...)</code> or <code>template.render(...)</code> on an environment created with <code>enable_async=True</code>. Rendering an async template synchronously means calling <code>asyncio.run()</code> from inside the server’s event loop, which Python refuses. Note the word page: the partials inside it were not involved.</p>
+<p>The fix: render the page with <code>await template.render_async(...)</code> and return an <code>HTMLResponse</code>. The partials need no change; jinja_partials renders them on its own thread pool. <a href="../user-guide/frameworks.html#the-page-level-rule-for-async-environments">The page-level rule</a> has the code.</p>
 </section>
 <section id="context-processor-values-are-missing-inside-a-partial" class="level1">
 <h1>Context processor values are missing inside a partial</h1>
-<p>Cause: on Flask, the partial was registered with <a href="../reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a> and renders through the Jinja environment, which does not apply <code>@app.context_processor</code> functions. <code>g</code>, <code>request</code>, and <code>session</code> still work on that path.</p>
-<p>Fix: use <code>jinja_partials.register_extensions(app)</code>, the only registration that renders partials through <code>flask.render_template</code>.</p>
+<p>What happened: on Flask, you registered with <a href="../reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a>, and partials render through the Jinja environment, which does not run <code>@app.context_processor</code> functions. <code>g</code>, <code>request</code>, and <code>session</code> still work on that path, which can make the missing value feel random. It is not; only context processors and the <code>template_rendered</code> signal are skipped.</p>
+<p>The fix: use <code>jinja_partials.register_extensions(app)</code>, the only registration that renders partials through <code>flask.render_template</code>.</p>
 </section>
 <section id="a-request-hangs-while-rendering-nested-partials" class="level1">
 <h1>A request hangs while rendering nested partials</h1>
-<p>Cause: in versions up to 0.3.2, a nested partial in an async app waited on the same thread pool its outer partial was occupying. Nesting as deep as <code>max_workers</code>, or enough concurrent requests with nested partials, blocked the pool permanently.</p>
-<p>Fix: upgrade. Nested renders now run on their own short-lived thread, so nesting depth never counts against <code>max_workers</code>. If you cannot upgrade, raise <code>max_workers</code> well above the deepest nesting multiplied by expected concurrency.</p>
+<p>What happened: in versions up to 0.3.2, a nested partial in an async app waited on the same thread pool its outer partial was sitting in. Nest as deep as <code>max_workers</code>, or get enough concurrent requests with nested partials at once, and every worker was waiting for a worker. The pool never recovered.</p>
+<p>The fix: upgrade. Nested renders now run on their own short-lived thread, so nesting depth never counts against <code>max_workers</code>. If you cannot upgrade yet, raise <code>max_workers</code> well above the deepest nesting multiplied by the concurrency you expect.</p>
 </section>
 <section id="the-lifespan-or-startup-hook-runs-twice" class="level1">
 <h1>The lifespan or startup hook runs twice</h1>
-<p>Cause: <a href="../reference/register_fastapi_extensions.html#jinja_partials.register_fastapi_extensions" class="gdls-link gdls-code">register_fastapi_extensions</a> or <a href="../reference/register_starlette_extensions.html#jinja_partials.register_starlette_extensions" class="gdls-link gdls-code">register_starlette_extensions</a> was called twice on one app. Each call wraps the current lifespan again; there is no idempotency guard. Quart registration similarly adds a second pair of serving hooks.</p>
-<p>Fix: register once, where the app is constructed. If you register inside an app factory, make sure the factory is the only caller.</p>
+<p>What happened: <a href="../reference/register_fastapi_extensions.html#jinja_partials.register_fastapi_extensions" class="gdls-link gdls-code">register_fastapi_extensions</a> or <a href="../reference/register_starlette_extensions.html#jinja_partials.register_starlette_extensions" class="gdls-link gdls-code">register_starlette_extensions</a> was called twice on one app. Each call wraps whatever lifespan is there, including the previous wrap; there is no idempotency guard. A second Quart registration likewise adds another pair of serving hooks. The usual culprit is an app factory that registers, plus a module that registers again at import.</p>
+<p>The fix: register once, where the app is constructed, and make that the only caller.</p>
 </section>
 <section id="nothing-above-matches" class="level1">
 <h1>Nothing above matches</h1>
-<p>Open an issue at <a href="https://github.com/mikeckennedy/jinja_partials/issues">github.com/mikeckennedy/jinja_partials/issues</a> with the registration call you used, the framework and its version, and the traceback.</p>
+<p>Open an issue at <a href="https://github.com/mikeckennedy/jinja_partials/issues">github.com/mikeckennedy/jinja_partials/issues</a> with the registration call you used, the framework and its version, and the traceback. New entries in this field guide come from exactly those reports.</p>
 
 
 </section>
