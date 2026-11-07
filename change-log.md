@@ -5,25 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
-
-### Fixed
-
-- A partial that renders itself, or a cycle of partials, in an async environment (Quart, FastAPI, Starlette, or `enable_async=True` Jinja2) now raises `RecursionError` at `MAX_NESTED_RENDERS` (100) levels, as a sync environment already did on its own. Each nested async render runs on its own thread with its own event loop, so Python's recursion limit never applied; the render kept creating threads, each slower than the last and holding file descriptors, until the process ran out.
-
-### Added
-
-- Regression tests that names leaving the templates folder (`..` segments, leading whitespace, absolute paths, backslashes, directory names) raise `TemplateNotFound` on every registration path. Jinja's loader already refused them; the tests pin that the built-in renderers pass names to it untouched.
-
-### Documentation
-
-- `generate_render_partial` now says that a custom renderer is responsible for refusing names that leave its templates folder, and the user guide explains how to let a request choose a partial safely (map the value to a name you wrote).
-
 ## [0.4.0] - 2026-11-06
 
 ### Fixed
 
 - Nested partials in async apps (Quart, FastAPI, Starlette, and async Jinja2 environments) no longer deadlock the render thread pool. A nested `render_partial` call used to wait on the same pool its outer partial was occupying, so nesting as deep as `max_workers`, or enough concurrent requests with nested partials, hung every request. Nested renders now run on their own short-lived thread, and nesting depth no longer counts against `max_workers`.
+- A partial that renders itself, or a cycle of partials, in an async environment (Quart, FastAPI, Starlette, or `enable_async=True` Jinja2) now raises `RecursionError` at `MAX_NESTED_RENDERS` (100) levels, as a sync environment already did on its own. Each nested async render runs on its own thread with its own event loop, so Python's recursion limit never applied; the render kept creating threads, each slower than the last and holding file descriptors, until the process ran out.
+
+### Added
+
+- Regression tests that names leaving the templates folder (`..` segments, leading whitespace, absolute paths, backslashes, directory names) raise `TemplateNotFound` on every registration path. Jinja's loader already refused them; the tests pin that the built-in renderers pass names to it untouched.
 
 ### Documentation
 
@@ -34,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Corrected the README note about older Python versions: 0.3.0 already had synchronous Starlette support.
 - `scripts/build_docs.py` now fails when `llms.txt`, `llms-full.txt`, or the skill files are missing from the build output, or when `llms-full.txt` has no user guide section.
 - The docs now build with great-docs 0.17.0 (the dev lockfile was recompiled from 0.13.0), and `scripts/postprocess_site.py` repairs two more output bugs: the `**data` parameter rendered as `data: Any = {}` in the `render_partial` signatures, and parameter defaults wrapped in nested backticks in the Markdown reference companions.
+- `generate_render_partial` now says that a custom renderer is responsible for refusing names that leave its templates folder, and the user guide explains how to let a request choose a partial safely (map the value to a name you wrote).
 
 ## [0.3.2] - 2026-06-11
 
