@@ -1,8 +1,27 @@
-"""
-jinja_partials - Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.
+"""Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.
+
+Register once at app startup, then call ``render_partial`` inside any template::
+
+    import flask
+    import jinja_partials
+
+    app = flask.Flask(__name__)
+    jinja_partials.register_extensions(app)
+
+    # templates/home/index.html
+    # {{ render_partial('shared/partials/video_square.html', video=v) }}
+
+Entry points by framework: ``register_extensions`` (Flask), ``register_quart_extensions`` (Quart),
+``register_fastapi_extensions`` (FastAPI), ``register_starlette_extensions`` (Starlette), and
+``register_environment`` or ``PartialsJinjaExtension`` for any Jinja2 ``Environment``. All of them install
+a ``render_partial`` global built by ``generate_render_partial``. Misconfiguration or a missing framework
+raises ``PartialsException``; a missing template raises ``jinja2.TemplateNotFound``.
+
+Full documentation: https://mkennedy.codes/docs/jinja-partials/
 """
 
 import asyncio
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
@@ -34,6 +53,9 @@ __all__ = [
 
 # Thread pool for running async renders from sync context
 _async_render_executor = ThreadPoolExecutor(max_workers=4)
+
+# Marks threads that are currently inside an async render (see _render_async_blocking)
+_render_thread_state = threading.local()
 
 try:
     import flask
@@ -69,7 +91,24 @@ if TYPE_CHECKING:
 
 
 class PartialsException(Exception):
-    """Raised when jinja_partials is misconfigured or a required web framework is not installed."""
+    """Raised when jinja_partials is misconfigured or a required web framework is not installed.
+
+    Every ``register_*`` function raises it when its framework cannot be imported, and
+    ``render_partial`` raises it when called with no renderer outside Flask. A template
+    that cannot be found raises ``jinja2.TemplateNotFound`` instead.
+
+    Example:
+        Catch it to give a clearer startup error:
+
+        ```python
+        import jinja_partials
+
+        try:
+            jinja_partials.register_quart_extensions(app)
+        except jinja_partials.PartialsException as e:
+            raise SystemExit(f'jinja_partials setup failed: {e}')
+        ```
+    """
 
     pass
 
@@ -83,7 +122,9 @@ class PartialsJinjaExtension(Extension):
     Note:
         Partials registered this way render directly through the Jinja2
         environment rather than flask.render_template, so Flask context
-        processors do not apply inside partials. Flask apps that rely on
+        processors and the template_rendered signal do not apply inside
+        partials (g, request, and session remain available because Flask
+        installs them as environment globals). Flask apps that rely on
         context processors should use register_extensions instead.
 
     Args:
@@ -94,8 +135,15 @@ class PartialsJinjaExtension(Extension):
     Example:
         Enable the extension on a Jinja2 environment:
 
-            from jinja2 import Environment
-            env = Environment(extensions=["jinja_partials.PartialsJinjaExtension"])
+        ```python
+        from jinja2 import Environment, FileSystemLoader
+
+        env = Environment(
+            loader=FileSystemLoader('templates'),
+            extensions=['jinja_partials.PartialsJinjaExtension'],
+        )
+        html = env.get_template('home/index.html').render(videos=videos)
+        ```
     """
 
     def __init__(self, environment: Environment) -> None:
@@ -154,6 +202,19 @@ def render_partial(
 
     Raises:
         PartialsException: If no renderer is specified and Flask is not installed.
+
+    Example:
+        Inside a template, after any ``register_*`` call:
+
+        ```html
+        {{ render_partial('shared/partials/video_square.html', video=v) }}
+        ```
+
+        From Python in a Flask request context, for example in a test:
+
+        ```python
+        html = jinja_partials.render_partial('shared/partials/video_square.html', video=video)
+        ```
     """
     if renderer is None:
         if flask is None:
@@ -188,6 +249,16 @@ def generate_render_partial(renderer: Callable[..., Any], markup: bool = True) -
 
     Returns:
         A callable with the same signature as render_partial that uses the bound renderer.
+
+    Example:
+        Install a custom renderer as the ``render_partial`` global:
+
+        ```python
+        def renderer(template_name: str, **data) -> str:
+            return env.get_template(template_name).render(**data)
+
+        env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))
+        ```
     """
     return partial(render_partial, renderer=renderer, markup=markup)
 
@@ -203,6 +274,17 @@ def register_extensions(app: 'Flask') -> None:
 
     Raises:
         PartialsException: If Flask is not installed.
+
+    Example:
+        Register once at startup:
+
+        ```python
+        import flask
+        import jinja_partials
+
+        app = flask.Flask(__name__)
+        jinja_partials.register_extensions(app)
+        ```
     """
     if flask is None:
         raise PartialsException('Install Flask to use `register_extensions`')
@@ -227,6 +309,17 @@ def register_quart_extensions(app: 'Quart', max_workers: int = 4) -> None:
 
     Raises:
         PartialsException: If Quart is not installed.
+
+    Example:
+        Register once at startup:
+
+        ```python
+        from quart import Quart
+        import jinja_partials
+
+        app = Quart(__name__)
+        jinja_partials.register_quart_extensions(app)
+        ```
     """
     if quart is None:
         raise PartialsException('Install Quart to use `register_quart_extensions`')
@@ -261,8 +354,7 @@ def register_quart_extensions(app: 'Quart', max_workers: int = 4) -> None:
             # Run async render in the app's dedicated thread pool while serving,
             # falling back to the per-registration executor outside a serving cycle
             executor = app.extensions.get('jinja_partials_executor') or fallback_executor
-            future = executor.submit(_run_async_render, template, data)
-            return future.result()
+            return _render_async_blocking(executor, template, data)
 
         # Sync environment - use direct rendering (unlikely for Quart)
         ctx = template.new_context(data)
@@ -301,13 +393,15 @@ def register_fastapi_extensions(
     Example:
         Register during app setup:
 
-            from fastapi import FastAPI
-            from fastapi.templating import Jinja2Templates
-            import jinja_partials
+        ```python
+        from fastapi import FastAPI
+        from fastapi.templating import Jinja2Templates
+        import jinja_partials
 
-            app = FastAPI()
-            templates = Jinja2Templates(directory="templates")
-            jinja_partials.register_fastapi_extensions(app, templates)
+        app = FastAPI()
+        templates = Jinja2Templates(directory='templates')
+        jinja_partials.register_fastapi_extensions(app, templates)
+        ```
     """
     if fastapi is None:
         raise PartialsException('Install FastAPI to use `register_fastapi_extensions`')
@@ -349,8 +443,7 @@ def register_fastapi_extensions(
             # Run async render in the app's dedicated thread pool during the
             # lifespan, falling back to the per-registration executor outside it
             executor = getattr(app.state, 'jinja_partials_executor', None) or fallback_executor
-            future = executor.submit(_run_async_render, template, data)
-            return future.result()
+            return _render_async_blocking(executor, template, data)
 
         # Sync environment - use direct rendering
         ctx = template.new_context(data)
@@ -387,19 +480,23 @@ def register_starlette_extensions(
         PartialsException: If Starlette is not installed.
 
     Example:
-        With lifecycle management:
+        With lifecycle management (note that templates comes first):
 
-            from starlette.applications import Starlette
-            from starlette.templating import Jinja2Templates
-            import jinja_partials
+        ```python
+        from starlette.applications import Starlette
+        from starlette.templating import Jinja2Templates
+        import jinja_partials
 
-            templates = Jinja2Templates(directory="templates")
-            app = Starlette(...)
-            jinja_partials.register_starlette_extensions(templates, app=app)
+        templates = Jinja2Templates(directory='templates')
+        app = Starlette(routes=[...])
+        jinja_partials.register_starlette_extensions(templates, app=app)
+        ```
 
         Without lifecycle management (backwards compatible):
 
-            jinja_partials.register_starlette_extensions(templates)
+        ```python
+        jinja_partials.register_starlette_extensions(templates)
+        ```
     """
     if starlette is None:
         raise PartialsException('Install Starlette to use `register_starlette_extensions`')
@@ -440,8 +537,7 @@ def register_starlette_extensions(
 
             if env.is_async:
                 executor = getattr(app.state, 'jinja_partials_executor', None) or fallback_executor
-                future = executor.submit(_run_async_render, template, data)
-                return future.result()
+                return _render_async_blocking(executor, template, data)
 
             ctx = template.new_context(data)
             try:
@@ -464,7 +560,40 @@ def _run_async_render(template: Any, data: dict[str, Any]) -> str:
     async def _do_render() -> str:
         return await template.render_async(**data)
 
-    return asyncio.run(_do_render())
+    previous = getattr(_render_thread_state, 'in_render', False)
+    _render_thread_state.in_render = True
+    try:
+        return asyncio.run(_do_render())
+    finally:
+        _render_thread_state.in_render = previous
+
+
+def _render_async_blocking(executor: ThreadPoolExecutor, template: Any, data: dict[str, Any]) -> str:
+    """Render an async template on the executor and block until it finishes.
+
+    A nested partial is rendered from a thread that is itself a render worker,
+    blocked on its outer render. Submitting the nested render to the same pool
+    would wait on a worker that may never free up (depth >= max_workers, or
+    enough concurrent requests), so nested renders run on a short-lived thread
+    instead. Nesting depth therefore never counts against max_workers.
+    """
+    if not getattr(_render_thread_state, 'in_render', False):
+        return executor.submit(_run_async_render, template, data).result()
+
+    outcome: dict[str, Any] = {}
+
+    def target() -> None:
+        try:
+            outcome['value'] = _run_async_render(template, data)
+        except BaseException as e:
+            outcome['error'] = e
+
+    thread = threading.Thread(target=target, name='jinja_partials-nested-render')
+    thread.start()
+    thread.join()
+    if 'error' in outcome:
+        raise outcome['error']
+    return outcome['value']
 
 
 def _render_template_blocking(env: Environment, template_name: str, **data: Any) -> str:
@@ -483,8 +612,7 @@ def _render_template_blocking(env: Environment, template_name: str, **data: Any)
     # Check if templates are compiled for async (enable_async=True)
     if env.is_async:
         # Run async render in a separate thread with its own event loop
-        future = _async_render_executor.submit(_run_async_render, template, data)
-        return future.result()
+        return _render_async_blocking(_async_render_executor, template, data)
 
     # Sync environment - use direct rendering
     ctx = template.new_context(data)
@@ -503,7 +631,19 @@ def register_environment(env: Environment, markup: bool = False) -> None:
     Args:
         env: The Jinja2 Environment to make render_partial available in.
         markup: When True, wrap rendered partials in markupsafe.Markup.
-                Defaults to False.
+                Defaults to False, so with autoescaping on, pass markup=True
+                or the fragment is inserted as escaped text.
+
+    Example:
+        Register with a standalone environment:
+
+        ```python
+        from jinja2 import Environment, FileSystemLoader
+        import jinja_partials
+
+        env = Environment(loader=FileSystemLoader('templates'), autoescape=True)
+        jinja_partials.register_environment(env, markup=True)
+        ```
     """
 
     def renderer(template_name: str, **data: Any) -> str:
