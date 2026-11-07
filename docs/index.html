@@ -248,16 +248,18 @@ section.level2:first-of-type > h2:first-child,
 <p>Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks. (There is also a <a href="https://github.com/mikeckennedy/chameleon_partials">Pyramid/Chameleon version here</a>.)</p>
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>Every real Jinja2 app ends up with the same HTML fragment copied into a dozen templates: a video card, a badge, a table row. The day the design changes, you go hunting for every copy. In Python you would write a function with parameters and call it. jinja_partials lets your templates do exactly that: <code>render_partial('shared/partials/video_square.html', video=v)</code> renders a fragment file with the data you hand it, and nothing else. Fragments nest, the data flow is explicit, and the same fragment can serve a full page or an HTMX swap.</p>
+<p>Every Jinja2 app of a certain age has a fragment that got copied. A video card, a badge, a table row. It started life on one page, got pasted onto a second, then a third, and by the time the designer asks for a small refresh there are fourteen of them and two have quietly drifted. In Python this never happens, because you would write a function with parameters and call it from everywhere. jinja_partials gives your templates that same move:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{{ render_partial('shared/partials/video_square.html', video=v) }}</span></code></pre></div>
+<p>That one call renders the fragment file with the data you hand it, and nothing else, and gives back HTML that is safe to drop straight into the page. Fragments nest as deep as the design needs. Every input is visible at the call site. And because a partial is just a template, the same file can render inline inside a page and be served on its own to an HTMX swap.</p>
 </section>
 <section id="documentation" class="level2">
 <h2 class="anchored" data-anchor-id="documentation">Documentation</h2>
-<p>The full documentation is available at <a href="https://mkennedy.codes/docs/jinja-partials/">mkennedy.codes/docs/jinja-partials</a>. The user guide expands each section of this README:</p>
+<p>The full documentation is available at <a href="https://mkennedy.codes/docs/jinja-partials/">mkennedy.codes/docs/jinja-partials</a>. This README is the short version; the user guide tells the whole story:</p>
 <ul>
-<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html">Why partials</a> - the problem, and how <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> differs from <code>include</code> and <code>macro</code></li>
-<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html">Installation</a> and the <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html">Quickstart</a></li>
-<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html">Frameworks</a> - Flask, Quart, FastAPI, Starlette, plain Jinja2, and the declarative extension</li>
-<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html">Troubleshooting</a> - what each error or wrong output means and how to fix it</li>
+<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html">Why partials</a> - the fourteenth copy of a video card, and how <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> differs from <code>include</code> and <code>macro</code></li>
+<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html">Installation</a> and the <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html">Quickstart</a>, which builds that card properly, once</li>
+<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html">Frameworks</a> - Flask, Quart, FastAPI, Starlette, plain Jinja2, the declarative extension, and the one rule async apps must follow</li>
+<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html">Troubleshooting</a> - a field guide to every error and wrong output, with the fix for each</li>
 <li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/testing.html">Testing partials</a>, <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/how-it-works.html">How it works</a>, and the <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/faq.html">FAQ</a></li>
 <li><a href="https://mkennedy.codes/docs/jinja-partials/reference/">API reference</a></li>
 </ul>
@@ -265,7 +267,7 @@ section.level2:first-of-type > h2:first-child,
 </section>
 <section id="supported-frameworks" class="level2">
 <h2 class="anchored" data-anchor-id="supported-frameworks">Supported Frameworks</h2>
-<p>Jinja Partials has specific support for the most popular Python web frameworks:</p>
+<p>Your templates never find out which framework is running them. <code>{ render_partial(...) }</code> looks the same in a Flask app from 2019 and a FastAPI app you started this morning. The only thing that changes is one registration line at startup:</p>
 <ul>
 <li><strong>Flask</strong> - <code>register_extensions(app)</code></li>
 <li><strong>FastAPI</strong> - <code>register_fastapi_extensions(app, templates)</code></li>
@@ -273,90 +275,111 @@ section.level2:first-of-type > h2:first-child,
 <li><strong>Quart</strong> - <code>register_quart_extensions(app)</code></li>
 <li><strong>Any Jinja2 environment</strong> - <code>register_environment(env)</code></li>
 </ul>
+<p>Under every one of those is the same tiny primitive. The framework helpers only differ in how they find the Jinja environment and, for the async frameworks, how they keep a small render thread pool alive for exactly as long as the app is serving.</p>
 </section>
 <section id="examples" class="level2">
 <h2 class="anchored" data-anchor-id="examples">Examples</h2>
-<p>This project includes example applications for each supported framework in the <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples"><code>examples</code></a> folder:</p>
+<p>The <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples"><code>examples</code></a> folder holds a runnable app for each framework:</p>
 <ul>
-<li><a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask"><strong>Flask example</strong></a> - Traditional Flask app with partials</li>
-<li><a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_fastapi"><strong>FastAPI example</strong></a> - FastAPI with Jinja2Templates</li>
-<li><a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_starlette"><strong>Starlette example</strong></a> - Starlette with Jinja2Templates</li>
-<li><a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_quart"><strong>Quart example</strong></a> - Async Quart app with partials</li>
+<li><a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask"><strong>Flask example</strong></a> - the complete video site from this README, with a layout, a listing page, and a small JSON database of videos</li>
+<li><a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_fastapi"><strong>FastAPI example</strong></a> - an <code>enable_async=True</code> environment rendering cards with nested badge partials</li>
+<li><a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_starlette"><strong>Starlette example</strong></a> - the same cards and badges on Starlette, with lifespan-managed rendering</li>
+<li><a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_quart"><strong>Quart example</strong></a> - the async Flask cousin, rendering the same cards through <code>before_serving</code> and <code>after_serving</code> hooks</li>
 </ul>
-<p>Each example demonstrates reusable partial templates. The screenshot below is from the Flask example:</p>
-<p><img src="https://raw.githubusercontent.com/mikeckennedy/jinja_partials/main/readme_resources/reused-html-visual.png" class="img-fluid"></p>
+<p>The three async examples are deliberately small and nearly identical, so you can diff them and see that the templates are the part that does not change. The screenshot below is the Flask example, and every card on it is one partial file rendered in a loop:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://raw.githubusercontent.com/mikeckennedy/jinja_partials/main/readme_resources/reused-html-visual.png" class="img-fluid figure-img"></p>
+<figcaption>Screenshot of the Flask example app showing a grid of video cards, each rendered from the same partial</figcaption>
+</figure>
+</div>
 </section>
 <section id="installation" class="level2">
 <h2 class="anchored" data-anchor-id="installation">Installation</h2>
-<p>It’s just <code>pip install jinja-partials</code> and you’re all set with this pure Python package.</p>
-<p>Requires Python 3.10 or newer. On older versions of Python, pip installs the 0.3.0 release, which predates the Quart and FastAPI support and the lifecycle-managed Starlette support described here.</p>
+<p>It’s just <code>pip install jinja-partials</code> (or <code>uv add jinja-partials</code>) and you’re all set with this pure Python package. The PyPI name has a hyphen and the import has an underscore, <code>import jinja_partials</code>, which is the first and only trap at the door.</p>
+<p>Requires Python 3.10 or newer. On older interpreters pip does not refuse; it quietly hands you the 0.3.0 release, which predates the Quart and FastAPI support and the lifecycle-managed Starlette support described here. If a function on this page is mysteriously missing, check which version you actually got.</p>
 </section>
 <section id="usage" class="level2">
 <h2 class="anchored" data-anchor-id="usage">Usage</h2>
-<p>Using the library is easy. Register jinja_partials with your framework once at app startup. The <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html">Frameworks</a> page covers each option in more depth, including the page-level rule for async apps.</p>
+<p>Register jinja_partials with your framework once, where the app is built, before it starts serving. After that the <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> function is simply there in every template, like <code>url_for</code>. The <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html">Frameworks</a> page covers each option in more depth, including the page-level rule for async apps.</p>
 <section id="flask" class="level3">
 <h3 class="anchored" data-anchor-id="flask">Flask</h3>
-<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> flask</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> flask.Flask(<span class="va">__name__</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_extensions(app)</span></code></pre></div>
+<p>Flask is the original home of this library and gets the richest behavior. Partials render through <code>flask.render_template</code>, so context processors, <code>g</code>, <code>request</code>, and <code>session</code> all work inside them exactly as they do in a page.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> flask</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> flask.Flask(<span class="va">__name__</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_extensions(app)</span></code></pre></div>
 </section>
 <section id="fastapi" class="level3">
 <h3 class="anchored" data-anchor-id="fastapi">FastAPI</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi <span class="im">import</span> FastAPI</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi.templating <span class="im">import</span> Jinja2Templates</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> FastAPI()</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">"templates"</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_fastapi_extensions(app, templates)</span></code></pre></div>
+<p>Registration wraps the app’s lifespan, so the render pool exists for exactly as long as the app is serving. If you already pass a <code>lifespan=</code> to FastAPI, it keeps running and whatever state it yields still reaches your routes.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi <span class="im">import</span> FastAPI</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi.templating <span class="im">import</span> Jinja2Templates</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> FastAPI()</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">"templates"</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_fastapi_extensions(app, templates)</span></code></pre></div>
 </section>
 <section id="starlette" class="level3">
 <h3 class="anchored" data-anchor-id="starlette">Starlette</h3>
-<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> starlette.applications <span class="im">import</span> Starlette</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> starlette.templating <span class="im">import</span> Jinja2Templates</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">"templates"</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> Starlette(routes<span class="op">=</span>[...])</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_starlette_extensions(templates, app<span class="op">=</span>app)</span></code></pre></div>
+<p>Read the last line twice: <code>templates</code> comes first and <code>app</code> is a keyword, the reverse of the FastAPI call. Starlette support predates the app-aware version and kept its original first argument. Passing the app is optional but recommended, because that is what ties the render pool to the lifespan.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> starlette.applications <span class="im">import</span> Starlette</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> starlette.templating <span class="im">import</span> Jinja2Templates</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">"templates"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> Starlette(routes<span class="op">=</span>[...])</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_starlette_extensions(templates, app<span class="op">=</span>app)</span></code></pre></div>
 </section>
 <section id="quart" class="level3">
 <h3 class="anchored" data-anchor-id="quart">Quart</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quart <span class="im">import</span> Quart</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> Quart(<span class="va">__name__</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_quart_extensions(app)</span></code></pre></div>
+<p>Quart templates are async, and registration adds <code>before_serving</code> and <code>after_serving</code> hooks that create and later shut down the pool that renders partials. Your pages keep using <code>await render_template(...)</code> as they always did.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quart <span class="im">import</span> Quart</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> Quart(<span class="va">__name__</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_quart_extensions(app)</span></code></pre></div>
+</section>
+<section id="one-rule-for-async-apps" class="level3">
+<h3 class="anchored" data-anchor-id="one-rule-for-async-apps">One rule for async apps</h3>
+<p>Quart, FastAPI, and Starlette apps usually build their Jinja environment with <code>enable_async=True</code>. jinja_partials handles the partials inside those templates with no changes on your side. The page that contains them is your job, and there is exactly one rule: in FastAPI and Starlette, render it with <code>await template.render_async(...)</code> and return an <code>HTMLResponse</code>. The tempting <code>templates.TemplateResponse(...)</code> calls the synchronous <code>render()</code>, which tries to start an event loop inside the one already running your request, and Python declines with <code>RuntimeError: asyncio.run() cannot be called from a running event loop</code>. The partials were never the problem; the page was.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastapi.responses <span class="im">import</span> HTMLResponse</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">@app.get</span>(<span class="st">'/'</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> index() <span class="op">-&gt;</span> HTMLResponse:</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    template <span class="op">=</span> templates.get_template(<span class="st">'home/index.html'</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> HTMLResponse(<span class="cf">await</span> template.render_async(items<span class="op">=</span>items))</span></code></pre></div>
 </section>
 <section id="direct-jinja2-environment" class="level3">
 <h3 class="anchored" data-anchor-id="direct-jinja2-environment">Direct Jinja2 Environment</h3>
-<p>For any other use case, register directly with a Jinja2 environment:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jinja2 <span class="im">import</span> Environment, FileSystemLoader</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>environment <span class="op">=</span> Environment(loader<span class="op">=</span>FileSystemLoader(<span class="st">"templates"</span>))</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_environment(environment, markup<span class="op">=</span><span class="va">True</span>)</span></code></pre></div>
+<p>No framework, or one the library has not heard of? Register with the environment directly. The <code>markup=True</code> is not decoration: this is the one registration function whose <code>markup</code> defaults to <code>False</code>, and with autoescaping on, the default inserts your fragment as escaped text.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jinja2 <span class="im">import</span> Environment, FileSystemLoader</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>environment <span class="op">=</span> Environment(loader<span class="op">=</span>FileSystemLoader(<span class="st">"templates"</span>))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_environment(environment, markup<span class="op">=</span><span class="va">True</span>)</span></code></pre></div>
 </section>
 <section id="using-the-jinja2-extension-declarative" class="level3">
 <h3 class="anchored" data-anchor-id="using-the-jinja2-extension-declarative">Using the Jinja2 Extension (Declarative)</h3>
-<p>Alternatively, you can use the <a href="reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a> for a more declarative approach.</p>
+<p>If your framework or settings file configures Jinja declaratively, <a href="reference/PartialsJinjaExtension.html#jinja_partials.PartialsJinjaExtension" class="gdls-link gdls-code">PartialsJinjaExtension</a> performs the same registration from the environment’s <code>extensions</code> list, always with markup enabled.</p>
 <section id="for-flask-applications" class="level4">
 <h4 class="anchored" data-anchor-id="for-flask-applications">For Flask Applications</h4>
 <p>With Flask, add the extension to your app’s Jinja environment:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> flask</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> flask.Flask(<span class="va">__name__</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Declarative registration with Flask</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>app.jinja_env.add_extension(<span class="st">'jinja_partials.PartialsJinjaExtension'</span>)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Alternative: traditional registration</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co"># jinja_partials.register_extensions(app)</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> flask</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> flask.Flask(<span class="va">__name__</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Declarative registration with Flask</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>app.jinja_env.add_extension(<span class="st">'jinja_partials.PartialsJinjaExtension'</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Alternative: traditional registration</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># jinja_partials.register_extensions(app)</span></span></code></pre></div>
 <blockquote class="blockquote">
 <p><strong>Note:</strong> With the extension approach, partials render directly through the Jinja environment rather than <code>flask.render_template</code>. That means Flask context processors (<code>@app.context_processor</code>) and the <code>template_rendered</code> signal do not apply inside partials (<code>g</code>, <code>request</code>, and <code>session</code> still work, since Flask installs them as environment globals). If your partials depend on context processors, use <code>jinja_partials.register_extensions(app)</code>.</p>
 </blockquote>
@@ -364,71 +387,62 @@ section.level2:first-of-type > h2:first-child,
 <section id="for-standalone-jinja2-environments" class="level4">
 <h4 class="anchored" data-anchor-id="for-standalone-jinja2-environments">For Standalone Jinja2 Environments</h4>
 <p>For direct Jinja2 usage (without Flask):</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jinja2 <span class="im">import</span> Environment, FileSystemLoader</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Declarative registration - extension automatically registers render_partial</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>environment <span class="op">=</span> Environment(</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    loader<span class="op">=</span>FileSystemLoader(<span class="st">"tests/test_templates"</span>),</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    extensions<span class="op">=</span>[<span class="st">"jinja_partials.PartialsJinjaExtension"</span>]</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co"># render_partial is now available in templates, no additional setup needed!</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jinja2 <span class="im">import</span> Environment, FileSystemLoader</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Declarative registration - extension automatically registers render_partial</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>environment <span class="op">=</span> Environment(</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    loader<span class="op">=</span>FileSystemLoader(<span class="st">"tests/test_templates"</span>),</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    extensions<span class="op">=</span>[<span class="st">"jinja_partials.PartialsJinjaExtension"</span>]</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># render_partial is now available in templates, no additional setup needed!</span></span></code></pre></div>
 </section>
 <section id="when-to-use-the-extension-approach" class="level4">
 <h4 class="anchored" data-anchor-id="when-to-use-the-extension-approach">When to Use the Extension Approach</h4>
-<p>This declarative approach is especially useful when:</p>
-<ul>
-<li>Working with frameworks that configure Jinja2 environments declaratively</li>
-<li>You want cleaner, more explicit dependency management</li>
-<li>Integrating with other Jinja2 extensions</li>
-<li>Using standalone Jinja2 environments outside of Flask</li>
-</ul>
-<p>The extension automatically enables markup support by default, ensuring that your partial templates return properly escaped <code>Markup</code> objects.</p>
+<p>Reach for the extension when the environment is configured somewhere you do not control the Python, such as a framework or settings file that takes a list of extension names, or when you are already stacking other Jinja2 extensions and want this one listed beside them. It always enables markup, so your partials come back as <code>Markup</code> objects and autoescaping leaves them alone.</p>
 </section>
 </section>
 </section>
 <section id="template-usage" class="level2">
 <h2 class="anchored" data-anchor-id="template-usage">Template Usage</h2>
-<p>Next, you define your main HTML (Jinja2) templates as usual. Then define your partial templates. I recommend locating and naming them accordingly:</p>
-<pre><code>├── templates
-│&nbsp;&nbsp; ├── home
-│&nbsp;&nbsp; │&nbsp;&nbsp; ├── index.html
-│&nbsp;&nbsp; │&nbsp;&nbsp; └── listing.html
-│&nbsp;&nbsp; └── shared
-│&nbsp;&nbsp;     ├── _layout.html
-│&nbsp;&nbsp;     └── partials
-│&nbsp;&nbsp;         ├── video_image.html
-│&nbsp;&nbsp;         └── video_square.html</code></pre>
-<p>Notice the <code>partials</code> subfolder in the <code>templates/shared</code> folder.</p>
-<p>The templates are just HTML fragments. Here is a stand-alone one for the YouTube thumbnail from the example app:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">img</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://img.youtube.com/vi/{{ video.id }}/maxresdefault.jpg"</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ot">     class</span><span class="op">=</span><span class="st">"img img-responsive {{ (classes | default([])) | join(' ') }}"</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="ot">     alt</span><span class="op">=</span><span class="st">"{{ video.title }}"</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="ot">     title</span><span class="op">=</span><span class="st">"{{ video.title }}"</span><span class="dt">&gt;</span></span></code></pre></div>
-<p>Notice that an object called <code>video</code> is passed in as the model, along with an optional list of CSS <code>classes</code>.</p>
-<p>Templates can also be nested. Here is the whole single video fragment with the image as well as other info linking out to YouTube:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span><span class="dt">&gt;</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">a</span><span class="ot"> href</span><span class="op">=</span><span class="st">"https://www.youtube.com/watch?v={{ video.id }}"</span><span class="ot"> target</span><span class="op">=</span><span class="st">"_blank"</span><span class="dt">&gt;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        {{ render_partial('shared/partials/video_image.html', video=video) }}</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;/</span><span class="kw">a</span><span class="dt">&gt;</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">a</span><span class="ot"> href</span><span class="op">=</span><span class="st">"https://www.youtube.com/watch?v={{ video.id }}"</span><span class="ot"> target</span><span class="op">=</span><span class="st">"_blank"</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="ot">       class</span><span class="op">=</span><span class="st">"author"</span><span class="dt">&gt;</span>{{ video.author }}<span class="dt">&lt;/</span><span class="kw">a</span><span class="dt">&gt;</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"views"</span><span class="dt">&gt;</span>{{ "{:,}".format(video.views) }} views<span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span></code></pre></div>
-<p>Now you see the <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial()</a> method. It takes the subpath into the templates folder and any model data passed in as keyword arguments.</p>
-<p>We can finally generate the list of video blocks as follows:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>{% for v in videos %}</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"col-md-3 video"</span><span class="dt">&gt;</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        {{ render_partial('shared/partials/video_square.html', video=v) }}</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>{% endfor %}</span></code></pre></div>
-<p>This time, we reframe each item in the list from the outer template (called <code>v</code>) as the <code>video</code> model in the inner HTML section.</p>
-<p>If a fragment shows up on the page as escaped text, or you hit <a href="reference/PartialsException.html#jinja_partials.PartialsException" class="gdls-link gdls-code">PartialsException</a>, <code>TemplateNotFound</code>, or an <code>asyncio.run()</code> error in an async app, the <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html">Troubleshooting</a> page lists the cause and fix for each.</p>
+<p>Here is the video card from the screenshot, built once. Partials are ordinary templates, so they can live anywhere your loader can see. The convention this project uses is a <code>partials</code> folder under <code>templates/shared</code>:</p>
+<pre class="text"><code>├── templates
+│   ├── home
+│   │   ├── index.html
+│   │   └── listing.html
+│   └── shared
+│       ├── _layout.html
+│       └── partials
+│           ├── video_image.html
+│           └── video_square.html</code></pre>
+<p>Start with the smallest piece. The YouTube thumbnail takes a <code>video</code> and an optional list of CSS <code>classes</code>, and it declares that <code>classes</code> is optional by handling its own absence with <code>| default([])</code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">img</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://img.youtube.com/vi/{{ video.id }}/maxresdefault.jpg"</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ot">     class</span><span class="op">=</span><span class="st">"img img-responsive {{ (classes | default([])) | join(' ') }}"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="ot">     alt</span><span class="op">=</span><span class="st">"{{ video.title }}"</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="ot">     title</span><span class="op">=</span><span class="st">"{{ video.title }}"</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>Now the card. It wraps the thumbnail in a link, adds the author and the view count, and it gets the thumbnail by rendering the image partial inside itself. Partials nest; that is half their charm.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">div</span><span class="dt">&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">a</span><span class="ot"> href</span><span class="op">=</span><span class="st">"https://www.youtube.com/watch?v={{ video.id }}"</span><span class="ot"> target</span><span class="op">=</span><span class="st">"_blank"</span><span class="dt">&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>        {{ render_partial('shared/partials/video_image.html', video=video) }}</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;/</span><span class="kw">a</span><span class="dt">&gt;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">a</span><span class="ot"> href</span><span class="op">=</span><span class="st">"https://www.youtube.com/watch?v={{ video.id }}"</span><span class="ot"> target</span><span class="op">=</span><span class="st">"_blank"</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="ot">       class</span><span class="op">=</span><span class="st">"author"</span><span class="dt">&gt;</span>{{ video.author }}<span class="dt">&lt;/</span><span class="kw">a</span><span class="dt">&gt;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"views"</span><span class="dt">&gt;</span>{{ "{:,}".format(video.views) }} views<span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>That is <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial()</a> in the wild. It takes the path of the fragment relative to the templates folder, extension included, and whatever data the fragment needs as keyword arguments.</p>
+<p>Finally the page, which turns a list of videos into a grid of cards:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>{% for v in videos %}</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"col-md-3 video"</span><span class="dt">&gt;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        {{ render_partial('shared/partials/video_square.html', video=v) }}</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>{% endfor %}</span></code></pre></div>
+<p>The page calls the loop variable <code>v</code>. The card calls it <code>video</code>. That renaming at the boundary is not a workaround; it is the whole idea. The fragment names what it needs, and each caller maps its own data onto those names. The listing page, the search results, and the email digest can all call this one file with whatever they happen to have, and the fragment can never quietly depend on a page variable it was not given.</p>
+<p>If a fragment shows up on the page as escaped text, or you hit <a href="reference/PartialsException.html#jinja_partials.PartialsException" class="gdls-link gdls-code">PartialsException</a>, <code>TemplateNotFound</code>, or an <code>asyncio.run()</code> error in an async app, the <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html">Troubleshooting</a> page starts from what you see on the screen and works back to the fix.</p>
 </section>
 <section id="why-not-just-use-include-or-macro-from-jinja" class="level2">
 <h2 class="anchored" data-anchor-id="why-not-just-use-include-or-macro-from-jinja">Why not just use <code>include</code> or <code>macro</code> from Jinja?</h2>
-<p>The short answer is they are nearly the same, but both fall short in different ways. <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html">Why partials</a> explains the differences, and the original discussion is on <a href="https://github.com/mikeckennedy/jinja_partials/issues/1"><strong>issue #1</strong></a>.</p>
+<p>Because both are nearly right, which is exactly why they frustrate. <code>{% include %}</code> hands the fragment the entire page context, so nothing at the call site tells you what it reads. <code>{% macro %}</code> has proper parameters but must be imported into every page and is not a file you can render on its own, so it cannot answer an HTMX request by itself. <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html">Why partials</a> tells the story, and the original debate is on <a href="https://github.com/mikeckennedy/jinja_partials/issues/1"><strong>issue #1</strong></a>.</p>
 
 
 </section>

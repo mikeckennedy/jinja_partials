@@ -659,7 +659,7 @@ Open an issue at [github.com/mikeckennedy/jinja_partials/issues](https://github.
 
 ### Testing partials
 
-A partial has an explicit list of inputs and produces a string. That is about the most testable shape a piece of a web app can have. You do not need a browser, a full page, or a database; you need the fragment's name and a few keyword arguments. The patterns below are the ones the library's own suite uses, so they are known to work.
+The designer's refresh from [Why partials](01-why-partials.qmd) has landed. The view count has thousands separators, the author is a link, and because there is one card instead of fourteen, the change was one file. The remaining question is how you know it is right on every page, and the pleasant answer is that you do not have to look at every page. A partial has an explicit list of inputs and produces a string, which is about the most testable shape a piece of a web app can have. No browser, no full page, no database; you need the fragment's name and a few keyword arguments. The patterns below are the ones the library's own suite uses, so they are known to work.
 
 ## Flask
 
@@ -684,7 +684,7 @@ def test_video_square(app):
     assert '12,500 views' in html
 ```
 
-A bad template name raises `jinja2.TemplateNotFound`, so `pytest.raises(TemplateNotFound)` is the right assertion when you want to prove a rename did not leave a dangling reference behind.
+That assertion is the thousands separators from the refresh, checked once, on behalf of every page that renders the card. A bad template name raises `jinja2.TemplateNotFound`, so `pytest.raises(TemplateNotFound)` is the right assertion when you want to prove a rename did not leave a dangling reference behind.
 
 ## FastAPI and Starlette
 
@@ -745,6 +745,8 @@ def test_fragment():
 ```
 
 If a test is specifically about escaping, assert `isinstance(result, Markup)`. `render_partial` returns `markupsafe.Markup` whenever `markup=True`, and a plain `str` when it is not, which is the difference between a rendered card and a page full of angle brackets.
+
+One file, one test, fourteen pages covered. A partial that passes in isolation renders the same way everywhere, because it never borrows anything from the page that calls it, and [How it works](07-how-it-works.qmd) shows how little machinery that guarantee rests on.
 
 
 
