@@ -1,17 +1,39 @@
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Callable, Union
+from typing import TYPE_CHECKING, Any, Callable, Union, cast
 
 # noinspection PyPackageRequirements
 import pytest as pytest
-from jinja2 import TemplateNotFound
+from jinja2 import Environment, TemplateNotFound
 from markupsafe import Markup
 
 import jinja_partials
 
+if TYPE_CHECKING:
+    from quart import Quart
+
 _TEMPLATES_DIR = Path(__file__).parent / 'test_templates'
+
+
+def _render_partial_global(env: Environment) -> Callable[..., str]:
+    """Fetch the installed ``render_partial`` global with a callable type.
+
+    jinja2 leaves ``Environment.globals`` unannotated, so type checkers infer its value type from the
+    default globals and refuse to call anything read out of it.
+    """
+    return cast('Callable[..., str]', env.globals['render_partial'])
+
+
+def _serving(app: 'Quart') -> AbstractAsyncContextManager[Any]:
+    """``async with`` wrapper for ``app.test_app()``.
+
+    Quart's ``TestAppProtocol`` declares ``__aexit__`` with non-Optional exception parameters, which
+    type checkers reject as an async context manager.
+    """
+    return cast('AbstractAsyncContextManager[Any]', app.test_app())
 
 
 def test_render_empty(registered_extension):
@@ -235,7 +257,7 @@ def test_fastapi_executor_lifecycle_reentrant(monkeypatch):
     app = FastAPI()
     jinja_partials.register_fastapi_extensions(app, templates)
     fallback = created[0]
-    render = templates.env.globals['render_partial']
+    render = _render_partial_global(templates.env)
 
     async def cycle():
         async with app.router.lifespan_context(app):
@@ -317,7 +339,7 @@ def test_fastapi_executor_shutdown_on_startup_error(monkeypatch):
     templates = Jinja2Templates(env=env)
     app = FastAPI(lifespan=failing_lifespan)
     jinja_partials.register_fastapi_extensions(app, templates)
-    render = templates.env.globals['render_partial']
+    render = _render_partial_global(templates.env)
 
     async def cycle():
         async with app.router.lifespan_context(app):
@@ -351,7 +373,7 @@ def test_starlette_executor_lifecycle_reentrant(monkeypatch):
     app = Starlette()
     jinja_partials.register_starlette_extensions(templates, app=app)
     fallback = created[0]
-    render = templates.env.globals['render_partial']
+    render = _render_partial_global(templates.env)
 
     async def cycle():
         async with app.router.lifespan_context(app):
@@ -421,10 +443,10 @@ def test_quart_executor_lifecycle_reentrant(monkeypatch):
     app = Quart(__name__, template_folder=folder)
     jinja_partials.register_quart_extensions(app)
     fallback = created[0]
-    render = app.jinja_env.globals['render_partial']
+    render = _render_partial_global(app.jinja_env)
 
     async def cycle():
-        async with app.test_app():
+        async with _serving(app):
             executor = app.extensions['jinja_partials_executor']
             assert executor is not None
             html = render('render/bare.html')
@@ -462,7 +484,7 @@ def test_starlette_executor_shutdown_on_startup_error(monkeypatch):
     templates = _async_templates()
     app = Starlette(lifespan=failing_lifespan)
     jinja_partials.register_starlette_extensions(templates, app=app)
-    render = templates.env.globals['render_partial']
+    render = _render_partial_global(templates.env)
 
     async def cycle():
         async with app.router.lifespan_context(app):
@@ -518,7 +540,7 @@ def test_fastapi_render_before_first_startup(monkeypatch):
     app = FastAPI()
     jinja_partials.register_fastapi_extensions(app, templates)
 
-    html = templates.env.globals['render_partial']('render/bare.html')
+    html = _render_partial_global(templates.env)('render/bare.html')
     assert '<h1>This is bare HTML fragment</h1>' in html
     assert created[0].submitted == 1  # the registration fallback did the work
 
@@ -532,7 +554,7 @@ def test_fastapi_nested_partials_in_cycle():
     templates = _async_templates()
     app = FastAPI()
     jinja_partials.register_fastapi_extensions(app, templates)
-    render = templates.env.globals['render_partial']
+    render = _render_partial_global(templates.env)
 
     async def cycle():
         async with app.router.lifespan_context(app):
@@ -569,7 +591,7 @@ def test_executor_max_workers_passthrough(monkeypatch):
             pass
         async with starlette_app.router.lifespan_context(starlette_app):
             pass
-        async with quart_app.test_app():
+        async with _serving(quart_app):
             pass
 
     asyncio.run(cycles())
@@ -598,7 +620,7 @@ def test_quart_executor_recovers_from_failed_startup():
             raise RuntimeError('boom in startup')
 
     async def failed_cycle():
-        async with app.test_app():
+        async with _serving(app):
             pass  # never reached, startup fails
 
     with pytest.raises(Exception, match='boom in startup'):
@@ -611,11 +633,11 @@ def test_quart_executor_recovers_from_failed_startup():
     fail['on'] = False
 
     async def clean_cycle():
-        async with app.test_app():
+        async with _serving(app):
             fresh = app.extensions['jinja_partials_executor']
             assert fresh is not None
             assert fresh is not stale
-            html = app.jinja_env.globals['render_partial']('render/bare.html')
+            html = _render_partial_global(app.jinja_env)('render/bare.html')
             assert '<h1>This is bare HTML fragment</h1>' in html
 
     asyncio.run(clean_cycle())
@@ -638,10 +660,10 @@ def test_partials_jinja_extension_markup_behavior():
     env = Environment(loader=FileSystemLoader(templates_path), extensions=['jinja_partials.PartialsJinjaExtension'])
 
     # Get the render_partial function from globals
-    render_partial_func = env.globals['render_partial']
+    render_partial_func = _render_partial_global(env)
 
     # Test that it returns Markup by default
-    result = render_partial_func('render/bare.html')  # type: ignore
+    result = render_partial_func('render/bare.html')
     assert isinstance(result, Markup)
     assert '<h1>This is bare HTML fragment</h1>' in result
 
@@ -658,7 +680,7 @@ def test_nested_partials_deeper_than_max_workers(monkeypatch):
     templates = _async_templates()
     app = FastAPI()
     jinja_partials.register_fastapi_extensions(app, templates, max_workers=1)
-    render = templates.env.globals['render_partial']
+    render = _render_partial_global(templates.env)
     outcome = {}
 
     def run():
@@ -688,7 +710,7 @@ def test_concurrent_nested_partials_do_not_exhaust_pool():
     templates = _async_templates()
     app = FastAPI()
     jinja_partials.register_fastapi_extensions(app, templates, max_workers=2)
-    render = templates.env.globals['render_partial']
+    render = _render_partial_global(templates.env)
     # Both outer renders occupy the pool before either one nests
     barrier = threading.Barrier(2, timeout=10)
     results = []
@@ -754,11 +776,11 @@ def every_render_partial(registered_extension):
 
     return {
         'flask': jinja_partials.render_partial,
-        'jinja': sync_env.globals['render_partial'],
-        'jinja_async': async_env.globals['render_partial'],
-        'fastapi': fastapi_templates.env.globals['render_partial'],
-        'starlette': starlette_templates.env.globals['render_partial'],
-        'quart': quart_app.jinja_env.globals['render_partial'],
+        'jinja': _render_partial_global(sync_env),
+        'jinja_async': _render_partial_global(async_env),
+        'fastapi': _render_partial_global(fastapi_templates.env),
+        'starlette': _render_partial_global(starlette_templates.env),
+        'quart': _render_partial_global(quart_app.jinja_env),
     }
 
 
@@ -787,7 +809,7 @@ def _plain_render_partial(is_async: bool):
 
     env = Environment(loader=FileSystemLoader(_TEMPLATES_DIR), enable_async=is_async)
     jinja_partials.register_environment(env)
-    return env.globals['render_partial']
+    return _render_partial_global(env)
 
 
 @pytest.mark.parametrize('is_async', [False, True], ids=['sync', 'async'])

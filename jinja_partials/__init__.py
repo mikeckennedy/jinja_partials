@@ -22,11 +22,12 @@ Full documentation: https://mkennedy.codes/docs/jinja-partials/
 
 import asyncio
 import threading
+from collections.abc import AsyncGenerator, MutableMapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from functools import partial
 from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Literal, Optional, Union, overload
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union, cast, overload
 
 from jinja2 import Environment
 from jinja2.ext import Extension
@@ -276,6 +277,17 @@ def generate_render_partial(renderer: Callable[..., Any], markup: bool = True) -
     return partial(render_partial, renderer=renderer, markup=markup)
 
 
+def _install_render_partial(env: Environment, func: Callable[..., Any]) -> None:
+    """Install ``func`` as the ``render_partial`` global on ``env``.
+
+    jinja2 leaves ``Environment.globals`` unannotated, so type checkers infer its value type from the
+    handful of default globals and reject anything else. The cast widens it back to the
+    ``MutableMapping[str, Any]`` that jinja2's own signatures document.
+    """
+    env_globals = cast('MutableMapping[str, Any]', env.globals)
+    env_globals['render_partial'] = func
+
+
 def register_extensions(app: 'Flask') -> None:
     """Register jinja_partials with a Flask application.
 
@@ -302,7 +314,7 @@ def register_extensions(app: 'Flask') -> None:
     if flask is None:
         raise PartialsException('Install Flask to use `register_extensions`')
 
-    app.jinja_env.globals.update(render_partial=generate_render_partial(flask.render_template))
+    _install_render_partial(app.jinja_env, generate_render_partial(flask.render_template))
 
 
 def register_quart_extensions(app: 'Quart', max_workers: int = 4) -> None:
@@ -376,7 +388,7 @@ def register_quart_extensions(app: 'Quart', max_workers: int = 4) -> None:
         except Exception:
             return env.handle_exception()
 
-    app.jinja_env.globals.update(render_partial=generate_render_partial(renderer, markup=True))
+    _install_render_partial(app.jinja_env, generate_render_partial(renderer, markup=True))
 
 
 def register_fastapi_extensions(
@@ -429,7 +441,7 @@ def register_fastapi_extensions(
     original_lifespan = app.router.lifespan_context
 
     @asynccontextmanager
-    async def lifespan_wrapper(app_instance: 'FastAPI') -> AsyncIterator[dict[str, Any]]:
+    async def lifespan_wrapper(app_instance: 'FastAPI') -> AsyncGenerator[dict[str, Any], None]:
         executor = ThreadPoolExecutor(max_workers=max_workers)
         app_instance.state.jinja_partials_executor = executor
         try:
@@ -465,7 +477,7 @@ def register_fastapi_extensions(
         except Exception:
             return env.handle_exception()
 
-    env.globals.update(render_partial=generate_render_partial(renderer, markup=True))
+    _install_render_partial(env, generate_render_partial(renderer, markup=True))
 
 
 def register_starlette_extensions(
@@ -527,7 +539,7 @@ def register_starlette_extensions(
         original_lifespan = app.router.lifespan_context
 
         @asynccontextmanager
-        async def lifespan_wrapper(app_instance: 'Starlette') -> AsyncIterator[dict[str, Any]]:
+        async def lifespan_wrapper(app_instance: 'Starlette') -> AsyncGenerator[dict[str, Any], None]:
             executor = ThreadPoolExecutor(max_workers=max_workers)
             app_instance.state.jinja_partials_executor = executor
             try:
@@ -558,13 +570,13 @@ def register_starlette_extensions(
             except Exception:
                 return env.handle_exception()
 
-        env.globals.update(render_partial=generate_render_partial(renderer, markup=True))
+        _install_render_partial(env, generate_render_partial(renderer, markup=True))
     else:
         # Backwards compatible: use global executor
         def renderer(template_name: str, **data: Any) -> str:
             return _render_template_blocking(env, template_name, **data)
 
-        env.globals.update(render_partial=generate_render_partial(renderer))
+        _install_render_partial(env, generate_render_partial(renderer))
 
 
 def _run_async_render(template: Any, data: dict[str, Any], depth: int = 1) -> str:
@@ -678,4 +690,4 @@ def register_environment(env: Environment, markup: bool = False) -> None:
     def renderer(template_name: str, **data: Any) -> str:
         return _render_template_blocking(env, template_name, **data)
 
-    env.globals.update(render_partial=generate_render_partial(renderer, markup=markup))
+    _install_render_partial(env, generate_render_partial(renderer, markup=markup))
