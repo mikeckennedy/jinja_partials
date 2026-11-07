@@ -57,7 +57,7 @@ Other frameworks swap only the registration line (see the table). In a test, ren
 | Plain Jinja2 or unsupported framework | `jinja_partials.register_environment(env, markup=True)` |
 | Declarative environment config | `Environment(extensions=['jinja_partials.PartialsJinjaExtension'])` |
 | Custom render pipeline | `env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))` |
-| Fragment response for HTMX | return the partial from the route with the framework's normal render call |
+| Fragment response for HTMX | return the partial from the route with the framework's normal render call ([recipe](https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html#hand-the-same-card-to-htmx)) |
 | Flask context processors inside partials | `register_extensions(app)`, not the extension |
 
 ## API

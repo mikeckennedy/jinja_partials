@@ -324,6 +324,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link active" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  <li><a href="#note" id="toc-note" class="nav-link" data-scroll-target="#note">Note</a></li>
   <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   </ul>
 </nav>
@@ -355,7 +356,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="doc-usage-source">
 <p>Usage</p>
-<p><a href="https://github.com/mikeckennedy/jinja_partials/blob/main/jinja_partials/__init__.py#L243-L263" target="_blank" rel="noopener">Source</a></p>
+<p><a href="https://github.com/mikeckennedy/jinja_partials/blob/main/jinja_partials/__init__.py#L250-L276" target="_blank" rel="noopener">Source</a></p>
 </div>
 <div class="doc-signature doc-Kind.FUNCTION">
 <div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="sig-name">generate_render_partial</span>(<span class="va">renderer</span>: <span class="va">Callable</span>[<span class="op">...</span>, <span class="va">Any</span>], <span class="va">markup</span>: <span class="va">Literal</span>[<span class="cn-bool">True</span>] <span class="op">=</span> <span class="op">...</span>) <span class="op">-&gt;</span> <span class="va">Callable</span>[<span class="op">...</span>, <span class="va">Markup</span>]</span>
@@ -389,6 +390,10 @@ A callable with the same signature as render_partial that uses the bound rendere
 </dd>
 </dl>
 </div>
+</section>
+<section id="note" class="level2 doc-note">
+<h2 class="doc-note">Note</h2>
+<p>The template name reaches <code>renderer</code> exactly as the template wrote it. The built-in renderers hand it to Jinja’s loader, which refuses names that leave the templates folder (<code>..</code> segments, absolute paths); a custom renderer that loads files some other way must enforce that itself.</p>
 </section>
 <section id="example" class="level2 doc-example">
 <h2 class="doc-example">Example</h2>

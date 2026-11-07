@@ -172,7 +172,9 @@ Render a partial template and return the resulting HTML fragment.
 
 Args:
     template_name: Path of the template within the templates folder,
-        e.g. `shared/partials/video_image.html`.
+        e.g. `shared/partials/video_image.html`. Names that leave the folder
+        raise ``jinja2.TemplateNotFound``; map any request-supplied value to a
+        name you wrote rather than building the path from it.
     renderer: Callable that renders the template with the given keyword
         arguments. Defaults to flask.render_template when Flask is installed.
     markup: When True (the default), wrap the result in markupsafe.Markup
@@ -208,6 +210,12 @@ Args:
 
 Returns:
     A callable with the same signature as render_partial that uses the bound renderer.
+
+Note:
+    The template name reaches ``renderer`` exactly as the template wrote it. The
+    built-in renderers hand it to Jinja's loader, which refuses names that leave
+    the templates folder (``..`` segments, absolute paths); a custom renderer that
+    loads files some other way must enforce that itself.
 
 Example:
     Install a custom renderer as the ``render_partial`` global:
@@ -363,7 +371,7 @@ The version is read from the installed package metadata, so it always tells the 
 
 ### Quickstart
 
-Remember the fourteen video cards from [Why partials](01-why-partials.qmd)? This page builds one, properly, with Flask. Every other framework differs only in the registration line, and [Frameworks](04-frameworks.qmd) has those. Four files and a few minutes.
+Remember the fourteen video cards from [Why partials](01-why-partials.qmd)? This page builds one, properly, with Flask, and then serves that same card to HTMX for free. Every other framework differs only in the registration line, and [Frameworks](04-frameworks.qmd) has those. Four files and a few minutes.
 
 ## 1. Register once at startup
 
@@ -461,6 +469,31 @@ Run the app and open the page. Each video renders as a card like this, with the 
 ```
 
 If instead the page shows you the HTML itself as text, angle brackets and all, the fragment was inserted as an escaped string rather than as markup. On Flask that does not happen, but on the plain Jinja2 path it is the single most common surprise, and [Troubleshooting](05-troubleshooting.qmd) has the one-word fix along with every other error you are likely to meet.
+
+## 6. Hand the same card to HTMX
+
+Here is the payoff for building the card as a file rather than a macro. The view counts on the home page go stale the moment the page loads, and the product manager would like them to tick along without a refresh. With HTMX, each card asks the server for a fresh copy of itself every thirty seconds:
+
+```html
+<!-- templates/home/index.html -->
+{% for v in videos %}
+    <div class="col-md-3 video" hx-get="/videos/{{ v.id }}/card" hx-trigger="every 30s" hx-swap="innerHTML">
+        {{ render_partial('shared/partials/video_square.html', video=v) }}
+    </div>
+{% endfor %}
+```
+
+The route that answers those requests does not need `render_partial` at all. A partial is an ordinary template, so the framework's normal render call serves it straight to the browser:
+
+```python
+@app.get('/videos/<video_id>/card')
+def video_card(video_id):
+    return flask.render_template('shared/partials/video_square.html', video=get_video(video_id))
+```
+
+One file, two delivery routes. The page inlines the card with `render_partial` on the first visit, HTMX fetches the very same file from the route after that, and the markup is identical both ways because it came from the same template with the same `video`. A macro could not do this; there is no URL for a macro.
+
+On FastAPI and Starlette the route is `HTMLResponse(await templates.get_template('shared/partials/video_square.html').render_async(video=video))`, and on Quart it is `await render_template(...)`, which is to say the same page-level rule from [Frameworks](04-frameworks.qmd#the-page-level-rule-for-async-environments) applies to a fragment response too.
 
 The complete version of this app, with the layout, the CSS, and a small JSON database of videos, is the [Flask example](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask) in the repository. It is the app behind the screenshot on the README.
 
@@ -777,6 +810,8 @@ my_env.globals.update(render_partial=jinja_partials.generate_render_partial(rend
 
 Look at what the renderer receives: a name and `data`, nothing else. Each partial is rendered by its own `renderer` call with a fresh context built from `data` alone. That is the entire mechanism behind "a partial sees only what you pass it." There is no context-hiding code anywhere, because there is no shared context to hide.
 
+The name arrives exactly as the template wrote it, too. The built-in renderers hand it to Jinja's loader, which refuses anything that would leave the templates folder: `..` segments, absolute paths, a leading space in front of a `..`. A custom renderer that loads templates some other way has to enforce that itself. And on either kind of renderer, if a request gets to choose which partial renders, map the request value to a name you wrote (`PARTIALS = {'card': 'cards/card.html'}`) rather than building a path from it; see [the FAQ](08-faq.qmd#can-a-request-choose-which-partial-renders).
+
 ## Markup defaults, and why one of them is different
 
 `render_partial` and `generate_render_partial` default to `markup=True`. The framework registrations and `PartialsJinjaExtension` hardcode `markup=True`. `register_environment` alone defaults to `markup=False`, because it did when it was first released and changing it would silently alter output for existing users. So the plain Jinja2 path is the one place you have to say `markup=True` yourself. The type overloads encode all of this: `markup=True` returns `Markup`, `markup=False` returns `str`, and your type checker can tell you which you have.
@@ -788,6 +823,8 @@ Here is the interesting part. Quart, FastAPI, and Starlette apps typically build
 The way across is a thread. The renderer submits `asyncio.run(template.render_async(**data))` to a `ThreadPoolExecutor` and blocks on the result. The worker thread has no event loop of its own, so `asyncio.run` is legal there and spins one up. The calling thread, which may well be the server's event loop, waits for the fragment to come back. That wait is a deliberate tradeoff: partials are small and fast, and the alternative would be a different template syntax for async apps. Templates staying identical across frameworks is worth a short block.
 
 Nesting adds a twist. A nested partial is rendered from inside a worker thread that is itself blocked, waiting for the outer render to finish. If the nested render were submitted to the same pool, it would be waiting for a worker while occupying one. Nest as deep as the pool is wide, or get enough concurrent requests doing it, and every worker is waiting for a worker, forever. That bug shipped in 0.3.2. Nested renders now run on a short-lived dedicated thread instead, so `max_workers` only bounds how many top-level partial renders are in flight at once, and nesting depth does not count against it.
+
+One more consequence of a thread per level: each one has its own event loop and its own recursion counter, so a partial that renders itself, or a cycle through two partials, would never hit Python's recursion limit. It would keep creating threads, slower and slower, until the process ran out of threads or file descriptors. The library stops that at `MAX_NESTED_RENDERS` (100) levels with a `RecursionError`, which is what a sync environment raises on its own at about twice that depth. Legitimate nesting never gets near it.
 
 ## Three executor tiers
 
@@ -816,7 +853,7 @@ Because each is nearly right in a different way. `{% include %}` hands the fragm
 
 ## Does this work with HTMX?
 
-It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an `hx-get` swap with `flask.render_template('shared/partials/video_square.html', video=v)`, while your pages keep rendering the very same file inline with `render_partial`. One card, two delivery routes.
+It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an `hx-get` swap with `flask.render_template('shared/partials/video_square.html', video=v)`, while your pages keep rendering the very same file inline with `render_partial`. One card, two delivery routes. The [Quickstart](03-quickstart.qmd#hand-the-same-card-to-htmx) ends with a worked example: cards that refresh their own view counts.
 
 ## Can a partial extend a layout?
 
@@ -829,6 +866,10 @@ Yes, and it is the best way to test one. In a Flask request context, `jinja_part
 ## What does a partial see?
 
 Only the keyword arguments you passed, plus the environment's globals. On the Flask `register_extensions` path, context processors, `g`, `request`, and `session` are applied too, because partials render through `flask.render_template` there. Everywhere else, if you did not pass it, it is not there, by design.
+
+## Can a request choose which partial renders?
+
+Not directly. The built-in renderers pass the name to Jinja's loader, which refuses `..` segments and absolute paths, so `render_partial(f'cards/{slug}.html')` cannot reach outside the templates folder. It can still reach any template inside it, though, so map the request value to names you wrote: `PARTIALS = {'card': 'cards/card.html', 'row': 'cards/row.html'}` and `render_partial(PARTIALS[kind], ...)`. A custom renderer built with `generate_render_partial` gets no checking from the library; see [How it works](07-how-it-works.qmd#one-primitive-and-some-sugar).
 
 ## Why is my fragment escaped?
 

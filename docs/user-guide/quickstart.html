@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, and know what the rendered output should look like.">
+<meta name="description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, know what the rendered output should look like, and serve the same card to HTMX.">
 
 <title>Quickstart – Jinja Partials | Jinja Partials</title>
 <style>
@@ -128,12 +128,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <link rel="canonical" href="https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Quickstart – Jinja Partials | Jinja Partials">
-  <meta property="og:description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, and know what the rendered output should look like.">
+  <meta property="og:description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, know what the rendered output should look like, and serve the same card to HTMX.">
   <meta property="og:url" content="https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html">
   <meta property="og:site_name" content="Jinja Partials">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Quickstart – Jinja Partials | Jinja Partials">
-  <meta name="twitter:description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, and know what the rendered output should look like.">
+  <meta name="twitter:description" content="Build the video card once with Flask: register at startup, write a nested partial, call it from a page, know what the rendered output should look like, and serve the same card to HTMX.">
 </head>
 
 <body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -282,6 +282,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#write-the-partials-smallest-first" id="toc-write-the-partials-smallest-first" class="nav-link" data-scroll-target="#write-the-partials-smallest-first">3. Write the partials, smallest first</a></li>
   <li><a href="#call-it-from-a-page" id="toc-call-it-from-a-page" class="nav-link" data-scroll-target="#call-it-from-a-page">4. Call it from a page</a></li>
   <li><a href="#what-you-should-see" id="toc-what-you-should-see" class="nav-link" data-scroll-target="#what-you-should-see">5. What you should see</a></li>
+  <li><a href="#hand-the-same-card-to-htmx" id="toc-hand-the-same-card-to-htmx" class="nav-link" data-scroll-target="#hand-the-same-card-to-htmx">6. Hand the same card to HTMX</a></li>
   </ul>
 </nav>
     </div>
@@ -295,7 +296,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Build the video card once with Flask: register at startup, write a nested partial, call it from a page, and know what the rendered output should look like.
+    Build the video card once with Flask: register at startup, write a nested partial, call it from a page, know what the rendered output should look like, and serve the same card to HTMX.
   </div>
 </div>
 
@@ -312,7 +313,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Remember the fourteen video cards from <a href="../user-guide/why-partials.html">Why partials</a>? This page builds one, properly, with Flask. Every other framework differs only in the registration line, and <a href="../user-guide/frameworks.html">Frameworks</a> has those. Four files and a few minutes.</p>
+<p>Remember the fourteen video cards from <a href="../user-guide/why-partials.html">Why partials</a>? This page builds one, properly, with Flask, and then serves that same card to HTMX for free. Every other framework differs only in the registration line, and <a href="../user-guide/frameworks.html">Frameworks</a> has those. Four files and a few minutes.</p>
 <section id="register-once-at-startup" class="level1">
 <h1>1. Register once at startup</h1>
 <div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># app.py</span></span>
@@ -387,6 +388,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span></code></pre></div>
 <p>If instead the page shows you the HTML itself as text, angle brackets and all, the fragment was inserted as an escaped string rather than as markup. On Flask that does not happen, but on the plain Jinja2 path it is the single most common surprise, and <a href="../user-guide/troubleshooting.html">Troubleshooting</a> has the one-word fix along with every other error you are likely to meet.</p>
+</section>
+<section id="hand-the-same-card-to-htmx" class="level1">
+<h1>6. Hand the same card to HTMX</h1>
+<p>Here is the payoff for building the card as a file rather than a macro. The view counts on the home page go stale the moment the page loads, and the product manager would like them to tick along without a refresh. With HTMX, each card asks the server for a fresh copy of itself every thirty seconds:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!-- templates/home/index.html --&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>{% for v in videos %}</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">div</span><span class="ot"> class</span><span class="op">=</span><span class="st">"col-md-3 video"</span><span class="ot"> hx-get</span><span class="op">=</span><span class="st">"/videos/{{ v.id }}/card"</span><span class="ot"> hx-trigger</span><span class="op">=</span><span class="st">"every 30s"</span><span class="ot"> hx-swap</span><span class="op">=</span><span class="st">"innerHTML"</span><span class="dt">&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        {{ render_partial('shared/partials/video_square.html', video=v) }}</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;/</span><span class="kw">div</span><span class="dt">&gt;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>{% endfor %}</span></code></pre></div>
+<p>The route that answers those requests does not need <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> at all. A partial is an ordinary template, so the framework’s normal render call serves it straight to the browser:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">@app.get</span>(<span class="st">'/videos/&lt;video_id&gt;/card'</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> video_card(video_id):</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> flask.render_template(<span class="st">'shared/partials/video_square.html'</span>, video<span class="op">=</span>get_video(video_id))</span></code></pre></div>
+<p>One file, two delivery routes. The page inlines the card with <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> on the first visit, HTMX fetches the very same file from the route after that, and the markup is identical both ways because it came from the same template with the same <code>video</code>. A macro could not do this; there is no URL for a macro.</p>
+<p>On FastAPI and Starlette the route is <code>HTMLResponse(await templates.get_template('shared/partials/video_square.html').render_async(video=video))</code>, and on Quart it is <code>await render_template(...)</code>, which is to say the same page-level rule from <a href="../user-guide/frameworks.html#the-page-level-rule-for-async-environments">Frameworks</a> applies to a fragment response too.</p>
 <p>The complete version of this app, with the layout, the CSS, and a small JSON database of videos, is the <a href="https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask">Flask example</a> in the repository. It is the app behind the screenshot on the README.</p>
 
 

@@ -18,7 +18,7 @@ That one call renders the fragment file with the data you hand it, and nothing e
 The full documentation is available at [mkennedy.codes/docs/jinja-partials](https://mkennedy.codes/docs/jinja-partials/). This README is the short version; the user guide tells the whole story:
 
 - [Why partials](https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html) - the fourteenth copy of a video card, and how `render_partial` differs from `include` and `macro`
-- [Installation](https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html) and the [Quickstart](https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html), which builds that card properly, once
+- [Installation](https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html) and the [Quickstart](https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html), which builds that card properly, once, then serves it to HTMX
 - [Frameworks](https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html) - Flask, Quart, FastAPI, Starlette, plain Jinja2, the declarative extension, and the one rule async apps must follow
 - [Troubleshooting](https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html) - a field guide to every error and wrong output, with the fix for each
 - [Testing partials](https://mkennedy.codes/docs/jinja-partials/user-guide/testing.html), [How it works](https://mkennedy.codes/docs/jinja-partials/user-guide/how-it-works.html), and the [FAQ](https://mkennedy.codes/docs/jinja-partials/user-guide/faq.html)

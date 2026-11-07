@@ -35,13 +35,13 @@ Other frameworks swap only the registration line (see the table). In a test, ren
 ## Rules
 
 - A partial sees only the keyword arguments you pass it plus environment globals. It never inherits the caller's context the way `{% include %}` does; pass everything, and use `| default(...)` for optional inputs.
-- Template names are paths relative to the templates root with forward slashes and the extension, as for `render_template`.
+- Template names are paths relative to the templates root with forward slashes and the extension, as for `render_template`. Jinja's loader refuses names that leave that root (`..`, absolute paths); a custom renderer bound with `generate_render_partial` must refuse them itself. When a request chooses the partial, map its value to a name you wrote rather than building a path from it.
 - `register_environment(env)` defaults to `markup=False`. With autoescaping on, that inserts the fragment as escaped text. Pass `markup=True`. Every other registration path and `PartialsJinjaExtension` already use `markup=True`.
 - `register_starlette_extensions(templates, app=app)` takes templates first and app as a keyword. The FastAPI order is `register_fastapi_extensions(app, templates)`. Swapping them fails with `AttributeError: 'Starlette' object has no attribute 'env'`.
 - Register once per app where it is built. A second `register_fastapi_extensions` or `register_starlette_extensions` call wraps the lifespan again, and a second Quart registration adds another pair of serving hooks. There is no idempotency guard.
 - Only `register_extensions(app)` on Flask renders partials through `flask.render_template`, so only there do context processors and the `template_rendered` signal apply inside partials. `PartialsJinjaExtension` on a Flask app skips them, though `g`, `request`, and `session` remain available as environment globals.
 - In FastAPI and Starlette with an `enable_async=True` environment, render the page with `await template.render_async(...)` and return `HTMLResponse`. `templates.TemplateResponse(...)` calls `asyncio.run()` inside the running loop and raises `RuntimeError`. Partials inside the page need no change.
-- Partials in async apps render on a thread pool (`max_workers=4` default) and the caller blocks for the result. Nested partials render on their own thread and do not count against `max_workers`. Renders beyond the pool size queue; they do not fail.
+- Partials in async apps render on a thread pool (`max_workers=4` default) and the caller blocks for the result. Nested partials render on their own thread and do not count against `max_workers`. Renders beyond the pool size queue; they do not fail. Nesting deeper than `MAX_NESTED_RENDERS` (100) raises `RecursionError`, the sign of a partial that renders itself.
 - `render_partial` with no renderer falls back to `flask.render_template` and raises `PartialsException('No renderer specified')` when Flask is absent. Outside Flask, bind a renderer with `generate_render_partial`.
 - Framework imports are optional; `register_*` raises `PartialsException('Install <Framework> to use ...')` when the framework is missing.
 
@@ -57,7 +57,7 @@ Other frameworks swap only the registration line (see the table). In a test, ren
 | Plain Jinja2 or unsupported framework | `jinja_partials.register_environment(env, markup=True)` |
 | Declarative environment config | `Environment(extensions=['jinja_partials.PartialsJinjaExtension'])` |
 | Custom render pipeline | `env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))` |
-| Fragment response for HTMX | return the partial from the route with the framework's normal render call |
+| Fragment response for HTMX | return the partial from the route with the framework's normal render call ([recipe](https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html#hand-the-same-card-to-htmx)) |
 | Flask context processors inside partials | `register_extensions(app)`, not the extension |
 
 ## API

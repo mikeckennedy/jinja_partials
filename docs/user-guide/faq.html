@@ -246,6 +246,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#can-a-partial-extend-a-layout" id="toc-can-a-partial-extend-a-layout" class="nav-link" data-scroll-target="#can-a-partial-extend-a-layout">Can a partial extend a layout?</a></li>
   <li><a href="#can-i-call-render_partial-from-python" id="toc-can-i-call-render_partial-from-python" class="nav-link" data-scroll-target="#can-i-call-render_partial-from-python">Can I call render_partial from Python?</a></li>
   <li><a href="#what-does-a-partial-see" id="toc-what-does-a-partial-see" class="nav-link" data-scroll-target="#what-does-a-partial-see">What does a partial see?</a></li>
+  <li><a href="#can-a-request-choose-which-partial-renders" id="toc-can-a-request-choose-which-partial-renders" class="nav-link" data-scroll-target="#can-a-request-choose-which-partial-renders">Can a request choose which partial renders?</a></li>
   <li><a href="#why-is-my-fragment-escaped" id="toc-why-is-my-fragment-escaped" class="nav-link" data-scroll-target="#why-is-my-fragment-escaped">Why is my fragment escaped?</a></li>
   <li><a href="#do-my-templates-change-for-async-apps" id="toc-do-my-templates-change-for-async-apps" class="nav-link" data-scroll-target="#do-my-templates-change-for-async-apps">Do my templates change for async apps?</a></li>
   <li><a href="#is-the-thread-pool-safe-under-load" id="toc-is-the-thread-pool-safe-under-load" class="nav-link" data-scroll-target="#is-the-thread-pool-safe-under-load">Is the thread pool safe under load?</a></li>
@@ -289,7 +290,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="does-this-work-with-htmx" class="level1">
 <h1>Does this work with HTMX?</h1>
-<p>It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an <code>hx-get</code> swap with <code>flask.render_template('shared/partials/video_square.html', video=v)</code>, while your pages keep rendering the very same file inline with <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a>. One card, two delivery routes.</p>
+<p>It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an <code>hx-get</code> swap with <code>flask.render_template('shared/partials/video_square.html', video=v)</code>, while your pages keep rendering the very same file inline with <a href="../reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a>. One card, two delivery routes. The <a href="../user-guide/quickstart.html#hand-the-same-card-to-htmx">Quickstart</a> ends with a worked example: cards that refresh their own view counts.</p>
 </section>
 <section id="can-a-partial-extend-a-layout" class="level1">
 <h1>Can a partial extend a layout?</h1>
@@ -302,6 +303,10 @@ ul.task-list li input[type="checkbox"] {
 <section id="what-does-a-partial-see" class="level1">
 <h1>What does a partial see?</h1>
 <p>Only the keyword arguments you passed, plus the environment’s globals. On the Flask <a href="../reference/register_extensions.html#jinja_partials.register_extensions" class="gdls-link gdls-code">register_extensions</a> path, context processors, <code>g</code>, <code>request</code>, and <code>session</code> are applied too, because partials render through <code>flask.render_template</code> there. Everywhere else, if you did not pass it, it is not there, by design.</p>
+</section>
+<section id="can-a-request-choose-which-partial-renders" class="level1">
+<h1>Can a request choose which partial renders?</h1>
+<p>Not directly. The built-in renderers pass the name to Jinja’s loader, which refuses <code>..</code> segments and absolute paths, so <code>render_partial(f'cards/{slug}.html')</code> cannot reach outside the templates folder. It can still reach any template inside it, though, so map the request value to names you wrote: <code>PARTIALS = {'card': 'cards/card.html', 'row': 'cards/row.html'}</code> and <code>render_partial(PARTIALS[kind], ...)</code>. A custom renderer built with <a href="../reference/generate_render_partial.html#jinja_partials.generate_render_partial" class="gdls-link gdls-code">generate_render_partial</a> gets no checking from the library; see <a href="../user-guide/how-it-works.html#one-primitive-and-some-sugar">How it works</a>.</p>
 </section>
 <section id="why-is-my-fragment-escaped" class="level1">
 <h1>Why is my fragment escaped?</h1>

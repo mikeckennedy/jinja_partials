@@ -1,6 +1,6 @@
 # Quickstart
 
-Remember the fourteen video cards from [Why partials](why-partials.md)? This page builds one, properly, with Flask. Every other framework differs only in the registration line, and [Frameworks](frameworks.md) has those. Four files and a few minutes.
+Remember the fourteen video cards from [Why partials](why-partials.md)? This page builds one, properly, with Flask, and then serves that same card to HTMX for free. Every other framework differs only in the registration line, and [Frameworks](frameworks.md) has those. Four files and a few minutes.
 
 
 # 1. Register once at startup
@@ -100,5 +100,31 @@ Run the app and open the page. Each video renders as a card like this, with the 
 ```
 
 If instead the page shows you the HTML itself as text, angle brackets and all, the fragment was inserted as an escaped string rather than as markup. On Flask that does not happen, but on the plain Jinja2 path it is the single most common surprise, and [Troubleshooting](troubleshooting.md) has the one-word fix along with every other error you are likely to meet.
+
+
+# 6. Hand the same card to HTMX
+
+Here is the payoff for building the card as a file rather than a macro. The view counts on the home page go stale the moment the page loads, and the product manager would like them to tick along without a refresh. With HTMX, each card asks the server for a fresh copy of itself every thirty seconds:
+
+``` html
+<!-- templates/home/index.html -->
+{% for v in videos %}
+    <div class="col-md-3 video" hx-get="/videos/{{ v.id }}/card" hx-trigger="every 30s" hx-swap="innerHTML">
+        {{ render_partial('shared/partials/video_square.html', video=v) }}
+    </div>
+{% endfor %}
+```
+
+The route that answers those requests does not need [render_partial](../reference/render_partial.md#jinja_partials.render_partial) at all. A partial is an ordinary template, so the framework's normal render call serves it straight to the browser:
+
+``` python
+@app.get('/videos/<video_id>/card')
+def video_card(video_id):
+    return flask.render_template('shared/partials/video_square.html', video=get_video(video_id))
+```
+
+One file, two delivery routes. The page inlines the card with [render_partial](../reference/render_partial.md#jinja_partials.render_partial) on the first visit, HTMX fetches the very same file from the route after that, and the markup is identical both ways because it came from the same template with the same `video`. A macro could not do this; there is no URL for a macro.
+
+On FastAPI and Starlette the route is `HTMLResponse(await templates.get_template('shared/partials/video_square.html').render_async(video=video))`, and on Quart it is `await render_template(...)`, which is to say the same page-level rule from [Frameworks](frameworks.md#the-page-level-rule-for-async-environments) applies to a fragment response too.
 
 The complete version of this app, with the layout, the CSS, and a small JSON database of videos, is the [Flask example](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask) in the repository. It is the app behind the screenshot on the README.

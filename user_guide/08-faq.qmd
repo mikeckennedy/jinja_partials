@@ -12,7 +12,7 @@ Because each is nearly right in a different way. `{% include %}` hands the fragm
 
 ## Does this work with HTMX?
 
-It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an `hx-get` swap with `flask.render_template('shared/partials/video_square.html', video=v)`, while your pages keep rendering the very same file inline with `render_partial`. One card, two delivery routes.
+It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an `hx-get` swap with `flask.render_template('shared/partials/video_square.html', video=v)`, while your pages keep rendering the very same file inline with `render_partial`. One card, two delivery routes. The [Quickstart](03-quickstart.qmd#hand-the-same-card-to-htmx) ends with a worked example: cards that refresh their own view counts.
 
 ## Can a partial extend a layout?
 

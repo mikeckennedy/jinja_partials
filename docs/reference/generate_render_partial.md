@@ -32,6 +32,11 @@ When True (the default), results are wrapped in markupsafe.Markup.
 A callable with the same signature as render_partial that uses the bound renderer.
 
 
+## Note
+
+The template name reaches `renderer` exactly as the template wrote it. The built-in renderers hand it to Jinja's loader, which refuses names that leave the templates folder (`..` segments, absolute paths); a custom renderer that loads files some other way must enforce that itself.
+
+
 ## Example
 
 Install a custom renderer as the [render_partial](render_partial.md#jinja_partials.render_partial) global:
@@ -39,7 +44,6 @@ Install a custom renderer as the [render_partial](render_partial.md#jinja_partia
 ``` python
 def renderer(template_name: str, **data) -> str:
     return env.get_template(template_name).render(**data)
-
 
 env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))
 ```

@@ -19,7 +19,7 @@ render_partial(template_name: str, renderer: Optional[Callable[..., Any]] = ...,
 
 
 `template_name: str`  
-Path of the template within the templates folder, e.g. `shared/partials/video_image.html`.
+Path of the template within the templates folder, e.g. `shared/partials/video_image.html`. Names that leave the folder raise `jinja2.TemplateNotFound`; map any request-supplied value to a name you wrote rather than building the path from it.
 
 `renderer: Optional[Callable[..., Any]] = None`  
 Callable that renders the template with the given keyword arguments. Defaults to flask.render_template when Flask is installed.

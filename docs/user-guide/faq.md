@@ -10,7 +10,7 @@ Because each is nearly right in a different way. `{% include %}` hands the fragm
 
 # Does this work with HTMX?
 
-It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an `hx-get` swap with `flask.render_template('shared/partials/video_square.html', video=v)`, while your pages keep rendering the very same file inline with [render_partial](../reference/render_partial.md#jinja_partials.render_partial). One card, two delivery routes.
+It is a natural pairing. A partial is an ordinary template, so a route can return it directly for an `hx-get` swap with `flask.render_template('shared/partials/video_square.html', video=v)`, while your pages keep rendering the very same file inline with [render_partial](../reference/render_partial.md#jinja_partials.render_partial). One card, two delivery routes. The [Quickstart](quickstart.md#hand-the-same-card-to-htmx) ends with a worked example: cards that refresh their own view counts.
 
 
 # Can a partial extend a layout?
@@ -26,6 +26,11 @@ Yes, and it is the best way to test one. In a Flask request context, `jinja_part
 # What does a partial see?
 
 Only the keyword arguments you passed, plus the environment's globals. On the Flask [register_extensions](../reference/register_extensions.md#jinja_partials.register_extensions) path, context processors, `g`, `request`, and `session` are applied too, because partials render through `flask.render_template` there. Everywhere else, if you did not pass it, it is not there, by design.
+
+
+# Can a request choose which partial renders?
+
+Not directly. The built-in renderers pass the name to Jinja's loader, which refuses `..` segments and absolute paths, so `render_partial(f'cards/{slug}.html')` cannot reach outside the templates folder. It can still reach any template inside it, though, so map the request value to names you wrote: `PARTIALS = {'card': 'cards/card.html', 'row': 'cards/row.html'}` and `render_partial(PARTIALS[kind], ...)`. A custom renderer built with [generate_render_partial](../reference/generate_render_partial.md#jinja_partials.generate_render_partial) gets no checking from the library; see [How it works](how-it-works.md#one-primitive-and-some-sugar).
 
 
 # Why is my fragment escaped?

@@ -19,11 +19,12 @@ That recipe is also the extension point. A framework the library has never heard
 def renderer(template_name: str, **data) -> str:
     return my_env.get_template(template_name).render(**data)
 
-
 my_env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))
 ```
 
 Look at what the renderer receives: a name and `data`, nothing else. Each partial is rendered by its own `renderer` call with a fresh context built from `data` alone. That is the entire mechanism behind "a partial sees only what you pass it." There is no context-hiding code anywhere, because there is no shared context to hide.
+
+The name arrives exactly as the template wrote it, too. The built-in renderers hand it to Jinja's loader, which refuses anything that would leave the templates folder: `..` segments, absolute paths, a leading space in front of a `..`. A custom renderer that loads templates some other way has to enforce that itself. And on either kind of renderer, if a request gets to choose which partial renders, map the request value to a name you wrote (`PARTIALS = {'card': 'cards/card.html'}`) rather than building a path from it; see [the FAQ](faq.md#can-a-request-choose-which-partial-renders).
 
 
 # Markup defaults, and why one of them is different
@@ -38,6 +39,8 @@ Here is the interesting part. Quart, FastAPI, and Starlette apps typically build
 The way across is a thread. The renderer submits `asyncio.run(template.render_async(**data))` to a `ThreadPoolExecutor` and blocks on the result. The worker thread has no event loop of its own, so `asyncio.run` is legal there and spins one up. The calling thread, which may well be the server's event loop, waits for the fragment to come back. That wait is a deliberate tradeoff: partials are small and fast, and the alternative would be a different template syntax for async apps. Templates staying identical across frameworks is worth a short block.
 
 Nesting adds a twist. A nested partial is rendered from inside a worker thread that is itself blocked, waiting for the outer render to finish. If the nested render were submitted to the same pool, it would be waiting for a worker while occupying one. Nest as deep as the pool is wide, or get enough concurrent requests doing it, and every worker is waiting for a worker, forever. That bug shipped in 0.3.2. Nested renders now run on a short-lived dedicated thread instead, so `max_workers` only bounds how many top-level partial renders are in flight at once, and nesting depth does not count against it.
+
+One more consequence of a thread per level: each one has its own event loop and its own recursion counter, so a partial that renders itself, or a cycle through two partials, would never hit Python's recursion limit. It would keep creating threads, slower and slower, until the process ran out of threads or file descriptors. The library stops that at `MAX_NESTED_RENDERS` (100) levels with a `RecursionError`, which is what a sync environment raises on its own at about twice that depth. Legitimate nesting never gets near it.
 
 
 # Three executor tiers

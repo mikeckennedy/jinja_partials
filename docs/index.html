@@ -257,7 +257,7 @@ section.level2:first-of-type > h2:first-child,
 <p>The full documentation is available at <a href="https://mkennedy.codes/docs/jinja-partials/">mkennedy.codes/docs/jinja-partials</a>. This README is the short version; the user guide tells the whole story:</p>
 <ul>
 <li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html">Why partials</a> - the fourteenth copy of a video card, and how <a href="reference/render_partial.html#jinja_partials.render_partial" class="gdls-link gdls-code">render_partial</a> differs from <code>include</code> and <code>macro</code></li>
-<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html">Installation</a> and the <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html">Quickstart</a>, which builds that card properly, once</li>
+<li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html">Installation</a> and the <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html">Quickstart</a>, which builds that card properly, once, then serves it to HTMX</li>
 <li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html">Frameworks</a> - Flask, Quart, FastAPI, Starlette, plain Jinja2, the declarative extension, and the one rule async apps must follow</li>
 <li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html">Troubleshooting</a> - a field guide to every error and wrong output, with the fix for each</li>
 <li><a href="https://mkennedy.codes/docs/jinja-partials/user-guide/testing.html">Testing partials</a>, <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/how-it-works.html">How it works</a>, and the <a href="https://mkennedy.codes/docs/jinja-partials/user-guide/faq.html">FAQ</a></li>
@@ -319,7 +319,7 @@ section.level2:first-of-type > h2:first-child,
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> FastAPI()</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">"templates"</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">'templates'</span>)</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_fastapi_extensions(app, templates)</span></code></pre></div>
 </section>
@@ -330,7 +330,7 @@ section.level2:first-of-type > h2:first-child,
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> starlette.templating <span class="im">import</span> Jinja2Templates</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">"templates"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>templates <span class="op">=</span> Jinja2Templates(directory<span class="op">=</span><span class="st">'templates'</span>)</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>app <span class="op">=</span> Starlette(routes<span class="op">=</span>[...])</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_starlette_extensions(templates, app<span class="op">=</span>app)</span></code></pre></div>
@@ -361,7 +361,7 @@ section.level2:first-of-type > h2:first-child,
 <div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> jinja2 <span class="im">import</span> Environment, FileSystemLoader</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jinja_partials</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>environment <span class="op">=</span> Environment(loader<span class="op">=</span>FileSystemLoader(<span class="st">"templates"</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>environment <span class="op">=</span> Environment(loader<span class="op">=</span>FileSystemLoader(<span class="st">'templates'</span>))</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>jinja_partials.register_environment(environment, markup<span class="op">=</span><span class="va">True</span>)</span></code></pre></div>
 </section>
 <section id="using-the-jinja2-extension-declarative" class="level3">
@@ -391,10 +391,9 @@ section.level2:first-of-type > h2:first-child,
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Declarative registration - extension automatically registers render_partial</span></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>environment <span class="op">=</span> Environment(</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    loader<span class="op">=</span>FileSystemLoader(<span class="st">"tests/test_templates"</span>),</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    extensions<span class="op">=</span>[<span class="st">"jinja_partials.PartialsJinjaExtension"</span>]</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># render_partial is now available in templates, no additional setup needed!</span></span></code></pre></div>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    loader<span class="op">=</span>FileSystemLoader(<span class="st">'tests/test_templates'</span>), extensions<span class="op">=</span>[<span class="st">'jinja_partials.PartialsJinjaExtension'</span>]</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># render_partial is now available in templates, no additional setup needed!</span></span></code></pre></div>
 </section>
 <section id="when-to-use-the-extension-approach" class="level4">
 <h4 class="anchored" data-anchor-id="when-to-use-the-extension-approach">When to Use the Extension Approach</h4>
