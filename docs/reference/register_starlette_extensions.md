@@ -27,7 +27,7 @@ The Jinja2Templates instance used for rendering.
 `app: Optional[Starlette] = None`  
 Optional Starlette application instance for lifecycle management.
 
-`max_workers: int = ``4`  
+`max_workers: int = 4`  
 Maximum number of worker threads for rendering partials. Only used when app is provided. Defaults to 4.
 
 
@@ -40,16 +40,20 @@ If Starlette is not installed.
 
 ## Example
 
-With lifecycle management:
+With lifecycle management (note that templates comes first):
 
-    from starlette.applications import Starlette
-    from starlette.templating import Jinja2Templates
-    import jinja_partials
+``` python
+from starlette.applications import Starlette
+from starlette.templating import Jinja2Templates
+import jinja_partials
 
-    templates = Jinja2Templates(directory="templates")
-    app = Starlette(...)
-    jinja_partials.register_starlette_extensions(templates, app=app)
+templates = Jinja2Templates(directory='templates')
+app = Starlette(routes=[...])
+jinja_partials.register_starlette_extensions(templates, app=app)
+```
 
 Without lifecycle management (backwards compatible):
 
-    jinja_partials.register_starlette_extensions(templates)
+``` python
+jinja_partials.register_starlette_extensions(templates)
+```

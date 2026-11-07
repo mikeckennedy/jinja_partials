@@ -1,0 +1,34 @@
+# Installation
+
+Install with uv or pip. The PyPI name uses a hyphen and the import name uses an underscore.
+
+``` bash
+uv add jinja-partials
+# or
+pip install jinja-partials
+```
+
+``` python
+import jinja_partials
+```
+
+The only runtime dependency is `jinja2`. The library is pure Python and fully typed (it ships a `py.typed` marker).
+
+
+# Python versions
+
+Python 3.10 or newer is required. On older interpreters, pip resolves to 0.3.0, which has the Flask, plain Jinja2, and synchronous Starlette registration but predates the Quart and FastAPI support and the lifecycle-managed Starlette registration described in this guide.
+
+
+# Frameworks are optional
+
+jinja_partials imports Flask, Quart, FastAPI, and Starlette only if they are already installed. Nothing pulls them in for you, so install the framework you use alongside the library. Calling a registration function for a framework that is not installed raises [PartialsException](../reference/PartialsException.md#jinja_partials.PartialsException) with a message naming the missing package, for example `Install Quart to use register_quart_extensions`.
+
+
+# Check the install
+
+``` bash
+python -c "import jinja_partials; print(jinja_partials.__version__)"
+```
+
+The version comes from the installed package metadata. Next, the [Quickstart](quickstart.md) builds a first page.

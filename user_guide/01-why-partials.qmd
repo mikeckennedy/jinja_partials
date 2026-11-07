@@ -1,0 +1,34 @@
+---
+title: "Why partials"
+description: "The problem jinja_partials solves and how render_partial differs from Jinja's include and macro."
+guide-section: "Get started"
+---
+
+When you build a real web app with Jinja2, the same HTML fragments show up again and again: a video card, a badge, a pagination control, a row in a table. Copying the markup into every page works until the design changes and you have to find every copy. The fix in Python code is a function with explicit arguments. jinja_partials gives templates the same thing: a `render_partial()` global that renders a fragment file with exactly the data you pass it.
+
+```html
+{% for v in videos %}
+    {{ render_partial('shared/partials/video_square.html', video=v) }}
+{% endfor %}
+```
+
+The fragment is an ordinary template file. It sees `video` and nothing else, so you can read its inputs at the call site, rename at the boundary (the loop variable `v` becomes `video` inside), and nest partials inside partials as deep as the design needs.
+
+## What is wrong with include and macro
+
+Jinja already has two reuse mechanisms, and both fall short in a different way.
+
+`{% include %}` hands the fragment the caller's entire context. Nothing at the call site says what the fragment needs, and renaming a variable means wrapping the include in `{% with %}`. A fragment that quietly depends on a page-level variable breaks when you reuse it somewhere that variable does not exist.
+
+`{% macro %}` has explicit parameters, which is the right idea, but a macro lives inside a template file that every page has to `{% import %}`, and a macro is not a file you can render on its own. With partials, the same `video_square.html` renders inside a page and also serves as an HTMX fragment response straight from a route.
+
+The longer discussion is in [issue #1](https://github.com/mikeckennedy/jinja_partials/issues/1) on GitHub.
+
+## What you get
+
+- One registration call per app, at startup, for Flask, Quart, FastAPI, Starlette, or any Jinja2 environment.
+- A `render_partial(template_name, **data)` global inside every template, returning safe `Markup` so autoescaping does not re-escape the fragment.
+- The same function callable from Python, for example in tests.
+- Async-ready: in Quart, FastAPI, and Starlette apps with `enable_async=True` environments, partials render on a small thread pool tied to the app's lifespan, and templates do not change.
+
+Continue with [Installation](02-installation.qmd) and the [Quickstart](03-quickstart.qmd).

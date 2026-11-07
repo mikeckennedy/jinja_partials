@@ -1,0 +1,102 @@
+# Quickstart
+
+This page builds the smallest useful example with Flask. Every other framework differs only in the registration line, covered in [Frameworks](frameworks.md).
+
+
+# 1. Register once at startup
+
+``` python
+# app.py
+import flask
+import jinja_partials
+
+app = flask.Flask(__name__)
+jinja_partials.register_extensions(app)
+
+
+@app.get('/')
+def index():
+    return flask.render_template('home/index.html', videos=get_videos())
+```
+
+Registration installs [render_partial](../reference/render_partial.md#jinja_partials.render_partial) as a global in the app's Jinja environment. Do it once, when the app is built, before it starts serving.
+
+
+# 2. Lay out the templates
+
+Partials are ordinary templates. The convention this project uses is a `partials` folder under `templates/shared`:
+
+``` text
+templates/
+├── home/
+│   └── index.html
+└── shared/
+    ├── _layout.html
+    └── partials/
+        ├── video_image.html
+        └── video_square.html
+```
+
+Template names passed to [render_partial](../reference/render_partial.md#jinja_partials.render_partial) are paths relative to the templates root, with forward slashes and the file extension, exactly like the names you pass to `render_template`.
+
+
+# 3. Write the partials
+
+The innermost fragment renders a YouTube thumbnail. It receives a `video` object and an optional list of CSS classes:
+
+``` html
+<!-- templates/shared/partials/video_image.html -->
+<img src="https://img.youtube.com/vi/{{ video.id }}/maxresdefault.jpg"
+     class="img img-responsive {{ (classes | default([])) | join(' ') }}"
+     alt="{{ video.title }}"
+     title="{{ video.title }}">
+```
+
+Partials nest. The video card renders the image partial inside itself:
+
+``` html
+<!-- templates/shared/partials/video_square.html -->
+
+    [{{ render_partial('shared/partials/video_image.html', video=video) }}](https://www.youtube.com/watch?v={{ video.id }})
+    [{{ video.author }}](https://www.youtube.com/watch?v={{ video.id }})
+    <div class="views">{{ "{:,}".format(video.views) }} views</div>
+
+```
+
+
+# 4. Use them from a page
+
+``` html
+<!-- templates/home/index.html -->
+{% extends "shared/_layout.html" %}
+{% block main_content %}
+    {% for v in videos %}
+        <div class="col-md-3 video">
+            {{ render_partial('shared/partials/video_square.html', video=v) }}
+        </div>
+    {% endfor %}
+{% endblock %}
+```
+
+The loop variable is `v` in the page and `video` inside the partial. That renaming is the normal way to use partials: the fragment declares what it needs, and the caller maps its own data onto those names.
+
+
+# 5. What you should see
+
+Run the app and open the page. Each video renders as a card like this, with the image fragment inlined where the nested [render_partial](../reference/render_partial.md#jinja_partials.render_partial) call was:
+
+``` html
+
+    <div>
+        <a href="https://www.youtube.com/watch?v=abc123" target="_blank">
+            <img src="https://img.youtube.com/vi/abc123/maxresdefault.jpg" class="img img-responsive " alt="Intro to Flask" title="Intro to Flask">
+        </a>
+        [Talk Python](https://www.youtube.com/watch?v=abc123)
+        <div class="views">12,500 views</div>
+    </div>
+
+```
+
+If instead you see the markup itself on the page as text (`<div>` and friends), the partial was inserted as an escaped string. That happens on the plain Jinja2 path when `markup=True` was not passed. [Troubleshooting](troubleshooting.md) covers that and the other errors you can hit.
+
+The full version of this app, with the layout, CSS, and a small JSON database, is the [Flask example](https://github.com/mikeckennedy/jinja_partials/tree/main/examples/example_flask) in the repository.

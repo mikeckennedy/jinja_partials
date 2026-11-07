@@ -11,7 +11,16 @@ That's what this library is all about.
 
 ## Documentation
 
-The full documentation is available at [mkennedy.codes/docs/jinja-partials](https://mkennedy.codes/docs/jinja-partials/).
+The full documentation is available at [mkennedy.codes/docs/jinja-partials](https://mkennedy.codes/docs/jinja-partials/). The user guide expands each section of this README:
+
+- [Why partials](https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html) - the problem, and how `render_partial` differs from `include` and `macro`
+- [Installation](https://mkennedy.codes/docs/jinja-partials/user-guide/installation.html) and the [Quickstart](https://mkennedy.codes/docs/jinja-partials/user-guide/quickstart.html)
+- [Frameworks](https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html) - Flask, Quart, FastAPI, Starlette, plain Jinja2, and the declarative extension
+- [Troubleshooting](https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html) - what each error or wrong output means and how to fix it
+- [Testing partials](https://mkennedy.codes/docs/jinja-partials/user-guide/testing.html), [How it works](https://mkennedy.codes/docs/jinja-partials/user-guide/how-it-works.html), and the [FAQ](https://mkennedy.codes/docs/jinja-partials/user-guide/faq.html)
+- [API reference](https://mkennedy.codes/docs/jinja-partials/reference/)
+
+Coding agents can load the [agent skill](https://mkennedy.codes/docs/jinja-partials/skill.md) or read [llms-full.txt](https://mkennedy.codes/docs/jinja-partials/llms-full.txt).
 
 ## Supported Frameworks
 
@@ -40,12 +49,11 @@ Each example demonstrates reusable partial templates. The screenshot below is fr
 
 It's just `pip install jinja-partials` and you're all set with this pure Python package.
 
-Requires Python 3.10 or newer (on older versions of Python, pip will install an earlier
-release that predates the FastAPI, Starlette, and Quart support described here).
+Requires Python 3.10 or newer. On older versions of Python, pip installs the 0.3.0 release, which predates the Quart and FastAPI support and the lifecycle-managed Starlette support described here.
 
 ## Usage
 
-Using the library is easy. Register jinja_partials with your framework once at app startup.
+Using the library is easy. Register jinja_partials with your framework once at app startup. The [Frameworks](https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html) page covers each option in more depth, including the page-level rule for async apps.
 
 ### Flask
 
@@ -126,10 +134,7 @@ app.jinja_env.add_extension('jinja_partials.PartialsJinjaExtension')
 # jinja_partials.register_extensions(app)
 ```
 
-> **Note:** With the extension approach, partials render directly through the Jinja
-> environment rather than `flask.render_template`. That means Flask context processors
-> (`@app.context_processor`) and the `template_rendered` signal do not apply inside
-> partials. If your partials depend on those, use `jinja_partials.register_extensions(app)`.
+> **Note:** With the extension approach, partials render directly through the Jinja environment rather than `flask.render_template`. That means Flask context processors (`@app.context_processor`) and the `template_rendered` signal do not apply inside partials (`g`, `request`, and `session` still work, since Flask installs them as environment globals). If your partials depend on context processors, use `jinja_partials.register_extensions(app)`.
 
 #### For Standalone Jinja2 Environments
 
@@ -222,8 +227,9 @@ We can finally generate the list of video blocks as follows:
 This time, we reframe each item in the list from the outer template (called `v`) as the `video` model
 in the inner HTML section.
 
+If a fragment shows up on the page as escaped text, or you hit `PartialsException`, `TemplateNotFound`, or an `asyncio.run()` error in an async app, the [Troubleshooting](https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html) page lists the cause and fix for each.
+
 
 ## Why not just use `include` or `macro` from Jinja?
 
-The short answer is they are nearly the same, but both fall short in different ways. 
-For a more detailed response, see the discussion on [**issue #1**](https://github.com/mikeckennedy/jinja_partials/issues/1)
+The short answer is they are nearly the same, but both fall short in different ways. [Why partials](https://mkennedy.codes/docs/jinja-partials/user-guide/why-partials.html) explains the differences, and the original discussion is on [**issue #1**](https://github.com/mikeckennedy/jinja_partials/issues/1).

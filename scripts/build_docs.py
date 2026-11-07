@@ -18,6 +18,16 @@ REPO_ROOT = _SCRIPTS.parent  # pyproject.toml + great-docs.yml live at the git r
 SITE = REPO_ROOT / 'great-docs' / '_site'
 DEST = REPO_ROOT / 'docs'
 
+# Agent-facing files that must exist in every build (see great-docs.yml `skill.file`)
+REQUIRED_OUTPUTS = (
+    'llms.txt',
+    'llms-full.txt',
+    'skill.md',
+    '.well-known/agent-skills/index.json',
+    '.well-known/agent-skills/jinja-partials/SKILL.md',
+)
+USER_GUIDE_MARKER = 'This is the User Guide documentation for the package.'
+
 
 def main() -> int:
     # Prefer the great-docs entry point from the same venv as this interpreter.
@@ -28,6 +38,18 @@ def main() -> int:
 
     if not SITE.is_dir():
         print(f'build output missing: {SITE}', file=sys.stderr)
+        return 1
+
+    # Great Docs reports success even when it silently skips the agent files (for
+    # example when it cannot import the package for llms-full.txt), so check the
+    # output before mirroring it into the committed site.
+    missing = [name for name in REQUIRED_OUTPUTS if not (SITE / name).is_file()]
+    if missing:
+        print(f'build output incomplete, missing: {", ".join(missing)}', file=sys.stderr)
+        return 1
+    llms_full = (SITE / 'llms-full.txt').read_text(encoding='utf-8')
+    if USER_GUIDE_MARKER not in llms_full:
+        print(f'llms-full.txt has no user guide section ({USER_GUIDE_MARKER!r} missing)', file=sys.stderr)
         return 1
 
     if DEST.exists():

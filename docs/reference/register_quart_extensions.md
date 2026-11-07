@@ -23,7 +23,7 @@ This creates a dedicated ThreadPoolExecutor for rendering partials in async envi
 `app: Quart`  
 The Quart application instance.
 
-`max_workers: int = ``4`  
+`max_workers: int = 4`  
 Maximum number of worker threads for rendering partials. Defaults to 4.
 
 
@@ -32,3 +32,16 @@ Maximum number of worker threads for rendering partials. Defaults to 4.
 
 `PartialsException`  
 If Quart is not installed.
+
+
+## Example
+
+Register once at startup:
+
+``` python
+from quart import Quart
+import jinja_partials
+
+app = Quart(__name__)
+jinja_partials.register_quart_extensions(app)
+```

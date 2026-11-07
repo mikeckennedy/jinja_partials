@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- Nested partials in async apps (Quart, FastAPI, Starlette, and async Jinja2 environments) no longer deadlock the render thread pool. A nested `render_partial` call used to wait on the same pool its outer partial was occupying, so nesting as deep as `max_workers`, or enough concurrent requests with nested partials, hung every request. Nested renders now run on their own short-lived thread, and nesting depth no longer counts against `max_workers`.
+
+### Documentation
+
+- Added a user guide to the documentation site: why partials, installation, quickstart, frameworks, troubleshooting, testing, how it works, and FAQ. The guide pages are included in `llms-full.txt`.
+- Replaced the generated agent skill with a hand-written `skills/jinja-partials/SKILL.md` that documents the rules of the package (explicit data flow, markup defaults, Starlette argument order, the async page-level rule, registration once) rather than only its API names.
+- Every public name now has an example in its docstring, and the module docstring names the entry points.
+- Corrected the note about `PartialsJinjaExtension` on Flask: only context processors and the `template_rendered` signal are skipped inside partials; `g`, `request`, and `session` remain available.
+- Corrected the README note about older Python versions: 0.3.0 already had synchronous Starlette support.
+- `scripts/build_docs.py` now fails when `llms.txt`, `llms-full.txt`, or the skill files are missing from the build output, or when `llms-full.txt` has no user guide section.
+- The docs now build with great-docs 0.17.0 (the dev lockfile was recompiled from 0.13.0), and `scripts/postprocess_site.py` repairs two more output bugs: the `**data` parameter rendered as `data: Any = {}` in the `render_partial` signatures, and parameter defaults wrapped in nested backticks in the Markdown reference companions.
+
 ## [0.3.2] - 2026-06-11
 
 ### Fixed
@@ -41,3 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [0.3.0] - Previous release
 
 See [GitHub releases](https://github.com/mikeckennedy/jinja_partials/releases) for earlier history.
+
+[Unreleased]: https://github.com/mikeckennedy/jinja_partials/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/mikeckennedy/jinja_partials/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/mikeckennedy/jinja_partials/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.3.0

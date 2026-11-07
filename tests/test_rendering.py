@@ -641,3 +641,72 @@ def test_partials_jinja_extension_markup_behavior():
     result = render_partial_func('render/bare.html')  # type: ignore
     assert isinstance(result, Markup)
     assert '<h1>This is bare HTML fragment</h1>' in result
+
+
+# Tests for nested partials vs. executor capacity (a nested render must not wait on the pool it occupies)
+def test_nested_partials_deeper_than_max_workers(monkeypatch):
+    """A nested partial renders on its own thread, so nesting depth never exhausts the pool."""
+    import asyncio
+    import threading
+
+    from fastapi import FastAPI
+
+    created = _track_executors(monkeypatch)
+    templates = _async_templates()
+    app = FastAPI()
+    jinja_partials.register_fastapi_extensions(app, templates, max_workers=1)
+    render = templates.env.globals['render_partial']
+    outcome = {}
+
+    def run():
+        async def cycle():
+            async with app.router.lifespan_context(app):
+                outcome['html'] = render('render/recursive.html', message='outer message', inner='inner message')
+
+        asyncio.run(cycle())
+
+    worker = threading.Thread(target=run, daemon=True)
+    worker.start()
+    worker.join(timeout=10)
+    assert not worker.is_alive(), 'nested render deadlocked the single-worker pool'
+    assert 'outer message' in outcome['html']
+    assert 'inner message' in outcome['html']
+    # Only the outer render went through the per-cycle pool; the nested one ran on a dedicated thread
+    assert created[1].submitted == 1
+
+
+def test_concurrent_nested_partials_do_not_exhaust_pool():
+    """Outer partials that fill every worker can still render their nested partials."""
+    import asyncio
+    import threading
+
+    from fastapi import FastAPI
+
+    templates = _async_templates()
+    app = FastAPI()
+    jinja_partials.register_fastapi_extensions(app, templates, max_workers=2)
+    render = templates.env.globals['render_partial']
+    # Both outer renders occupy the pool before either one nests
+    barrier = threading.Barrier(2, timeout=10)
+    results = []
+
+    def request():
+        results.append(render('render/nested_barrier.html', sync=barrier.wait, inner='inner message'))
+
+    def run():
+        async def cycle():
+            async with app.router.lifespan_context(app):
+                threads = [threading.Thread(target=request, daemon=True) for _ in range(2)]
+                for t in threads:
+                    t.start()
+                for t in threads:
+                    t.join(timeout=10)
+
+        asyncio.run(cycle())
+
+    worker = threading.Thread(target=run, daemon=True)
+    worker.start()
+    worker.join(timeout=20)
+    assert not worker.is_alive(), 'nested renders deadlocked the pool'
+    assert len(results) == 2
+    assert all('<span>The inner text is inner message</span>' in html for html in results)

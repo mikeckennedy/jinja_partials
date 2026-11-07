@@ -26,3 +26,16 @@ The Flask application instance.
 
 `PartialsException`  
 If Flask is not installed.
+
+
+## Example
+
+Register once at startup:
+
+``` python
+import flask
+import jinja_partials
+
+app = flask.Flask(__name__)
+jinja_partials.register_extensions(app)
+```

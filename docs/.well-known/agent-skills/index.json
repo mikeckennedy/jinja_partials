@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "jinja-partials",
-      "description": "Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks. Use when writing Python code that uses the jinja_partials package.",
+      "description": "Reusable HTML fragments for Jinja2 templates in Flask, Quart, FastAPI, Starlette, or any Jinja2 environment, through a render_partial() template global that renders a fragment file with explicitly passed data and nests freely. Use when adding jinja_partials or jinja-partials to an app, writing or refactoring templates that repeat markup, serving HTMX fragments, choosing between include, macro, and render_partial, or when a partial renders as escaped text, raises PartialsException or TemplateNotFound, or a FastAPI or Starlette route fails with \"asyncio.run() cannot be called from a running event loop\".",
       "files": [
         "SKILL.md"
       ]

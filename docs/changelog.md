@@ -64,7 +64,7 @@ Jinja_Partials Release Notes
 
 ## 🚀 New Features
 
-- **PartialsJinjaExtension**: Added a declarative Jinja2 extension for easy integration of partials and templates. Thank you [<span class="citation" cites="jenisys">@jenisys</span>](https://github.com/jenisys)!
+- **PartialsJinjaExtension**: Added a declarative Jinja2 extension for easy integration of partials and templates. Thank you [<span class="citation" data-cites="jenisys">@jenisys</span>](https://github.com/jenisys)!
 - **Versioning**: Enhanced the `__all__` import list to include version information, making it easier to manage updates.
 
 
@@ -100,4 +100,4 @@ Solves [\#9](https://github.com/mikeckennedy/jinja_partials/issues/9) requiremen
 
 *2024-02-02* · [GitHub](https://github.com/mikeckennedy/jinja_partials/releases/tag/v0.2.0)
 
-This release adds a `register_environment(environment)` method to allow using partials with Jinja outside of a web framework like Flask. See [\#4](https://github.com/mikeckennedy/jinja_partials/issues/4) for details. Thank you to [<span class="citation" cites="sam-kleiner">@sam-kleiner</span>](https://github.com/sam-kleiner) for this feature.
+This release adds a `register_environment(environment)` method to allow using partials with Jinja outside of a web framework like Flask. See [\#4](https://github.com/mikeckennedy/jinja_partials/issues/4) for details. Thank you to [<span class="citation" data-cites="sam-kleiner">@sam-kleiner</span>](https://github.com/sam-kleiner) for this feature.

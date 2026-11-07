@@ -24,6 +24,11 @@ Fixes:
    backtick spans (reference/*.md).
 8. The class Usage signature drops __init__ parameters, rendering the
    misleading no-arg constructor 'PartialsJinjaExtension()'.
+9. The render_partial Usage signatures render the **data var-keyword as a
+   positional 'data: Any = {}' parameter (HTML and .md companion).
+10. In the reference/*.md parameter lists a default value is wrapped in its
+    own backticks inside the code span ('`markup: bool = ``True`'), which
+    Markdown renders as a broken span. Collapsed to '`markup: bool = True`'.
 """
 
 from __future__ import annotations
@@ -47,6 +52,12 @@ EXT_SIG_HTML = '<span class="sig-name">PartialsJinjaExtension</span>()'
 EXT_SIG_HTML_FIXED = '<span class="sig-name">PartialsJinjaExtension</span>(environment)'
 EXT_SIG_MD = 'PartialsJinjaExtension()'
 EXT_SIG_MD_FIXED = 'PartialsJinjaExtension(environment)'
+
+DATA_SIG_HTML = '<span class="va">data</span>: <span class="va">Any</span> <span class="op">=</span> {})'
+DATA_SIG_HTML_FIXED = '<span class="op">**</span><span class="va">data</span>: <span class="va">Any</span>)'
+DATA_SIG_MD = 'data: Any = {})'
+DATA_SIG_MD_FIXED = '**data: Any)'
+_MD_NESTED_DEFAULT = re.compile(r'`([^`\n]+ = )``([^`\n]+)`')
 
 
 def _unsmart(text: str) -> str:
@@ -83,7 +94,15 @@ def main() -> int:
         print(f'docs/ missing: {DOCS}', file=sys.stderr)
         return 1
 
-    counts = {'canonical': 0, 'video_embed': 0, 'color_swatch': 0, 'code_punct': 0, 'ext_sig': 0}
+    counts = {
+        'canonical': 0,
+        'video_embed': 0,
+        'color_swatch': 0,
+        'code_punct': 0,
+        'ext_sig': 0,
+        'data_sig': 0,
+        'md_default': 0,
+    }
 
     for page in sorted(DOCS.rglob('*.html')):
         rel = page.relative_to(DOCS)
@@ -110,6 +129,10 @@ def main() -> int:
             text = text.replace(EXT_SIG_HTML, EXT_SIG_HTML_FIXED, 1)
             counts['ext_sig'] += 1
 
+        if rel.parent.as_posix() == 'reference' and DATA_SIG_HTML in text:
+            counts['data_sig'] += text.count(DATA_SIG_HTML)
+            text = text.replace(DATA_SIG_HTML, DATA_SIG_HTML_FIXED)
+
         if rel.as_posix() == 'index.html':
             text = text.replace(
                 'content="https://mkennedy.codes/docs/jinja-partials"',
@@ -129,6 +152,11 @@ def main() -> int:
         if page.name == 'PartialsJinjaExtension.md' and EXT_SIG_MD in text:
             text = text.replace(EXT_SIG_MD, EXT_SIG_MD_FIXED, 1)
             counts['ext_sig'] += 1
+        if DATA_SIG_MD in text:
+            counts['data_sig'] += text.count(DATA_SIG_MD)
+            text = text.replace(DATA_SIG_MD, DATA_SIG_MD_FIXED)
+        text, n = _MD_NESTED_DEFAULT.subn(r'`\1\2`', text)
+        counts['md_default'] += n
         if text != original:
             page.write_text(text, encoding='utf-8')
 
@@ -146,6 +174,8 @@ def main() -> int:
         f'color-swatch loaders: {counts["color_swatch"]}, '
         f'code spans unsmarted: {counts["code_punct"]}, '
         f'extension signatures: {counts["ext_sig"]}, '
+        f'**data signatures: {counts["data_sig"]}, '
+        f'md nested defaults: {counts["md_default"]}, '
         f'search.json skill->skills: {skill_fixes}'
     )
     return 0

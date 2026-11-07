@@ -1,179 +1,102 @@
 ---
 name: jinja-partials
-description: >
-  Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks. Use when writing Python code that uses the jinja_partials package.
+description: Reusable HTML fragments for Jinja2 templates in Flask, Quart, FastAPI, Starlette, or any Jinja2 environment, through a render_partial() template global that renders a fragment file with explicitly passed data and nests freely. Use when adding jinja_partials or jinja-partials to an app, writing or refactoring templates that repeat markup, serving HTMX fragments, choosing between include, macro, and render_partial, or when a partial renders as escaped text, raises PartialsException or TemplateNotFound, or a FastAPI or Starlette route fails with "asyncio.run() cannot be called from a running event loop".
 license: MIT
-compatibility: Requires Python >=3.10.
+compatibility: Python 3.10 or newer; depends only on jinja2. Flask, Quart, FastAPI, and Starlette are optional and must be installed separately.
 ---
 
-# Jinja Partials
+# jinja-partials
 
-Simple reuse of partial HTML page templates in the Jinja template language for Python web frameworks.
+Repeated HTML fragments in Jinja2 templates are hard to keep consistent. jinja_partials adds a `render_partial(template_name, **data)` global that renders a fragment file with exactly the keyword arguments you pass, returns `markupsafe.Markup` so autoescaping leaves it alone, and nests. Misconfiguration raises `jinja_partials.PartialsException`; a bad template name raises `jinja2.TemplateNotFound`.
 
-## Installation
+## Install
 
-```bash
-pip install jinja-partials
-```
+`uv add jinja-partials` or `pip install jinja-partials`. Import as `jinja_partials`. Install your web framework yourself; the library never pulls one in.
 
-## When to use what
-
-| Need | Use |
-|------|-----|
-| Flask app | `jinja_partials.register_extensions(app)` |
-| Quart app | `jinja_partials.register_quart_extensions(app)` |
-| FastAPI app | `jinja_partials.register_fastapi_extensions(app, templates)` |
-| Starlette app | `jinja_partials.register_starlette_extensions(templates, app=app)` |
-| Plain Jinja2 environment or unsupported framework | `jinja_partials.register_environment(env, markup=True)` |
-| Declarative environment configuration | `Environment(extensions=['jinja_partials.PartialsJinjaExtension'])` |
-| Custom render pipeline | `generate_render_partial(renderer) installed as a Jinja global` |
-
-## API overview
-
-### Framework registration
-
-Register render_partial with your web framework once at app startup.
-
-- `register_extensions`: Register jinja_partials with a Flask application
-- `register_fastapi_extensions`: Register jinja_partials with a FastAPI application
-- `register_starlette_extensions`: Register jinja_partials with Starlette templates
-- `register_quart_extensions`: Register jinja_partials with a Quart application
-- `register_environment`: Register jinja_partials with a plain Jinja2 environment
-
-### Rendering
-
-Render partial templates directly or build framework-specific renderers.
-
-- `render_partial`: Render a partial template and return the resulting HTML fragment
-- `generate_render_partial`: Create a render_partial function bound to a specific renderer
-
-### Jinja2 extension
-
-Declarative registration via the Jinja2 extension mechanism.
-
-- `PartialsJinjaExtension`: Jinja2 extension that automatically registers render_partial functionality
-
-### Exceptions
-
-Errors raised by jinja_partials.
-
-- `PartialsException`: Raised when jinja_partials is misconfigured or a required web framework is not installed
-
-## Gotchas
-
-1. register_starlette_extensions takes templates FIRST with app as an optional keyword — the argument order differs from register_fastapi_extensions(app, templates).
-2. register_environment defaults markup=False while every other registration path uses markup=True; with autoescaping on, forgetting markup=True makes partials show up as escaped HTML text.
-3. PartialsJinjaExtension on a Flask app renders partials through the Jinja environment, not flask.render_template — context processors, g, and request are unavailable inside partials; use register_extensions(app) if you need them.
-4. render_partial with no renderer falls back to flask.render_template and raises PartialsException('No renderer specified') when Flask is not installed — pass a renderer or use generate_render_partial outside Flask.
-5. Calling register_fastapi_extensions or register_starlette_extensions twice on the same app double-wraps the lifespan (no idempotency guard) — register exactly once at startup.
-6. On an enable_async=True FastAPI/Starlette environment, render pages with await template.render_async(...) + HTMLResponse; templates.TemplateResponse(...) calls asyncio.run() inside the running event loop and crashes.
-
-## Best practices
-
-- Register once at app startup, before the app starts serving, so the partial-rendering executor is tied to the app's lifecycle.
-- Pass app= to register_starlette_extensions when you have one — it upgrades from the shared module-level executor to a lifespan-managed one.
-- Keep partials in templates/shared/partials/ and pass model data explicitly as keyword arguments; partials do not inherit the caller's context.
-- Install as `pip install jinja-partials` (hyphen) but import as `jinja_partials` (underscore).
-
-## End-to-end wiring
-
-A complete, minimal Flask app — one registration call at startup, then `render_partial()` is available inside every template. Template paths are always given relative to the templates root.
+## Use
 
 ```python
-# app.py
 import flask
 import jinja_partials
 
 app = flask.Flask(__name__)
-jinja_partials.register_extensions(app)   # once, at startup
-
-
-@app.get('/')
-def index():
-    return flask.render_template('home/index.html', videos=get_videos())
+jinja_partials.register_extensions(app)  # once, at startup, before serving
 ```
 
 ```html
-<!-- templates/home/index.html -->
+{# templates/home/index.html #}
 {% for v in videos %}
-    {{ render_partial('shared/partials/video_square.html', video=v) }}
+    {{ render_partial('shared/partials/video_square.html', video=v) }}  {# outer v becomes inner video #}
+{% endfor %}
+```
+
+Other frameworks swap only the registration line (see the table). In a test, render a fragment directly: `templates.env.globals['render_partial']('shared/partials/card.html', item=item)`, or `jinja_partials.render_partial(name, **data)` inside a Flask request context.
+
+## Rules
+
+- A partial sees only the keyword arguments you pass it plus environment globals. It never inherits the caller's context the way `{% include %}` does; pass everything, and use `| default(...)` for optional inputs.
+- Template names are paths relative to the templates root with forward slashes and the extension, as for `render_template`.
+- `register_environment(env)` defaults to `markup=False`. With autoescaping on, that inserts the fragment as escaped text. Pass `markup=True`. Every other registration path and `PartialsJinjaExtension` already use `markup=True`.
+- `register_starlette_extensions(templates, app=app)` takes templates first and app as a keyword. The FastAPI order is `register_fastapi_extensions(app, templates)`. Swapping them fails with `AttributeError: 'Starlette' object has no attribute 'env'`.
+- Register once per app where it is built. A second `register_fastapi_extensions` or `register_starlette_extensions` call wraps the lifespan again, and a second Quart registration adds another pair of serving hooks. There is no idempotency guard.
+- Only `register_extensions(app)` on Flask renders partials through `flask.render_template`, so only there do context processors and the `template_rendered` signal apply inside partials. `PartialsJinjaExtension` on a Flask app skips them, though `g`, `request`, and `session` remain available as environment globals.
+- In FastAPI and Starlette with an `enable_async=True` environment, render the page with `await template.render_async(...)` and return `HTMLResponse`. `templates.TemplateResponse(...)` calls `asyncio.run()` inside the running loop and raises `RuntimeError`. Partials inside the page need no change.
+- Partials in async apps render on a thread pool (`max_workers=4` default) and the caller blocks for the result. Nested partials render on their own thread and do not count against `max_workers`. Renders beyond the pool size queue; they do not fail.
+- `render_partial` with no renderer falls back to `flask.render_template` and raises `PartialsException('No renderer specified')` when Flask is absent. Outside Flask, bind a renderer with `generate_render_partial`.
+- Framework imports are optional; `register_*` raises `PartialsException('Install <Framework> to use ...')` when the framework is missing.
+
+## Decision table
+
+| Need | Use |
+| --- | --- |
+| Flask app | `jinja_partials.register_extensions(app)` |
+| Quart app | `jinja_partials.register_quart_extensions(app, max_workers=4)` |
+| FastAPI app | `jinja_partials.register_fastapi_extensions(app, templates, max_workers=4)` |
+| Starlette app with lifespan-managed pool | `jinja_partials.register_starlette_extensions(templates, app=app, max_workers=4)` |
+| Starlette templates, no app | `jinja_partials.register_starlette_extensions(templates)` (shared module pool) |
+| Plain Jinja2 or unsupported framework | `jinja_partials.register_environment(env, markup=True)` |
+| Declarative environment config | `Environment(extensions=['jinja_partials.PartialsJinjaExtension'])` |
+| Custom render pipeline | `env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))` |
+| Fragment response for HTMX | return the partial from the route with the framework's normal render call |
+| Flask context processors inside partials | `register_extensions(app)`, not the extension |
+
+## API
+
+- `render_partial(template_name, renderer=None, markup=True, **data) -> Markup | str`: the primitive. Raises `PartialsException` without a renderer when Flask is absent; raises `TemplateNotFound` for a bad name.
+- `generate_render_partial(renderer, markup=True) -> Callable`: binds `renderer(template_name, **data) -> str`; install the result as the `render_partial` global.
+- `register_extensions(app: Flask) -> None`: Flask; raises `PartialsException` if Flask is missing.
+- `register_quart_extensions(app: Quart, max_workers=4) -> None`: Quart; pool created in `before_serving`, shut down in `after_serving`, stored in `app.extensions['jinja_partials_executor']`.
+- `register_fastapi_extensions(app: FastAPI, templates: Jinja2Templates, max_workers=4) -> None`: wraps the lifespan; pool on `app.state.jinja_partials_executor`; an existing `lifespan=` keeps running.
+- `register_starlette_extensions(templates: Jinja2Templates, app: Starlette | None = None, max_workers=4) -> None`: templates first; `max_workers` applies only with `app`.
+- `register_environment(env: Environment, markup=False) -> None`: plain Jinja2, sync or async; pass `markup=True`.
+- `PartialsJinjaExtension(environment)`: Jinja2 extension; calls `register_environment(environment, markup=True)`.
+- `PartialsException(Exception)`: misconfiguration or missing framework.
+
+## Output
+
+Page template plus partial, and the rendered result:
+
+```html
+{# home/index.html #}            {# shared/partials/card.html #}
+{% for item in items %}          <div class="card"><h3>{{ item.title }}</h3></div>
+  {{ render_partial('shared/partials/card.html', item=item) }}
 {% endfor %}
 ```
 
 ```html
-<!-- templates/shared/partials/video_square.html — partials nest freely -->
-<div>
-    <a href="https://www.youtube.com/watch?v={{ video.id }}">
-        {{ render_partial('shared/partials/video_image.html', video=video) }}
-    </a>
-    <div class="views">{{ "{:,}".format(video.views) }} views</div>
-</div>
+<div class="card"><h3>Python Basics</h3></div>   <!-- correct: Markup inserted verbatim -->
+&lt;div class="card"&gt;&lt;h3&gt;Python Basics&lt;/h3&gt;&lt;/div&gt;   <!-- escaped text: markup=False on register_environment -->
 ```
 
-Other frameworks swap only the registration line: `register_quart_extensions(app)`, `register_fastapi_extensions(app, templates)`, `register_starlette_extensions(templates, app=app)`, or `register_environment(env, markup=True)` for a plain Jinja2 environment.
-
-## Data flow is explicit (this is not `include`)
-
-A partial sees **only** what you pass as keyword arguments to `render_partial` — there is no implicit sharing of the caller's context the way Jinja's `{% include %}` does it. That is the point: partials are functions over an explicit model, so renaming at the call site is normal:
-
-```html
-{% for v in videos %}
-    {{ render_partial('shared/partials/video_square.html', video=v) }}  {# outer `v` becomes inner `video` #}
-{% endfor %}
-```
-
-The one exception: on the Flask `register_extensions` path (and only there), partials render through `flask.render_template`, so Flask context processors, `g`, and `request` are also available inside partials.
-
-## Project layout convention
-
-Partials are ordinary Jinja templates; the convention is a `partials` subfolder under `templates/shared`:
-
-```
-templates/
-├── home/
-│   ├── index.html
-│   └── listing.html
-└── shared/
-    ├── _layout.html          # normal Jinja {% extends %} layout — partials don't replace it
-    └── partials/
-        ├── video_image.html
-        └── video_square.html
-```
-
-Partials complement, not replace, Jinja inheritance: pages still `{% extends 'shared/_layout.html' %}`; `render_partial` handles the reusable fragments inside those pages.
-
-## Async apps: how it works and the one page-level rule
-
-Quart/FastAPI/Starlette use `enable_async=True` Jinja environments, and Jinja expressions can't `await` — so registration installs a renderer that runs each partial's `render_async` on a small thread pool tied to the app's lifespan (`max_workers=4` by default, tunable on each `register_*` call). `{{ render_partial(...) }}` in templates needs no changes in async apps.
-
-The page-level rule for FastAPI/Starlette with an async environment: render the **page** with `await template.render_async(...)` and return an `HTMLResponse` — partials inside it just work:
-
-```python
-@app.get('/')
-async def index() -> HTMLResponse:
-    template = templates.get_template('home/index.html')
-    return HTMLResponse(await template.render_async(items=items))
-```
-
-## Custom renderers
-
-Every registration path is sugar over `generate_render_partial(renderer)`, where `renderer(template_name, **data) -> str`. For an unsupported framework or a custom pipeline, bind your own:
-
-```python
-def renderer(template_name: str, **data) -> str:
-    return my_env.get_template(template_name).render(**data)
-
-my_env.globals.update(render_partial=jinja_partials.generate_render_partial(renderer))
-```
-
-## Fetching the docs as Markdown
-
-Every page on the documentation site has a plain-Markdown twin: swap the `.html` extension for `.md` to get token-efficient source without the site chrome. For example https://mkennedy.codes/docs/jinja-partials/reference/render_partial.html is also available at https://mkennedy.codes/docs/jinja-partials/reference/render_partial.md. Prefer the `.md` form when reading these docs programmatically.
-
+Fix order when something is wrong: confirm the registration call ran once at startup, then the template path, then that every variable the fragment reads was passed, then `markup=True` on the plain Jinja2 path, then the page-level `render_async` rule in async apps.
 
 ## Resources
 
-- [Full documentation](https://mkennedy.codes/docs/jinja-partials/)
-- [llms.txt](llms.txt) — Indexed API reference for LLMs
-- [llms-full.txt](llms-full.txt) — Comprehensive documentation for LLMs
-- [Source code](https://github.com/mikeckennedy/jinja_partials)
+- Documentation: <https://mkennedy.codes/docs/jinja-partials/>
+- Frameworks: <https://mkennedy.codes/docs/jinja-partials/user-guide/frameworks.html>
+- Troubleshooting: <https://mkennedy.codes/docs/jinja-partials/user-guide/troubleshooting.html>
+- How it works: <https://mkennedy.codes/docs/jinja-partials/user-guide/how-it-works.html>
+- API reference: <https://mkennedy.codes/docs/jinja-partials/reference/>
+- llms.txt: <https://mkennedy.codes/docs/jinja-partials/llms.txt>
+- llms-full.txt: <https://mkennedy.codes/docs/jinja-partials/llms-full.txt>
+- Source: <https://github.com/mikeckennedy/jinja_partials>
